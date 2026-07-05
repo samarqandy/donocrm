@@ -1,0 +1,27 @@
+# Runtime data
+data/*.sqlite
+data/*.sqlite-*
+data/*.db
+data/*.db-*
+data/db.json
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Dependencies/build output
+node_modules/
+dist/
+build/
+coverage/
