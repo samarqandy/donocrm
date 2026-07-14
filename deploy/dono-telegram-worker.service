@@ -1,0 +1,17 @@
+[Unit]
+Description=Dono CRM Telegram Queue Worker
+After=network.target dono.service
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/dono
+Environment=NODE_ENV=production
+Environment=SQLITE_FILE=/var/www/dono/data/dono.sqlite
+EnvironmentFile=-/etc/dono/dono.env
+ExecStart=/usr/bin/node /var/www/dono/scripts/telegram-worker.js
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

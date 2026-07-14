@@ -1,0 +1,20 @@
+[Unit]
+Description=Dono CRM Node Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/dono
+Environment=NODE_ENV=production
+Environment=PORT=8081
+Environment=SQLITE_FILE=/var/www/dono/data/dono.sqlite
+Environment=COOKIE_SECURE=false
+Environment=DONO_EMBEDDED_TELEGRAM_WORKER=false
+EnvironmentFile=-/etc/dono/dono.env
+ExecStart=/usr/bin/node /var/www/dono/server.js
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target

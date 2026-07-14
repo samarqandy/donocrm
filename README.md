@@ -1,6 +1,6 @@
-# Dono
+# donocrm
 
-Dono kichik o'quv markazlari va repetitorlar uchun ishlaydigan ta'lim boshqaruv dasturi. Tizim davomat, to'lovlar, qarzdorlik, guruhlar, dars jadvali, leadlar va Telegram xabarlar navbatini bitta panelda boshqaradi.
+donocrm kichik o'quv markazlari va repetitorlar uchun ishlaydigan ta'lim boshqaruv dasturi. Tizim davomat, to'lovlar, qarzdorlik, guruhlar, dars jadvali, leadlar va Telegram xabarlar navbatini bitta panelda boshqaradi.
 
 Backend modular Node.js arxitekturasida qurilgan va ma'lumotlar SQLite bazasida saqlanadi.
 
@@ -61,9 +61,10 @@ Script vaqtinchalik SQLite bazasini `/tmp` ichida yaratadi, HTTP orqali barcha a
 - Admin dashboard
 - Teacher dashboard, jadval, davomat tarixi va profil
 - O'quvchilar, guruhlar va darslar
+- O'qituvchi profili, guruh/yuklama, ish vaqti va portal-access boshqaruvi
 - Davomatni saqlash
 - To'lov qo'shish va qarzdorlikni kamaytirish
-- Telegram xabarlar navbati va yuborish logi
+- Telegram xabarlar navbati, avtomatik retry va yuborish logi
 - Leadlar bilan ishlash
 - Hisobotlar va audit log
 - Tenant scope API
@@ -84,15 +85,20 @@ O'qituvchi panelida:
 - `Davomat` — saqlangan davomat tarixi
 - `Profil` — o'qituvchi ma'lumotlari
 
+Administrator panelidagi `O'qituvchilar` moduli profil va login akkauntini alohida boshqaradi. O'qituvchini login bermasdan katalogga qo'shish yoki PBKDF2 bilan himoyalangan teacher-account yaratish mumkin. Profil kartasida guruhlar, o'quvchilar soni, haftalik yuklama, yaqin darslar va ish vaqti ko'rinadi. Arxivlash hard-delete qilmaydi: tarix saqlanadi, login bloklanadi va faol sessiyalar yopiladi. Faol guruh yoki kelajak darsi mavjud o'qituvchini arxivlash avval reassignment talab qiladi.
+
 ## Telegram bot token qo'shish
 
 1. Telegramda `@BotFather` orqali bot yarating.
 2. Bot tokenni oling.
-3. Dono ichida `Sozlamalar` bo'limiga kiring.
+3. donocrm ichida `Sozlamalar` bo'limiga kiring.
 4. `Telegram sozlamalari` kartasida bot username va tokenni kiriting.
 5. `Saqlash` tugmasini bosing.
+6. O'quvchi profilidagi Telegram bo'limidan bir martalik ulash havolasini yarating va ota-onaga yuboring.
 
-Token bazada saqlanadi, interfeysda esa faqat ulangan/ulanmagan holati ko'rsatiladi.
+Ota-ona botni oddiy `/start` bilan ochsa, bot telefon raqamini Telegram'ning xavfsiz `request_contact` tugmasi orqali so'raydi. Faqat foydalanuvchining o'z kontakti qabul qilinadi. Raqam o'quvchi profilidagi ota-ona telefoniga mos kelsa, Telegram Chat ID avtomatik ulanadi; bir raqamga bir nechta farzand biriktirilgan bo'lsa, ularning barchasi ulanadi.
+
+Saqlash paytida token Telegram Bot API orqali tekshiriladi. Token bazada AES-256-GCM bilan shifrlanadi, interfeysda esa faqat ulangan/ulanmagan holati ko'rsatiladi. Bir martalik ulash kodi bazada faqat SHA-256 digest ko'rinishida saqlanadi. Alohida worker botga kelgan `/start` va contact ulash komandalarini qabul qiladi hamda xabarlarni navbatdan avtomatik yuboradi. Vaqtinchalik Telegram xatolarida navbat exponential backoff bilan qayta urinadi; doimiy xatolar operatorga sababi bilan ko'rsatiladi.
 
 ## Arxitektura
 

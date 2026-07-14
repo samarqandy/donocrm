@@ -1,0 +1,1817 @@
+openapi: 3.0.3
+info:
+  title: DonoCRM API
+  version: 2026.07.13
+  description: >
+    DonoCRM multi-tenant education CRM API contract. Authentication uses an
+    HttpOnly `dono_session` cookie. Admin endpoints require the `admin` role;
+    teacher endpoints are scoped to the authenticated teacher.
+servers:
+  - url: http://localhost:8081
+security:
+  - sessionCookie: []
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: dono_session
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    User:
+      type: object
+      required: [id, tenantId, username, name, role]
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        username: { type: string }
+        name: { type: string }
+        role:
+          type: string
+          enum: [admin, teacher, superadmin]
+    Student:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        name: { type: string }
+        groupId: { type: string }
+        groupName: { type: string }
+        parentName: { type: string }
+        phone: { type: string }
+        telegramChatId:
+          type: string
+          description: Admin only. Omitted from teacher responses.
+        debt:
+          type: number
+          description: Admin only. Omitted from teacher responses.
+        balance:
+          type: number
+          description: Admin only. Omitted from teacher responses.
+        status:
+          type: string
+          enum: [active, frozen, left]
+    Group:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        name: { type: string }
+        subject: { type: string }
+        teacherId: { type: string }
+        teacherName: { type: string }
+        room: { type: string }
+        monthlyFee:
+          type: number
+          description: Admin only. Omitted from teacher responses.
+        active: { type: boolean }
+        studentsCount: { type: integer }
+    Teacher:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        branchId: { type: string }
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string, format: email }
+        specialization: { type: string }
+        employmentType:
+          type: string
+          enum: [full_time, part_time, contract]
+        status:
+          type: string
+          enum: [active, inactive]
+        hiredAt: { type: string, format: date }
+        maxWeeklyMinutes: { type: integer }
+        weeklyMinutes: { type: integer }
+        workloadPercent: { type: integer }
+        groupsCount: { type: integer }
+        studentsCount: { type: integer }
+        completedLessons: { type: integer }
+        hasAccess: { type: boolean }
+        username:
+          type: string
+          description: Admin only.
+        accessStatus:
+          type: string
+          enum: [active, inactive, not_granted]
+    Lesson:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        groupId: { type: string }
+        scheduleId: { type: integer }
+        date: { type: string, format: date }
+        occurrenceDate: { type: string, format: date }
+        time:
+          type: string
+          example: "09:00 - 10:30"
+        startTime: { type: string, example: "09:00" }
+        endTime: { type: string, example: "10:30" }
+        status:
+          type: string
+          enum: [waiting, planned, completed, cancelled]
+        groupName: { type: string }
+        subject: { type: string }
+        room: { type: string }
+        roomId: { type: string }
+        teacherId: { type: string }
+        teacherName: { type: string }
+        topic: { type: string }
+        homework: { type: string }
+        note: { type: string }
+        attendanceVersion: { type: integer }
+        financialStatus:
+          type: string
+          enum: [unposted, legacy, pending, posted, reversed]
+          description: >
+            Financial lifecycle is separate from lesson status. Attendance
+            finalization sets `pending`; an explicit confirmation posts money.
+            Migrated completed lessons are `legacy` and are not auto-posted.
+        financialVersion:
+          type: integer
+          minimum: 0
+          description: Incremented by successful financial confirmation or reversal.
+        version: { type: integer }
+        cancelledReason: { type: string }
+        completedAt: { type: string, format: date-time }
+        cancelledAt: { type: string, format: date-time }
+        financialReversedBy: { type: string }
+        financialReversedAt: { type: string }
+        financialReversalReason: { type: string }
+    ScheduleSeriesChangeFields:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: >
+        Scheduling fields proposed by an administrator. For `this_occurrence`,
+        weekday selects the target day inside the same logical ISO week.
+        `status=inactive` is only valid for `this_and_future`. Omitted fields
+        retain their current values.
+      properties:
+        weekday: { type: integer, minimum: 1, maximum: 7 }
+        startTime:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        endTime:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        teacherId: { type: string, minLength: 1 }
+        roomId:
+          type: string
+          nullable: true
+          description: Use null or an empty string to clear the explicit room.
+        lessonLink: { type: string, maxLength: 2000 }
+        validUntil: { type: string, format: date, nullable: true }
+        status: { type: string, enum: [active, inactive] }
+    ScheduleSeriesChangePreview:
+      type: object
+      required:
+        [scheduleId, seriesId, scope, occurrenceDate, occurrenceKey, version, canApply, before, impact, warnings]
+      properties:
+        scheduleId: { type: integer }
+        seriesId: { type: string }
+        scope:
+          type: string
+          enum: [this_occurrence, this_and_future]
+        occurrenceDate:
+          type: string
+          format: date
+          description: Original occurrence date selected by the administrator.
+        occurrenceKey:
+          type: string
+          example: "2026-W28"
+          description: Stable logical-week identity; unchanged by a weekday move.
+        version:
+          type: integer
+          minimum: 1
+          description: Schedule version used to calculate this preview.
+        canApply: { type: boolean }
+        before: { type: object }
+        after:
+          type: object
+          nullable: true
+        impact:
+          type: object
+          required:
+            [createsOccurrenceException, closesSeriesVersion, createsSeriesVersion, materializedLessonsPreserved]
+          properties:
+            createsOccurrenceException: { type: boolean }
+            closesSeriesVersion: { type: boolean }
+            createsSeriesVersion: { type: boolean }
+            nextSeriesVersion: { type: integer, nullable: true }
+            firstOccurrenceDate: { type: string, format: date, nullable: true }
+            materializedLessonsPreserved: { type: integer, minimum: 0 }
+        warnings:
+          type: array
+          items: { type: string }
+    ScheduleSeriesChangeResult:
+      type: object
+      required: [scope, occurrenceKey, reused]
+      properties:
+        scope: { type: string, enum: [this_occurrence, this_and_future] }
+        occurrenceKey: { type: string, example: "2026-W28" }
+        reused:
+          type: boolean
+          description: True when an identical idempotent retry returned the original result.
+        lesson: { $ref: "#/components/schemas/Lesson" }
+        predecessor: { type: object }
+        schedule:
+          type: object
+          nullable: true
+        preview: { $ref: "#/components/schemas/ScheduleSeriesChangePreview" }
+    AttendanceReason:
+      type: object
+      required:
+        [id, tenantId, code, name, attendanceStatus, chargePercent, consumePercent, isActive, isSystem]
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        code: { type: string, pattern: "^[a-z][a-z0-9_]{1,39}$" }
+        name: { type: string, maxLength: 120 }
+        attendanceStatus:
+          type: string
+          enum: [present, absent, late, excused]
+        chargePercent: { type: number, minimum: 0, maximum: 100 }
+        consumePercent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Snapshotted for future consumption policy; no subscription usage is posted by this slice.
+        isActive: { type: boolean }
+        isSystem: { type: boolean }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    AttendanceRecord:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        lessonId: { type: string }
+        studentId: { type: string }
+        studentName: { type: string }
+        groupId: { type: string }
+        groupName: { type: string }
+        teacherId: { type: string }
+        status:
+          type: string
+          enum: [present, absent, late, excused]
+        reasonId: { type: string }
+        reasonCode: { type: string }
+        reasonName: { type: string }
+        chargePercent: { type: number, minimum: 0, maximum: 100 }
+        consumePercent: { type: number, minimum: 0, maximum: 100 }
+        note: { type: string }
+        lessonDate: { type: string, format: date }
+        lessonTime: { type: string }
+        createdAt: { type: string }
+    LessonBillingPolicy:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        branchId: { type: string }
+        groupId: { type: string }
+        groupName: { type: string }
+        name: { type: string }
+        baseAmount:
+          type: integer
+          minimum: 0
+          description: Per-lesson base amount in UZS.
+        currency: { type: string, enum: [UZS] }
+        status: { type: string, enum: [active, archived] }
+        validFrom: { type: string, format: date }
+        validUntil: { type: string }
+        version: { type: integer, minimum: 1 }
+        createdBy: { type: string }
+        createdAt: { type: string }
+    TeacherRateRule:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        branchId: { type: string }
+        teacherId: { type: string }
+        teacherName: { type: string }
+        groupId: { type: string }
+        groupName: { type: string }
+        lessonType:
+          type: string
+          enum: ["", group, individual, trial, makeup]
+        rateType:
+          type: string
+          enum: [flat, per_student, hourly]
+        amount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [UZS] }
+        status: { type: string, enum: [active, archived] }
+        effectiveFrom: { type: string, format: date }
+        effectiveUntil: { type: string }
+        version: { type: integer, minimum: 1 }
+        createdBy: { type: string }
+        createdAt: { type: string }
+    FinancePeriod:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        branchId: { type: string }
+        label: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status: { type: string, enum: [open, closed] }
+        version: { type: integer, minimum: 1 }
+        closedAt: { type: string }
+        closedBy: { type: string }
+        closeReason: { type: string }
+        reopenedAt: { type: string }
+        reopenedBy: { type: string }
+        reopenReason: { type: string }
+        createdAt: { type: string }
+    FinancialBlocker:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - legacy_lesson
+            - already_confirmed
+            - new_revision_required
+            - attendance_missing
+            - billing_policy_ambiguous
+            - billing_policy_missing
+            - teacher_rate_ambiguous
+            - teacher_rate_missing
+            - finance_period_closed
+        message: { type: string }
+    LessonFinanceStudentLine:
+      type: object
+      properties:
+        studentId: { type: string }
+        studentName: { type: string }
+        attendanceStatus:
+          type: string
+          enum: [present, absent, late, excused]
+        reasonId: { type: string }
+        reasonCode: { type: string }
+        reasonName: { type: string }
+        chargePercent: { type: number, minimum: 0, maximum: 100 }
+        consumePercent: { type: number, minimum: 0, maximum: 100 }
+        baseAmount: { type: number, minimum: 0 }
+        chargeAmount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [UZS] }
+    TeacherAccrualPreview:
+      type: object
+      properties:
+        teacherId: { type: string }
+        teacherName: { type: string }
+        rateRuleId: { type: string }
+        rateRuleVersion: { type: integer, minimum: 1 }
+        rateType: { type: string, enum: [flat, per_student, hourly] }
+        rateAmount: { type: number, minimum: 0 }
+        durationMinutes: { type: integer, minimum: 0 }
+        basisQuantity: { type: number, minimum: 0 }
+        attendedCount: { type: integer, minimum: 0 }
+        accrualAmount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [UZS] }
+    LessonFinancialSettlement:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        branchId: { type: string }
+        lessonId: { type: string }
+        attendanceRevisionNo: { type: integer, minimum: 1 }
+        status: { type: string, enum: [confirmed, reversed] }
+        serviceDate: { type: string, format: date }
+        postingDate: { type: string, format: date }
+        currency: { type: string, enum: [UZS] }
+        billingPolicyId: { type: string }
+        billingPolicyVersion: { type: integer }
+        teacherRateRuleId: { type: string }
+        teacherRateRuleVersion: { type: integer }
+        confirmedBy: { type: string }
+        confirmedAt: { type: string }
+        reversedBy: { type: string }
+        reversedAt: { type: string }
+        reversalReason: { type: string }
+        version: { type: integer, minimum: 1 }
+        idempotencyKey: { type: string }
+    LessonFinancePosting:
+      type: object
+      properties:
+        id: { type: string }
+        studentId: { type: string }
+        studentName: { type: string }
+        attendanceStatus: { type: string, enum: [present, absent, late, excused] }
+        reasonCode: { type: string }
+        chargePercent: { type: number }
+        chargeAmount: { type: number }
+        currency: { type: string, enum: [UZS] }
+        ledgerTransactionId: { type: integer, nullable: true }
+        reversalTransactionId: { type: integer, nullable: true }
+        status: { type: string, enum: [active, reversed] }
+    TeacherAccrualEntry:
+      type: object
+      properties:
+        id: { type: string }
+        teacherId: { type: string }
+        entryType: { type: string, enum: [accrual, reversal] }
+        originalEntryId: { type: string }
+        amount: { type: number, minimum: 0 }
+        currency: { type: string, enum: [UZS] }
+        createdAt: { type: string }
+    LessonFinancePreview:
+      type: object
+      properties:
+        lesson: { $ref: "#/components/schemas/Lesson" }
+        financialStatus:
+          type: string
+          enum: [unposted, legacy, pending, posted, reversed]
+        attendanceVersion: { type: integer }
+        lessonVersion: { type: integer }
+        billingPolicy:
+          allOf:
+            - { $ref: "#/components/schemas/LessonBillingPolicy" }
+          nullable: true
+        studentLines:
+          type: array
+          items: { $ref: "#/components/schemas/LessonFinanceStudentLine" }
+        teacherAccrual:
+          allOf:
+            - { $ref: "#/components/schemas/TeacherAccrualPreview" }
+          nullable: true
+        blockers:
+          type: array
+          items: { $ref: "#/components/schemas/FinancialBlocker" }
+        readyToConfirm: { type: boolean }
+        totals:
+          type: object
+          properties:
+            studentCharges: { type: number }
+            teacherAccrual: { type: number }
+        settlement:
+          allOf:
+            - { $ref: "#/components/schemas/LessonFinancialSettlement" }
+          nullable: true
+    LessonFinanceResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        reused:
+          type: boolean
+          description: True when the same idempotency key and request fingerprint are replayed.
+        lesson: { $ref: "#/components/schemas/Lesson" }
+        settlement:
+          allOf:
+            - { $ref: "#/components/schemas/LessonFinancialSettlement" }
+          nullable: true
+        postings:
+          type: array
+          items: { $ref: "#/components/schemas/LessonFinancePosting" }
+        accruals:
+          type: array
+          items: { $ref: "#/components/schemas/TeacherAccrualEntry" }
+        preview: { $ref: "#/components/schemas/LessonFinancePreview" }
+    Payment:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        studentId: { type: string }
+        studentName: { type: string }
+        amount: { type: number }
+        type:
+          type: string
+          enum: [cash, card, transfer]
+        createdAt: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [active, voided]
+        reused:
+          type: boolean
+          description: True when an idempotency key returns an existing payment.
+    Transaction:
+      type: object
+      properties:
+        id: { type: integer }
+        tenantId: { type: string }
+        studentId: { type: string }
+        type:
+          type: string
+          enum: [payment, charge, discount, refund, correction]
+        amount: { type: number }
+        signedAmount: { type: number }
+        description: { type: string }
+        invoiceDate: { type: string, format: date }
+        createdAt: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [active, voided]
+        reused: { type: boolean }
+    Message:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        studentId: { type: string }
+        to: { type: string }
+        channel: { type: string, enum: [telegram] }
+        text: { type: string }
+        status:
+          type: string
+          enum: [queued, processing, sent, failed]
+        attempts: { type: integer }
+        createdAt: { type: string, format: date-time }
+        sentAt: { type: string, nullable: true }
+        processingStartedAt: { type: string, nullable: true }
+        nextAttemptAt: { type: string, format: date-time, nullable: true }
+        lastErrorCode: { type: string, nullable: true }
+        lastErrorMessage: { type: string, nullable: true }
+        telegramMessageId: { type: string, nullable: true }
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+paths:
+  /healthz:
+    get:
+      security: []
+      summary: Server health check
+      responses:
+        "200": { description: Server is alive }
+  /readyz:
+    get:
+      security: []
+      summary: Database readiness check
+      responses:
+        "200": { description: SQLite is ready }
+        "503": { description: Database unavailable }
+  /api/login:
+    post:
+      security: []
+      summary: Create session cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login success
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/logout:
+    post:
+      summary: Delete current session
+      responses:
+        "200": { description: Logout success }
+  /api/me:
+    get:
+      summary: Current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/bootstrap:
+    get:
+      summary: Initial dashboard shell and audit data
+      responses:
+        "200": { description: Bootstrap payload }
+  /api/students:
+    get:
+      summary: List students; teacher responses omit finance and Telegram fields
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+      responses:
+        "200":
+          description: Students list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  students:
+                    type: array
+                    items: { $ref: "#/components/schemas/Student" }
+    post:
+      summary: Create student
+      description: Admin only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, groupId, parentName]
+              properties:
+                name: { type: string }
+                groupId: { type: string }
+                parentName: { type: string }
+                phone: { type: string }
+                debt: { type: number, minimum: 0 }
+      responses:
+        "201": { description: Student created }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/students/{studentId}:
+    put:
+      summary: Update student
+      description: Admin only.
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Student updated }
+    delete:
+      summary: Mark student as left
+      description: Admin only. This is a soft-delete preserving financial history.
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Student marked left }
+  /api/students/{studentId}/ledger:
+    get:
+      summary: Student wallet ledger
+      description: Admin only.
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Ledger payload }
+  /api/students/{studentId}/transactions:
+    post:
+      summary: Add wallet transaction
+      description: Admin only. Use idempotencyKey for safe retries.
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, amount]
+              properties:
+                type:
+                  type: string
+                  enum: [payment, charge, discount, refund, correction]
+                method:
+                  type: string
+                  enum: [cash, card, transfer, click, payme, bank]
+                amount: { type: number, minimum: 1 }
+                description: { type: string }
+                invoiceDate: { type: string, format: date }
+                idempotencyKey: { type: string, maxLength: 120 }
+      responses:
+        "201": { description: Transaction created or reused }
+  /api/students/{studentId}/chat-id:
+    post:
+      summary: Update student Telegram chat ID
+      description: Admin only.
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Student updated }
+  /api/students/{studentId}/telegram-link:
+    post:
+      summary: Create a one-time Telegram account-linking URL
+      description: Admin only. The token expires after 24 hours, can be used once, and is stored only as a SHA-256 digest.
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema: { type: string }
+      responses:
+        "201": { description: One-time Telegram deep link created }
+  /api/groups:
+    get:
+      summary: List groups; teacher responses omit monthlyFee
+      responses:
+        "200": { description: Groups list }
+    post:
+      summary: Create group
+      description: Admin only.
+      responses:
+        "201": { description: Group created }
+  /api/groups/{groupId}:
+    put:
+      summary: Update group
+      description: Admin only.
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Group updated }
+    delete:
+      summary: Delete empty group
+      description: Admin only. Blocked when students, lessons, or schedules exist.
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Group deleted }
+        "409": { description: Group is in use }
+  /api/group-schedules/{id}/changes/preview:
+    post:
+      summary: Preview a scoped recurring schedule change
+      description: >
+        Admin only. Computes either one occurrence exception or a versioned
+        `this_and_future` series split without writing state. Resource conflicts
+        return `409` with structured details.
+        Completed, cancelled, past and explicitly overridden concrete lessons
+        are preserved. Financial settlement, ledger and payroll history are
+        never changed.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [scope, occurrenceDate, version, reason, patch]
+              properties:
+                scope:
+                  type: string
+                  enum: [this_occurrence, this_and_future]
+                occurrenceDate:
+                  type: string
+                  format: date
+                  description: Original selected occurrence date.
+                version: { type: integer, minimum: 1 }
+                reason: { type: string, minLength: 1, maxLength: 500 }
+                patch: { $ref: "#/components/schemas/ScheduleSeriesChangeFields" }
+      responses:
+        "200":
+          description: Write-free impact preview; inspect `canApply` and warnings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleSeriesChangePreview" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Schedule series not found in the active tenant }
+        "409": { description: Stale version, changed series state, or immutable selected occurrence }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/group-schedules/{id}/changes:
+    post:
+      summary: Apply a scoped recurring schedule change
+      description: >
+        Admin only. Recomputes preview inside one transaction. A
+        `this_occurrence` change creates one concrete occurrence exception; an
+        already-materialized occurrence is edited through the lesson workflow.
+        A `this_and_future` change closes the previous immutable rule
+        version and creates a new version with the same series identity. Reason,
+        optimistic version and idempotency key are mandatory. Identical retries
+        return the original result; key reuse with another canonical payload is
+        rejected. This endpoint has no financial side effects.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [scope, occurrenceDate, version, reason, patch, idempotencyKey]
+              properties:
+                scope:
+                  type: string
+                  enum: [this_occurrence, this_and_future]
+                occurrenceDate:
+                  type: string
+                  format: date
+                  description: Original selected occurrence date.
+                version: { type: integer, minimum: 1 }
+                reason: { type: string, minLength: 1, maxLength: 500 }
+                patch: { $ref: "#/components/schemas/ScheduleSeriesChangeFields" }
+                idempotencyKey: { type: string, minLength: 1, maxLength: 120 }
+      responses:
+        "200":
+          description: Change applied atomically or an identical retry reused
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScheduleSeriesChangeResult" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Schedule series not found in the active tenant }
+        "409": { description: Stale version, resource conflict, immutable occurrence, or idempotency payload mismatch }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/teachers:
+    get:
+      summary: List teachers with workload and portal-access state
+      description: Teacher responses are self-scoped and omit credential-management fields.
+      responses:
+        "200": { description: Teacher directory }
+    post:
+      summary: Create teacher profile and optional portal account
+      description: Admin only. Profile, user, role and branch access are created atomically.
+      responses:
+        "201": { description: Teacher created }
+        "409": { description: Username already exists }
+  /api/teachers/{teacherId}:
+    get:
+      summary: Teacher profile, groups, upcoming lessons and working hours
+      parameters:
+        - in: path
+          name: teacherId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Teacher detail }
+    put:
+      summary: Update teacher profile and portal-access state
+      description: Admin only. Disabling access invalidates active sessions.
+      parameters:
+        - in: path
+          name: teacherId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Teacher updated }
+    delete:
+      summary: Archive teacher
+      description: Admin only. Soft archive; blocked while active groups or upcoming lessons remain.
+      parameters:
+        - in: path
+          name: teacherId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Teacher archived and portal sessions invalidated }
+        "409": { description: Teacher still has active assignments }
+  /api/teachers/{teacherId}/restore:
+    post:
+      summary: Restore archived teacher profile
+      description: Admin only. Portal access remains separately controlled.
+      parameters:
+        - in: path
+          name: teacherId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Teacher restored }
+  /api/teachers/{teacherId}/reset-password:
+    post:
+      summary: Reset teacher portal password
+      description: Admin only. Uses PBKDF2 and invalidates every active session.
+      parameters:
+        - in: path
+          name: teacherId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Password reset }
+  /api/lessons:
+    get:
+      summary: List lessons
+      responses:
+        "200": { description: Lessons list }
+    post:
+      summary: Create one-off lesson
+      description: Admin only. Does not create a recurring schedule. Time must be `HH:MM - HH:MM`; resource overlaps are rejected.
+      responses:
+        "201": { description: Lesson created }
+        "409": { description: Duplicate or group/teacher/room/student conflict }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/lesson-occurrences:
+    post:
+      summary: Materialize a recurring schedule occurrence
+      description: Admin or the assigned teacher. The `(scheduleId, date)` occurrence is created once.
+      responses:
+        "201": { description: Occurrence materialized }
+        "403": { description: Teacher is not assigned to the schedule }
+        "409": { description: Occurrence already exists or conflicts }
+  /api/lessons/{lessonId}:
+    get:
+      summary: Get lesson profile, lifecycle events and attendance revisions
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Lesson profile }
+    put:
+      summary: Update or reschedule a planned lesson
+      description: Admin only. Scheduling changes require `reason` and support optimistic `version`.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Lesson updated }
+        "409": { description: Completed/cancelled, stale version, or resource conflict }
+  /api/lessons/{lessonId}/cancel:
+    post:
+      summary: Cancel a planned lesson without deleting history
+      description: Admin only. `reason` is required.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Lesson cancelled }
+        "409": { description: Completed lesson cannot be cancelled }
+  /api/lessons/{lessonId}/restore:
+    post:
+      summary: Restore a cancelled lesson
+      description: Admin only. Conflicts and teacher availability are revalidated.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Lesson restored }
+        "409": { description: Restore conflict }
+  /api/lessons/{lessonId}/reopen:
+    post:
+      summary: Reopen a completed lesson for a new attendance revision
+      description: >
+        Admin only. `reason` is required. An active financial settlement must
+        first be reversed, and the lesson service date must be in an open
+        finance period. Current attendance rows are removed, while immutable
+        attendance revisions, settlements and reversal history are retained.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Lesson returned to planned state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+        "409": { description: Lesson is not completed, settlement is active, or period is closed }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/lessons/{lessonId}/finance-preview:
+    get:
+      summary: Preview student charges and teacher accrual for a completed lesson
+      description: >
+        Admin role plus `lesson_finance.read`. Read-only: no settlement, ledger
+        transaction, payroll accrual or subscription usage is created. The
+        response reports configuration and lifecycle blockers.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Financial preview
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonFinancePreview" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Lesson not found }
+        "409": { description: Lesson is not completed }
+  /api/lessons/{lessonId}/confirm-finance:
+    post:
+      summary: Atomically confirm lesson finance
+      description: >
+        Admin role plus `lesson_finance.confirm`. Requires an idempotency key.
+        Clients should submit `attendanceVersion` and `lessonVersion` returned
+        by preview; omitted versions default to the current lesson values. A
+        matching retry reuses the original result, while reusing the key with a
+        different request is rejected.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idempotencyKey]
+              properties:
+                attendanceVersion: { type: integer, minimum: 1 }
+                lessonVersion: { type: integer, minimum: 1 }
+                idempotencyKey: { type: string, maxLength: 120 }
+      responses:
+        "200":
+          description: Settlement, student posting snapshots and teacher accrual committed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonFinanceResult" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Missing or ambiguous policy, stale version, closed period, or idempotency conflict }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/lessons/{lessonId}/reverse-finance:
+    post:
+      summary: Reverse a confirmed lesson settlement with compensating entries
+      description: >
+        Admin role plus `lesson_finance.reverse`. The original ledger and
+        payroll rows are preserved. Credit transactions and append-only teacher
+        accrual reversal rows are added using today's posting date. The current
+        posting period must be open.
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, idempotencyKey]
+              properties:
+                settlementVersion:
+                  type: integer
+                  minimum: 1
+                  description: Defaults to the current settlement version when omitted.
+                reason: { type: string, maxLength: 500 }
+                idempotencyKey: { type: string, maxLength: 120 }
+      responses:
+        "200":
+          description: Settlement reversed or an identical retry reused
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonFinanceResult" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: No active settlement, stale version, closed period, or idempotency conflict }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/schedules/week:
+    get:
+      summary: Weekly schedule view
+      parameters:
+        - in: query
+          name: date
+          schema: { type: string, format: date }
+      responses:
+        "200": { description: Week schedule }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/attendance:
+    post:
+      summary: Save lesson attendance
+      description: >
+        Requires a complete, unique roster. `reasonId` is optional; when omitted,
+        the active system reason matching the status is selected. The reason
+        code/name and charge/consume percentages are snapshotted. This is step
+        one only: it completes the lesson and sets `financialStatus=pending`,
+        but creates no settlement, ledger transaction, payroll accrual, or
+        subscription consumption. Future/cancelled lessons are blocked.
+        Completed attendance is teacher-immutable; an admin correction requires
+        `correctionReason`, an open finance period, and no active settlement.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lessonId, records]
+              properties:
+                lessonId: { type: string }
+                correctionReason: { type: string, maxLength: 500 }
+                topic:
+                  type: string
+                  maxLength: 500
+                  description: Lesson topic saved atomically with attendance; omitted values preserve the current topic.
+                homework:
+                  type: string
+                  maxLength: 2000
+                  description: Lesson homework saved atomically with attendance; omitted values preserve the current homework.
+                lessonNote:
+                  type: string
+                  maxLength: 2000
+                  description: General lesson note saved atomically with attendance; omitted values preserve the current note.
+                records:
+                  type: array
+                  items:
+                    type: object
+                    required: [studentId, status]
+                    properties:
+                      studentId: { type: string }
+                      status:
+                        type: string
+                        enum: [present, absent, late, excused]
+                      reasonId:
+                        type: string
+                        description: Must be active, tenant-owned and match `status`.
+                      note: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Attendance revision saved; an identical completed resubmission may return `reused=true`
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  reused: { type: boolean }
+                  lesson: { $ref: "#/components/schemas/Lesson" }
+                  dashboard: { type: object }
+        "403": { description: Teacher is not assigned or attempted a completed correction }
+        "409": { description: Future/cancelled/empty-roster lesson, active settlement, or closed period }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/attendance-records:
+    get:
+      summary: List attendance records with reason and financial-policy snapshots
+      description: Assigned teachers receive only their lesson records; admins receive the tenant list.
+      responses:
+        "200":
+          description: Attendance record list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attendanceRecords:
+                    type: array
+                    items: { $ref: "#/components/schemas/AttendanceRecord" }
+  /api/attendance-reasons:
+    get:
+      summary: List attendance reasons
+      description: Any authenticated user. Teachers receive active reasons only; admins also receive inactive reasons.
+      responses:
+        "200":
+          description: Attendance reasons
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attendanceReasons:
+                    type: array
+                    items: { $ref: "#/components/schemas/AttendanceReason" }
+    post:
+      summary: Create a tenant attendance reason
+      description: Admin only. Codes are immutable and unique within the tenant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name, attendanceStatus, chargePercent, consumePercent]
+              properties:
+                code: { type: string, pattern: "^[a-z][a-z0-9_]{1,39}$" }
+                name: { type: string, maxLength: 120 }
+                attendanceStatus:
+                  type: string
+                  enum: [present, absent, late, excused]
+                chargePercent: { type: number, minimum: 0, maximum: 100 }
+                consumePercent: { type: number, minimum: 0, maximum: 100 }
+      responses:
+        "201":
+          description: Attendance reason created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceReason" }
+        "409": { description: Code already exists }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/attendance-reasons/{reasonId}:
+    patch:
+      summary: Update an attendance reason policy
+      description: >
+        Admin only. Name, percentages and active state are editable; code and
+        attendance status are immutable. A system reason cannot be disabled.
+        Existing attendance and posting snapshots are not rewritten.
+      parameters:
+        - in: path
+          name: reasonId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 120 }
+                chargePercent: { type: number, minimum: 0, maximum: 100 }
+                consumePercent: { type: number, minimum: 0, maximum: 100 }
+                isActive: { type: boolean }
+      responses:
+        "200":
+          description: Attendance reason updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceReason" }
+        "404": { description: Attendance reason not found }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/finance/lesson-billing-policies:
+    get:
+      summary: List lesson billing policies
+      description: Admin role plus `lesson_finance.read`.
+      responses:
+        "200":
+          description: Billing policy list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  billingPolicies:
+                    type: array
+                    items: { $ref: "#/components/schemas/LessonBillingPolicy" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      summary: Create a versioned per-lesson billing policy
+      description: >
+        Admin role plus `lesson_finance.confirm`. An active policy cannot overlap
+        another active policy with the same tenant/branch/group scope. Optional
+        branch and group values are configuration scope, not user-access RBAC.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baseAmount]
+              properties:
+                branchId: { type: string }
+                groupId: { type: string }
+                name: { type: string, maxLength: 120 }
+                baseAmount: { type: integer, minimum: 0 }
+                currency: { type: string, enum: [UZS], default: UZS }
+                validFrom: { type: string, format: date }
+                validUntil: { type: string, format: date }
+      responses:
+        "201":
+          description: Billing policy created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonBillingPolicy" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Active policy overlaps the same scope }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/finance/teacher-rate-rules:
+    get:
+      summary: List teacher rate rules
+      description: Admin role plus `payroll.manage`.
+      responses:
+        "200":
+          description: Teacher rate rule list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teacherRateRules:
+                    type: array
+                    items: { $ref: "#/components/schemas/TeacherRateRule" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      summary: Create a versioned teacher rate rule
+      description: >
+        Admin role plus `payroll.manage`. Current resolution selects by teacher,
+        service date, optional group and optional lesson type. Rate types are a
+        flat amount, amount per present/late student, or amount per elapsed hour.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [teacherId, rateType, amount]
+              properties:
+                teacherId: { type: string }
+                branchId: { type: string }
+                groupId: { type: string }
+                lessonType:
+                  type: string
+                  enum: [group, individual, trial, makeup]
+                rateType:
+                  type: string
+                  enum: [flat, per_student, hourly]
+                amount: { type: number, minimum: 0 }
+                currency: { type: string, enum: [UZS], default: UZS }
+                effectiveFrom: { type: string, format: date }
+                effectiveUntil: { type: string, format: date }
+      responses:
+        "201":
+          description: Teacher rate rule created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherRateRule" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Active rate overlaps the same teacher/group/lesson-type scope }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/finance/teacher-rate-rules/{ruleId}/archive:
+    post:
+      summary: Archive a teacher rate rule
+      description: Admin role plus `payroll.manage`. Historical settlement snapshots are retained.
+      parameters:
+        - in: path
+          name: ruleId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Rule archived, or existing archived rule returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherRateRule" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Teacher rate rule not found }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/finance/periods:
+    get:
+      summary: List finance periods
+      description: Admin role plus `finance_periods.manage`.
+      responses:
+        "200":
+          description: Finance period list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  financePeriods:
+                    type: array
+                    items: { $ref: "#/components/schemas/FinancePeriod" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      summary: Create an open finance period
+      description: >
+        Admin role plus `finance_periods.manage`. Same-scope date ranges cannot
+        overlap. An omitted branch is tenant-wide; branch is a financial control
+        scope and does not establish branch-level user authorization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [startDate, endDate]
+              properties:
+                label: { type: string, maxLength: 120 }
+                branchId: { type: string }
+                startDate: { type: string, format: date }
+                endDate: { type: string, format: date }
+      responses:
+        "201":
+          description: Finance period created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancePeriod" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { description: Finance period overlaps the same scope }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/finance/periods/{periodId}/close:
+    post:
+      summary: Close a finance period
+      description: >
+        Admin role plus `finance_periods.manage`. `reason` is required. Closing
+        is blocked while a completed lesson in scope remains financially pending.
+      parameters:
+        - in: path
+          name: periodId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Period closed, or existing closed period returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancePeriod" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Finance period not found }
+        "409": { description: Pending completed lesson exists in the period }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/finance/periods/{periodId}/reopen:
+    post:
+      summary: Reopen a closed finance period
+      description: Admin role plus `finance_periods.manage`. `reason` is required and audited.
+      parameters:
+        - in: path
+          name: periodId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: Period reopened, or existing open period returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FinancePeriod" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Finance period not found }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /api/lessons/{lessonId}/send-attendance-alerts:
+    post:
+      summary: Queue Telegram alerts for absent and late students
+      parameters:
+        - in: path
+          name: lessonId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Alerts idempotently queued for the current attendance revision }
+  /api/payments:
+    get:
+      summary: List active payments
+      description: Admin only.
+      responses:
+        "200": { description: Active payments list }
+    post:
+      summary: Create payment
+      description: Admin only. Use idempotencyKey for safe retries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentId, amount, type]
+              properties:
+                studentId: { type: string }
+                amount: { type: number, minimum: 1 }
+                type: { type: string, enum: [cash, card, transfer] }
+                idempotencyKey: { type: string, maxLength: 120 }
+      responses:
+        "201": { description: Payment created or reused }
+  /api/payments/{paymentId}:
+    put:
+      summary: Update active payment
+      description: Admin only.
+      parameters:
+        - in: path
+          name: paymentId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Payment updated }
+    delete:
+      summary: Void payment
+      description: Admin only. Soft-delete that preserves payment and ledger rows.
+      parameters:
+        - in: path
+          name: paymentId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Payment voided }
+  /api/messages:
+    get:
+      summary: List Telegram message queue
+      description: Admin only.
+      responses:
+        "200": { description: Messages list }
+    post:
+      summary: Queue manual Telegram message
+      description: Admin only.
+      responses:
+        "201": { description: Message queued }
+  /api/messages/process:
+    post:
+      summary: Process Telegram message queue
+      description: Admin only. Also recovers stale processing messages.
+      responses:
+        "200": { description: Queue processed }
+  /api/messages/retry-failed:
+    post:
+      summary: Return failed Telegram messages to the delivery queue
+      description: Admin only. Retry counters and previous delivery errors are cleared.
+      responses:
+        "200": { description: Failed messages queued again }
+  /api/settings/telegram:
+    post:
+      summary: Save Telegram settings
+      description: >
+        Admin only. The Bot API validates the token before it is encrypted at rest.
+        In production, DONO_TELEGRAM_BOT_TOKEN or tenant-scoped
+        DONO_TELEGRAM_BOT_TOKEN_<TENANT_ID> environment variables override DB token.
+      responses:
+        "200": { description: Tenant updated }
+  /api/telegram/test:
+    post:
+      summary: Send Telegram test message
+      description: Admin only.
+      responses:
+        "200": { description: Test result }
+  /api/pipeline-stages:
+    get:
+      summary: List lead pipeline stages
+      description: Admin only.
+      responses:
+        "200": { description: Pipeline stages }
+    post:
+      summary: Create pipeline stage
+      description: Admin only.
+      responses:
+        "201": { description: Stage created }
+  /api/leads:
+    get:
+      summary: List leads
+      description: Admin only.
+      responses:
+        "200": { description: Leads list }
+    post:
+      summary: Create lead
+      description: Admin only.
+      responses:
+        "201": { description: Lead created }
+  /api/leads/{leadId}/stage:
+    patch:
+      summary: Move lead to another pipeline stage
+      description: Admin only.
+      parameters:
+        - in: path
+          name: leadId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Lead updated }
+  /api/platform/tenants:
+    get:
+      summary: List all tenants
+      description: SuperAdmin only. Does not expose tenant student, lesson, or finance details.
+      responses:
+        "200": { description: Tenant list }
+        "403": { description: SuperAdmin role required }
+    post:
+      summary: Create a tenant
+      description: SuperAdmin only.
+      responses:
+        "201": { description: Tenant created }
+        "403": { description: SuperAdmin role required }
+        "409": { description: Tenant domain already exists }
+  /api/platform/tenants/{tenantId}/users:
+    post:
+      summary: Create tenant admin user
+      description: SuperAdmin only. Creates an admin linked to the selected tenant.
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema: { type: string }
+      responses:
+        "201": { description: Tenant admin created }
+        "403": { description: SuperAdmin role required }
+        "404": { description: Tenant not found }
+  /api/platform/tenants/{tenantId}:
+    patch:
+      summary: Update tenant status, plan, or name
+      description: SuperAdmin only. Used for trial/active/suspended/blocked platform lifecycle.
+      parameters:
+        - in: path
+          name: tenantId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Tenant updated }
+        "403": { description: SuperAdmin role required }
+        "404": { description: Tenant not found }
+  /api/platform/audit-logs:
+    get:
+      summary: List platform audit logs
+      description: SuperAdmin only. Includes tenant creation, admin creation, tenant switch and status updates.
+      responses:
+        "200": { description: Platform audit list }
+        "403": { description: SuperAdmin role required }
+  /api/platform/switch-tenant:
+    post:
+      summary: Switch SuperAdmin session into a tenant
+      description: SuperAdmin only. Sets a server-side active tenant context for support/testing mode.
+      responses:
+        "200": { description: Active tenant selected }
+        "403": { description: SuperAdmin role required }
+        "404": { description: Tenant not found }
+  /api/platform/exit-tenant:
+    post:
+      summary: Exit SuperAdmin tenant mode
+      description: SuperAdmin only. Clears active tenant context and returns to platform management mode.
+      responses:
+        "200": { description: Platform mode restored }
+        "403": { description: SuperAdmin role required }
+  /api/export/students:
+    get:
+      summary: Export students as XLSX
+      description: Admin only.
+      responses:
+        "200":
+          description: XLSX file
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+  /api/export/payments:
+    get:
+      summary: Export active ledger payment/charge rows as XLSX
+      description: Admin only.
+      responses:
+        "200":
+          description: XLSX file
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+  /api/permissions/me:
+    get:
+      summary: Current effective permission list
+      responses:
+        "200": { description: Effective permissions for the current session }
+  /api/roles:
+    get:
+      summary: Tenant roles
+      description: Admin only. Returns seeded admin/teacher role definitions and ranks.
+      responses:
+        "200": { description: Role list }
+  /api/branches:
+    get:
+      summary: Tenant branches
+      description: Requires branches.manage permission.
+      responses:
+        "200": { description: Branch list }
+    post:
+      summary: Create branch
+      description: Requires branches.manage permission.
+      responses:
+        "201": { description: Branch created }
+  /api/subscriptions:
+    get:
+      summary: List student subscriptions
+      description: Requires subscriptions.manage permission.
+      responses:
+        "200": { description: Subscription list }
+    post:
+      summary: Create student subscription
+      description: Requires subscriptions.manage permission.
+      responses:
+        "201": { description: Subscription created }
+  /api/teacher-working-hours:
+    get:
+      summary: List teacher working hours
+      description: Teacher responses are scoped to the authenticated teacher.
+      responses:
+        "200": { description: Working-hours list }
+    post:
+      summary: Create teacher working-hour slot
+      description: Requires lessons.manage permission.
+      responses:
+        "201": { description: Working-hour slot created }
+        "409": { description: Working-hour interval overlaps an existing slot }
+  /api/teacher-working-hours/{workingHourId}:
+    delete:
+      summary: Delete teacher working-hour slot
+      description: Admin only.
+      parameters:
+        - in: path
+          name: workingHourId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Working-hour slot deleted }
+  /api/finance/accounts:
+    get:
+      summary: List finance accounts
+      description: Requires finance.manage permission.
+      responses:
+        "200": { description: Finance account list }
+    post:
+      summary: Create finance account
+      description: Requires finance.manage permission.
+      responses:
+        "201": { description: Finance account created }
+  /api/finance/categories:
+    get:
+      summary: List finance categories
+      description: Requires finance.manage permission.
+      responses:
+        "200": { description: Finance category list }
+    post:
+      summary: Create finance category
+      description: Requires finance.manage permission.
+      responses:
+        "201": { description: Finance category created }
+  /api/tasks:
+    get:
+      summary: List tasks/reminders
+      description: Teachers see assigned/unassigned tasks; admins see all tenant tasks.
+      responses:
+        "200": { description: Task list }
+    post:
+      summary: Create task/reminder
+      description: Requires tasks.manage permission.
+      responses:
+        "201": { description: Task created }
+  /api/tasks/{taskId}:
+    patch:
+      summary: Update task status or details
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Task updated }
+  /api/leads/{leadId}/convert:
+    post:
+      summary: Convert lead into student
+      description: Admin only. Creates a student, links lead.converted_student_id, and moves lead to converted/paid.
+      parameters:
+        - in: path
+          name: leadId
+          required: true
+          schema: { type: string }
+      responses:
+        "201": { description: Lead converted }

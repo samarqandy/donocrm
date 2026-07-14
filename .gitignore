@@ -1,9 +1,5 @@
-# Runtime data
-data/*.sqlite
-data/*.sqlite-*
-data/*.db
-data/*.db-*
-data/db.json
+# Runtime data and backups must never be committed.
+data/
 
 # Local environment
 .env

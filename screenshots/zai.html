@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduCRM - O'quv markazi boshqaruv tizimi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    accent: { DEFAULT: '#00b074', light: '#00d68f', dark: '#008a5c', bg: 'rgba(0,176,116,0.08)' },
+                    sidebar: { DEFAULT: '#12141c', hover: '#1c1f2e', active: '#252839' },
+                    content: '#f3f4f8',
+                    danger: '#ef4444',
+                    warning: '#f59e0b',
+                },
+                fontFamily: { sans: ['Inter', 'sans-serif'] }
+            }
+        }
+    }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        .sidebar-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
+        .sidebar-item:hover { background: #1c1f2e; border-left-color: rgba(0,176,116,0.3); }
+        .sidebar-item.active { background: #252839; border-left-color: #00b074; color: #00d68f; }
+
+        .page-enter { animation: pageIn 0.3s ease forwards; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .modal-enter { animation: modalIn 0.25s ease forwards; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .slide-in-right { animation: slideRight 0.3s ease forwards; }
+        @keyframes slideRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .slide-out-right { animation: slideOutRight 0.3s ease forwards; }
+        @keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
+
+        .toast-enter { animation: toastIn 0.3s ease forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+
+        .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+
+        .table-row { transition: background 0.15s ease; }
+        .table-row:hover { background: #f9fafb; }
+
+        .group-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .group-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
+
+        .schedule-block { transition: transform 0.15s ease, box-shadow 0.15s ease; cursor: pointer; }
+        .schedule-block:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 10; }
+
+        .btn-primary { background: #00b074; color: white; transition: all 0.2s ease; }
+        .btn-primary:hover { background: #008a5c; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,176,116,0.3); }
+        .btn-secondary { background: white; color: #374151; border: 1px solid #d1d5db; transition: all 0.2s ease; }
+        .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
+        .btn-danger { background: #ef4444; color: white; transition: all 0.2s ease; }
+        .btn-danger:hover { background: #dc2626; }
+
+        .form-input { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+        .form-input:focus { border-color: #00b074; box-shadow: 0 0 0 3px rgba(0,176,116,0.15); outline: none; }
+
+        .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+        .badge-active { background: rgba(0,176,116,0.1); color: #008a5c; }
+        .badge-inactive { background: rgba(239,68,68,0.1); color: #dc2626; }
+        .badge-frozen { background: rgba(245,158,11,0.1); color: #d97706; }
+        .badge-confirmed { background: rgba(0,176,116,0.1); color: #008a5c; }
+        .badge-pending { background: rgba(245,158,11,0.1); color: #d97706; }
+        .badge-cancelled { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+        @media (max-width: 1024px) {
+            #sidebar { transform: translateX(-100%); position: fixed; z-index: 40; height: 100vh; }
+            #sidebar.open { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="font-sans bg-content text-gray-900">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-sidebar flex flex-col transition-transform duration-300 flex-shrink-0">
+            <div class="h-16 flex items-center px-5 border-b border-white/5">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-accent rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
+                    </div>
+                    <span class="text-white font-bold text-lg tracking-tight">EduCRM</span>
+                </div>
+            </div>
+            <nav id="sidebar-nav" class="flex-1 py-4 overflow-y-auto"></nav>
+            <div class="p-4 border-t border-white/5">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-semibold">AK</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white text-sm font-medium truncate">Admin</p>
+                        <p class="text-gray-500 text-xs truncate">admin@educrm.uz</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Overlay -->
+        <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-30 lg:hidden" onclick="toggleSidebar()"></div>
+
+        <!-- Asosiy qism -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Topbar -->
+            <header class="h-16 bg-white border-b border-gray-200 flex-shrink-0">
+                <div class="flex items-center justify-between h-full px-4 lg:px-6">
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleSidebar()" class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
+                            <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <nav id="breadcrumb" class="flex items-center gap-2 text-sm"></nav>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="hidden sm:flex items-center bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 w-64">
+                            <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm mr-2"></i>
+                            <input id="global-search" type="text" placeholder="Qidirish..." class="bg-transparent text-sm w-full outline-none" oninput="handleGlobalSearch(this.value)">
+                        </div>
+                        <button class="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full"></span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Kontent -->
+            <main id="content" class="flex-1 overflow-y-auto p-4 lg:p-6"></main>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-backdrop" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="hideModal()"></div>
+        <div id="modal-content" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto modal-enter"></div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="detail-overlay" class="hidden fixed inset-0 z-40 bg-black/30" onclick="hideDetailPanel()"></div>
+    <div id="detail-panel" class="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 transform translate-x-full overflow-y-auto"></div>
+
+    <!-- Toast -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirm-dialog" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="hideConfirm()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 modal-enter text-center">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-danger text-xl"></i>
+            </div>
+            <h3 id="confirm-title" class="text-lg font-semibold mb-2"></h3>
+            <p id="confirm-text" class="text-gray-500 text-sm mb-6"></p>
+            <div class="flex gap-3">
+                <button onclick="hideConfirm()" class="flex-1 btn-secondary py-2.5 rounded-xl font-medium text-sm">Bekor qilish</button>
+                <button id="confirm-btn" class="flex-1 btn-danger py-2.5 rounded-xl font-medium text-sm">O'chirish</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ===== MA'LUMOTLAR =====
+let courses = [
+    { id: 1, name: 'Web dasturlash', duration: 6, price: 1200000, description: 'HTML, CSS, JavaScript, React.js', color: '#00b074', icon: 'fa-code' },
+    { id: 2, name: 'Python dasturlash', duration: 5, price: 1000000, description: 'Python asoslari, Django, FastAPI', color: '#3b82f6', icon: 'fa-python' },
+    { id: 3, name: 'Ingliz tili', duration: 4, price: 800000, description: 'General English, IELTS tayyorgarlik', color: '#f59e0b', icon: 'fa-language' },
+    { id: 4, name: 'Matematika', duration: 3, price: 600000, description: 'Maktab va universitet matematikasi', color: '#8b5cf6', icon: 'fa-calculator' },
+    { id: 5, name: 'Dasturlash asoslari', duration: 3, price: 700000, description: 'Algoritmlar, ma\'lumotlar tuzilmasi, C++', color: '#ef4444', icon: 'fa-laptop-code' },
+];
+
+let teachers = [
+    { id: 1, name: 'Ismoilov Bobur', phone: '+998 90 123 45 67', courseIds: [1, 5], status: 'active' },
+    { id: 2, name: 'Xasanova Dilnoza', phone: '+998 91 234 56 78', courseIds: [2], status: 'active' },
+    { id: 3, name: 'Karimov Sardor', phone: '+998 93 345 67 89', courseIds: [3], status: 'active' },
+    { id: 4, name: 'Toshmatova Nilufar', phone: '+998 94 456 78 90', courseIds: [4], status: 'active' },
+    { id: 5, name: 'Raximov Jasur', phone: '+998 95 567 89 01', courseIds: [1], status: 'active' },
+    { id: 6, name: 'Qo\'chqorov Azamat', phone: '+998 97 678 90 12', courseIds: [2, 5], status: 'active' },
+];
+
+let groups = [
+    { id: 1, name: 'Web-01', courseId: 1, teacherId: 1, maxStudents: 15, days: ['Dushanba', 'Chorshanba'], time: '09:00-11:00', room: '201', status: 'active' },
+    { id: 2, name: 'Web-02', courseId: 1, teacherId: 5, maxStudents: 12, days: ['Seshanba', 'Payshanba'], time: '14:00-16:00', room: '203', status: 'active' },
+    { id: 3, name: 'Pyth-01', courseId: 2, teacherId: 2, maxStudents: 12, days: ['Dushanba', 'Juma'], time: '11:00-13:00', room: '105', status: 'active' },
+    { id: 4, name: 'Pyth-02', courseId: 2, teacherId: 6, maxStudents: 10, days: ['Chorshanba', 'Shanba'], time: '15:00-17:00', room: '105', status: 'active' },
+    { id: 5, name: 'Eng-01', courseId: 3, teacherId: 3, maxStudents: 10, days: ['Dushanba', 'Juma'], time: '16:00-17:30', room: '301', status: 'active' },
+    { id: 6, name: 'Math-01', courseId: 4, teacherId: 4, maxStudents: 15, days: ['Chorshanba', 'Juma'], time: '09:00-11:00', room: '102', status: 'active' },
+    { id: 7, name: 'DA-01', courseId: 5, teacherId: 6, maxStudents: 12, days: ['Seshanba', 'Shanba'], time: '09:00-11:00', room: '201', status: 'active' },
+];
+
+let students = [
+    { id: 1, name: 'Karimov Aziz', phone: '+998 90 111 22 33', email: 'aziz@mail.ru', groupId: 1, status: 'active', balance: 400000, joinDate: '2024-09-01' },
+    { id: 2, name: "To'xtayeva Nilufar", phone: '+998 91 222 33 44', email: 'nilufar@mail.ru', groupId: 1, status: 'active', balance: 0, joinDate: '2024-09-05' },
+    { id: 3, name: 'Raximov Jasur', phone: '+998 93 333 44 55', email: 'jasur@mail.ru', groupId: 1, status: 'active', balance: 600000, joinDate: '2024-09-10' },
+    { id: 4, name: 'Saidova Mohira', phone: '+998 94 444 55 66', email: 'mohira@mail.ru', groupId: 2, status: 'active', balance: 200000, joinDate: '2024-09-15' },
+    { id: 5, name: 'Xolmatov Sanjar', phone: '+998 95 555 66 77', email: 'sanjar@mail.ru', groupId: 2, status: 'frozen', balance: 800000, joinDate: '2024-08-20' },
+    { id: 6, name: 'Yusupova Kamola', phone: '+998 97 666 77 88', email: 'kamola@mail.ru', groupId: 3, status: 'active', balance: 0, joinDate: '2024-10-01' },
+    { id: 7, name: 'Mirzayev Shoxruh', phone: '+998 90 777 88 99', email: 'shoxruh@mail.ru', groupId: 3, status: 'active', balance: 500000, joinDate: '2024-10-05' },
+    { id: 8, name: 'Axmedova Dildora', phone: '+998 91 888 99 00', email: 'dildora@mail.ru', groupId: 3, status: 'inactive', balance: 1000000, joinDate: '2024-09-01' },
+    { id: 9, name: 'Zokirov Botir', phone: '+998 93 999 00 11', email: 'botir@mail.ru', groupId: 4, status: 'active', balance: 300000, joinDate: '2024-10-10' },
+    { id: 10, name: 'Qodirova Sevinch', phone: '+998 94 000 11 22', email: 'sevinch@mail.ru', groupId: 5, status: 'active', balance: 0, joinDate: '2024-09-20' },
+    { id: 11, name: 'Oripov Davron', phone: '+998 95 111 22 33', email: 'davron@mail.ru', groupId: 5, status: 'active', balance: 400000, joinDate: '2024-09-25' },
+    { id: 12, name: 'Hamidova Lola', phone: '+998 97 222 33 44', email: 'lola@mail.ru', groupId: 6, status: 'active', balance: 100000, joinDate: '2024-10-15' },
+    { id: 13, name: 'Usmonov Farrux', phone: '+998 90 333 44 55', email: 'farrux@mail.ru', groupId: 6, status: 'active', balance: 600000, joinDate: '2024-10-01' },
+    { id: 14, name: 'Rustamova Nodira', phone: '+998 91 444 55 66', email: 'nodira@mail.ru', groupId: 7, status: 'active', balance: 0, joinDate: '2024-11-01' },
+    { id: 15, name: 'Botirov Ilyos', phone: '+998 93 555 66 77', email: 'ilyos@mail.ru', groupId: 7, status: 'active', balance: 700000, joinDate: '2024-11-05' },
+    { id: 16, name: 'Eshmatov Sardor', phone: '+998 94 666 77 88', email: 'sardor2@mail.ru', groupId: 1, status: 'active', balance: 1200000, joinDate: '2024-11-10' },
+    { id: 17, name: 'Turgunova Gulnora', phone: '+998 95 777 88 99', email: 'gulnora@mail.ru', groupId: 2, status: 'active', balance: 900000, joinDate: '2024-11-12' },
+    { id: 18, name: 'Nazarov Bobur', phone: '+998 97 888 99 00', email: 'bobur2@mail.ru', groupId: 4, status: 'active', balance: 0, joinDate: '2024-11-15' },
+];
+
+let payments = [
+    { id: 1, studentId: 1, amount: 1200000, date: '2024-09-01', type: 'cash', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 2, studentId: 2, amount: 600000, date: '2024-09-05', type: 'card', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 3, studentId: 2, amount: 600000, date: '2024-10-05', type: 'card', status: 'confirmed', note: 'Ikkinchi to\'lov' },
+    { id: 4, studentId: 3, amount: 1200000, date: '2024-09-10', type: 'transfer', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 5, studentId: 4, amount: 600000, date: '2024-09-15', type: 'cash', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 6, studentId: 4, amount: 400000, date: '2024-10-20', type: 'cash', status: 'pending', note: 'Qoldiq' },
+    { id: 7, studentId: 5, amount: 400000, date: '2024-08-20', type: 'cash', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 8, studentId: 6, amount: 800000, date: '2024-10-01', type: 'card', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 9, studentId: 7, amount: 500000, date: '2024-10-05', type: 'transfer', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 10, studentId: 7, amount: 500000, date: '2024-11-05', type: 'transfer', status: 'pending', note: 'Ikkinchi to\'lov' },
+    { id: 11, studentId: 8, amount: 1000000, date: '2024-09-01', type: 'cash', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 12, studentId: 9, amount: 700000, date: '2024-10-10', type: 'card', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 13, studentId: 10, amount: 800000, date: '2024-09-20', type: 'cash', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 14, studentId: 11, amount: 400000, date: '2024-09-25', type: 'transfer', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 15, studentId: 12, amount: 500000, date: '2024-10-15', type: 'cash', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 16, studentId: 13, amount: 600000, date: '2024-10-01', type: 'card', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 17, studentId: 14, amount: 700000, date: '2024-11-01', type: 'cash', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 18, studentId: 15, amount: 700000, date: '2024-11-05', type: 'transfer', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 19, studentId: 16, amount: 1200000, date: '2024-11-10', type: 'card', status: 'confirmed', note: "To'liq to'lov" },
+    { id: 20, studentId: 17, amount: 600000, date: '2024-11-12', type: 'cash', status: 'confirmed', note: 'Birinchi to\'lov' },
+    { id: 21, studentId: 1, amount: 800000, date: '2024-11-15', type: 'cash', status: 'pending', note: 'Qayta ro\'yxat' },
+    { id: 22, studentId: 18, amount: 500000, date: '2024-11-15', type: 'transfer', status: 'confirmed', note: 'Birinchi to\'lov' },
+];
+
+// ===== HOLAT =====
+let currentPage = 'dashboard';
+let searchQuery = '';
+let filters = { status: 'all', course: 'all', group: 'all', type: 'all' };
+let chartInstances = {};
+let confirmCallback = null;
+let nextId = { student: 19, group: 8, course: 6, payment: 23, teacher: 7 };
+
+// ===== MENU =====
+const menuItems = [
+    { id: 'dashboard', icon: 'fa-chart-line', label: 'Boshqaruv paneli' },
+    { id: 'students', icon: 'fa-users', label: 'Talabalar' },
+    { id: 'groups', icon: 'fa-layer-group', label: 'Guruhlar' },
+    { id: 'courses', icon: 'fa-graduation-cap', label: 'Kurslar' },
+    { id: 'payments', icon: 'fa-credit-card', label: 'To\'lovlar' },
+    { id: 'schedule', icon: 'fa-calendar-days', label: 'Dars jadvali' },
+    { id: 'teachers', icon: 'fa-chalkboard-user', label: 'O\'qituvchilar' },
+];
+
+// ===== YORDAMCHI FUNKSIYALAR =====
+function formatMoney(n) { return n.toLocaleString('uz-UZ') + " so'm"; }
+function formatDate(d) { if (!d) return '-'; const p = d.split('-'); return `${p[2]}.${p[1]}.${p[0]}`; }
+function getInitials(name) { return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase(); }
+function getCourse(id) { return courses.find(c => c.id === id); }
+function getGroup(id) { return groups.find(g => g.id === id); }
+function getTeacher(id) { return teachers.find(t => t.id === id); }
+function getStudent(id) { return students.find(s => s.id === id); }
+function getGroupCount(gid) { return students.filter(s => s.groupId === gid).length; }
+function getCourseStudentCount(cid) { return students.filter(s => { const g = getGroup(s.groupId); return g && g.courseId === cid; }).length; }
+function getCourseGroupCount(cid) { return groups.filter(g => g.courseId === cid).length; }
+
+function statusBadge(status) {
+    const map = { active: ['Aktiv', 'badge-active'], inactive: ['Nofaol', 'badge-inactive'], frozen: ['Muzlatilgan', 'badge-frozen'] };
+    const [label, cls] = map[status] || ['-', ''];
+    return `<span class="badge ${cls}">${label}</span>`;
+}
+function paymentStatusBadge(status) {
+    const map = { confirmed: ['Tasdiqlangan', 'badge-confirmed'], pending: ['Kutilmoqda', 'badge-pending'], cancelled: ['Bekor qilingan', 'badge-cancelled'] };
+    const [label, cls] = map[status] || ['-', ''];
+    return `<span class="badge ${cls}">${label}</span>`;
+}
+function paymentTypeLabel(type) {
+    const map = { cash: 'Naqt', card: 'Karta', transfer: "O'tkazma" };
+    return map[type] || type;
+}
+function paymentTypeIcon(type) {
+    const map = { cash: 'fa-money-bill-wave', card: 'fa-credit-card', transfer: 'fa-building-columns' };
+    return map[type] || 'fa-circle';
+}
+const dayOrder = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
+const dayShort = { Dushanba: 'Dush', Seshanba: 'Sesh', Chorshanba: 'Chor', Payshanba: 'Pay', Juma: 'Jum', Shanba: 'Shan', Yakshanba: 'Yak' };
+
+// ===== TOAST =====
+function showToast(msg, type = 'success') {
+    const colors = { success: 'bg-accent', error: 'bg-danger', warning: 'bg-warning', info: 'bg-blue-500' };
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    const el = document.createElement('div');
+    el.className = `toast-enter pointer-events-auto flex items-center gap-3 ${colors[type]} text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium`;
+    el.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span>${msg}</span>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.style.transition = 'all 0.3s ease'; el.style.opacity = '0'; el.style.transform = 'translateX(100px)'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ===== CONFIRM =====
+function showConfirm(title, text, cb) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-text').textContent = text;
+    document.getElementById('confirm-dialog').classList.remove('hidden');
+    confirmCallback = cb;
+    document.getElementById('confirm-btn').onclick = () => { if (confirmCallback) confirmCallback(); hideConfirm(); };
+}
+function hideConfirm() { document.getElementById('confirm-dialog').classList.add('hidden'); confirmCallback = null; }
+
+// ===== MODAL =====
+function showModal(html) {
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal-backdrop').classList.remove('hidden');
+}
+function hideModal() { document.getElementById('modal-backdrop').classList.add('hidden'); }
+
+// ===== DETAIL PANEL =====
+function showDetailPanel(html) {
+    document.getElementById('detail-panel').innerHTML = html;
+    document.getElementById('detail-panel').className = 'fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 overflow-y-auto slide-in-right';
+    document.getElementById('detail-overlay').classList.remove('hidden');
+}
+function hideDetailPanel() {
+    document.getElementById('detail-panel').className = 'fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 transform translate-x-full overflow-y-auto slide-out-right';
+    document.getElementById('detail-overlay').classList.add('hidden');
+    setTimeout(() => { document.getElementById('detail-panel').className = 'fixed right-0 top-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 transform translate-x-full overflow-y-auto'; }, 300);
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebar-overlay');
+    sb.classList.toggle('open');
+    ov.classList.toggle('hidden');
+}
+function renderSidebar() {
+    const nav = document.getElementById('sidebar-nav');
+    nav.innerHTML = menuItems.map(m => {
+        const badge = m.id === 'students' ? `<span class="ml-auto bg-accent/20 text-accent text-xs px-2 py-0.5 rounded-full font-semibold">${students.length}</span>` : '';
+        return `<button onclick="navigate('${m.id}')" class="sidebar-item w-full flex items-center gap-3 px-5 py-2.5 text-sm text-gray-400 ${currentPage === m.id ? 'active' : ''}">
+            <i class="fa-solid ${m.icon} w-5 text-center text-[13px]"></i>
+            <span>${m.label}</span>${badge}
+        </button>`;
+    }).join('');
+}
+
+// ===== BREADCRUMB =====
+function renderBreadcrumb() {
+    const item = menuItems.find(m => m.id === currentPage);
+    document.getElementById('breadcrumb').innerHTML = `
+        <span class="text-gray-400">EduCRM</span>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-[10px]"></i>
+        <span class="text-gray-700 font-medium">${item ? item.label : ''}</span>
+    `;
+}
+
+// ===== NAVIGATSIYA =====
+function navigate(page) {
+    currentPage = page;
+    searchQuery = '';
+    filters = { status: 'all', course: 'all', group: 'all', type: 'all' };
+    const gs = document.getElementById('global-search');
+    if (gs) gs.value = '';
+    renderSidebar();
+    renderBreadcrumb();
+    renderContent();
+    // Mobil uchun sidebar yopish
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.add('hidden');
+}
+function handleGlobalSearch(val) { searchQuery = val.toLowerCase(); renderContent(); }
+
+// ===== KONTENT RENDER =====
+function renderContent() {
+    Object.values(chartInstances).forEach(c => c.destroy());
+    chartInstances = {};
+    const el = document.getElementById('content');
+    switch (currentPage) {
+        case 'dashboard': el.innerHTML = renderDashboard(); initDashboardCharts(); break;
+        case 'students': el.innerHTML = renderStudents(); break;
+        case 'groups': el.innerHTML = renderGroups(); break;
+        case 'courses': el.innerHTML = renderCourses(); break;
+        case 'payments': el.innerHTML = renderPayments(); break;
+        case 'schedule': el.innerHTML = renderSchedule(); break;
+        case 'teachers': el.innerHTML = renderTeachers(); break;
+        default: el.innerHTML = renderDashboard(); initDashboardCharts();
+    }
+}
+
+// ===== BOSHQARUV PANELI =====
+function renderDashboard() {
+    const totalStudents = students.length;
+    const activeStudents = students.filter(s => s.status === 'active').length;
+    const totalGroups = groups.filter(g => g.status === 'active').length;
+    const totalRevenue = payments.filter(p => p.status === 'confirmed').reduce((a, p) => a + p.amount, 0);
+    const pendingPayments = payments.filter(p => p.status === 'pending').reduce((a, p) => a + p.amount, 0);
+    const attendanceRate = 87;
+
+    const stats = [
+        { label: 'Talabalar', value: totalStudents, sub: `${activeStudents} aktiv`, icon: 'fa-users', color: '#00b074', bg: 'rgba(0,176,116,0.1)', trend: '+12%', up: true },
+        { label: 'Guruhlar', value: totalGroups, sub: `${courses.length} kurs`, icon: 'fa-layer-group', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', trend: '+3', up: true },
+        { label: 'Oylik daromad', value: formatMoney(totalRevenue), sub: `Kutilmoqda: ${formatMoney(pendingPayments)}`, icon: 'fa-wallet', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', trend: '+18%', up: true },
+        { label: 'Davomat', value: attendanceRate + '%', sub: 'O\'rtacha ko\'rsatkich', icon: 'fa-chart-pie', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)', trend: '-2%', up: false },
+    ];
+
+    const recentPayments = [...payments].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+    const upcomingClasses = groups.filter(g => g.status === 'active').slice(0, 5);
+
+    return `<div class="page-enter">
+        <!-- Statistika kartalari -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            ${stats.map(s => `
+                <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:${s.bg}">
+                            <i class="fa-solid ${s.icon}" style="color:${s.color}"></i>
+                        </div>
+                        <span class="text-xs font-semibold ${s.up ? 'text-accent' : 'text-danger'} flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-${s.up ? 'up' : 'down'} text-[10px]"></i>${s.trend}
+                        </span>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-900 mb-1">${s.value}</p>
+                    <p class="text-xs text-gray-400">${s.label} &middot; ${s.sub}</p>
+                </div>
+            `).join('')}
+        </div>
+
+        <!-- Grafiklar -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-800">Oylik daromad</h3>
+                    <span class="text-xs text-gray-400">So'nggi 6 oy</span>
+                </div>
+                <canvas id="revenueChart" height="110"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-800">Talabalar taqsimoti</h3>
+                </div>
+                <canvas id="distributionChart" height="180"></canvas>
+            </div>
+        </div>
+
+        <!-- Pastki qism -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- So'nggi to'lovlar -->
+            <div class="bg-white rounded-2xl p-5 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-800">So'nggi to'lovlar</h3>
+                    <button onclick="navigate('payments')" class="text-accent text-xs font-medium hover:underline">Barchasini ko'rish</button>
+                </div>
+                <div class="space-y-3">
+                    ${recentPayments.map(p => {
+                        const st = getStudent(p.studentId);
+                        return `<div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs font-semibold flex-shrink-0">${st ? getInitials(st.name) : '??'}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">${st ? st.name : 'Noma\'lum'}</p>
+                                <p class="text-xs text-gray-400">${formatDate(p.date)} &middot; ${paymentTypeLabel(p.type)}</p>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-semibold text-gray-800">${formatMoney(p.amount)}</p>
+                                ${paymentStatusBadge(p.status)}
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Kelgusi darslar -->
+            <div class="bg-white rounded-2xl p-5 border border-gray-100">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-semibold text-gray-800">Kelgusi darslar</h3>
+                    <button onclick="navigate('schedule')" class="text-accent text-xs font-medium hover:underline">Jadvalni ko'rish</button>
+                </div>
+                <div class="space-y-3">
+                    ${upcomingClasses.map(g => {
+                        const c = getCourse(g.courseId);
+                        const t = getTeacher(g.teacherId);
+                        const cnt = getGroupCount(g.id);
+                        return `<div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="navigate('groups')">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style="background:${c ? c.color : '#666'}">${g.name}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800">${c ? c.name : ''}</p>
+                                <p class="text-xs text-gray-400">${t ? t.name : ''} &middot; ${g.days.join(', ')} &middot; ${g.time}</p>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-semibold text-gray-700">${cnt}/${g.maxStudents}</p>
+                                <p class="text-xs text-gray-400">Xona ${g.room}</p>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function initDashboardCharts() {
+    // Daromad grafigi
+    const rc = document.getElementById('revenueChart');
+    if (!rc) return;
+    const ctx1 = rc.getContext('2d');
+    const gradient = ctx1.createLinearGradient(0, 0, 0, 250);
+    gradient.addColorStop(0, 'rgba(0,176,116,0.25)');
+    gradient.addColorStop(1, 'rgba(0,176,116,0.01)');
+    chartInstances.revenue = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ['Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktyabr', 'Noyabr'],
+            datasets: [{
+                label: 'Daromad',
+                data: [8200000, 10500000, 12300000, 14800000, 16200000, 18700000],
+                backgroundColor: gradient,
+                borderColor: '#00b074',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatMoney(ctx.raw) } } },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 12, family: 'Inter' }, color: '#9ca3af' } },
+                y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 11, family: 'Inter' }, color: '#9ca3af', callback: v => (v/1000000).toFixed(0) + 'M' }, border: { display: false } }
+            }
+        }
+    });
+
+    // Taqsimot grafigi
+    const dc = document.getElementById('distributionChart');
+    if (!dc) return;
+    chartInstances.distribution = new Chart(dc.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: courses.map(c => c.name),
+            datasets: [{
+                data: courses.map(c => getCourseStudentCount(c.id)),
+                backgroundColor: courses.map(c => c.color),
+                borderWidth: 0,
+                spacing: 3,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 11, family: 'Inter' }, color: '#6b7280', padding: 12, usePointStyle: true, pointStyleWidth: 8 } }
+            }
+        }
+    });
+}
+
+// ===== TALABALAR =====
+function renderStudents() {
+    let filtered = [...students];
+    if (searchQuery) filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery) || s.phone.includes(searchQuery) || s.email.toLowerCase().includes(searchQuery));
+    if (filters.status !== 'all') filtered = filtered.filter(s => s.status === filters.status);
+    if (filters.course !== 'all') filtered = filtered.filter(s => { const g = getGroup(s.groupId); return g && g.courseId == filters.course; });
+    if (filters.group !== 'all') filtered = filtered.filter(s => s.groupId == filters.group);
+
+    return `<div class="page-enter">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Talabalar</h1>
+                <p class="text-sm text-gray-400 mt-0.5">Jami ${students.length} ta talaba, ${students.filter(s => s.status === 'active').length} tasi aktiv</p>
+            </div>
+            <button onclick="showStudentModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 self-start">
+                <i class="fa-solid fa-plus text-xs"></i> Talaba qo'shish
+            </button>
+        </div>
+
+        <!-- Filtrlar -->
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+            <div class="flex flex-wrap gap-3">
+                <div class="flex items-center bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 flex-1 min-w-[200px]">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm mr-2"></i>
+                    <input type="text" placeholder="Ism, telefon, email bo'yicha qidirish..." value="${searchQuery}" oninput="searchQuery=this.value.toLowerCase();renderContent()" class="bg-transparent text-sm w-full outline-none">
+                </div>
+                <select onchange="filters.status=this.value;renderContent()" class="form-input bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 text-sm outline-none">
+                    <option value="all" ${filters.status==='all'?'selected':''}>Barcha holatlar</option>
+                    <option value="active" ${filters.status==='active'?'selected':''}>Aktiv</option>
+                    <option value="inactive" ${filters.status==='inactive'?'selected':''}>Nofaol</option>
+                    <option value="frozen" ${filters.status==='frozen'?'selected':''}>Muzlatilgan</option>
+                </select>
+                <select onchange="filters.course=this.value;renderContent()" class="form-input bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 text-sm outline-none">
+                    <option value="all" ${filters.course==='all'?'selected':''}>Barcha kurslar</option>
+                    ${courses.map(c => `<option value="${c.id}" ${filters.course==c.id?'selected':''}>${c.name}</option>`).join('')}
+                </select>
+                <select onchange="filters.group=this.value;renderContent()" class="form-input bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 text-sm outline-none">
+                    <option value="all" ${filters.group==='all'?'selected':''}>Barcha guruhlar</option>
+                    ${groups.map(g => `<option value="${g.id}" ${filters.group==g.id?'selected':''}>${g.name}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+
+        <!-- Jadval -->
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">Talaba</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider hidden md:table-cell">Telefon</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider hidden lg:table-cell">Guruh / Kurs</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">Holat</th>
+                            <th class="text-right py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">Balans</th>
+                            <th class="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider w-20">Amal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.length === 0 ? `<tr><td colspan="6" class="py-12 text-center text-gray-400"><i class="fa-solid fa-inbox text-3xl mb-3 block"></i>Talabalar topilmadi</td></tr>` :
+                        filtered.map(s => {
+                            const g = getGroup(s.groupId);
+                            const c = g ? getCourse(g.courseId) : null;
+                            return `<tr class="table-row border-b border-gray-50 cursor-pointer" onclick="showStudentDetail(${s.id})">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0" style="background:${c ? c.color : '#6b7280'}">${getInitials(s.name)}</div>
+                                        <div>
+                                            <p class="font-medium text-gray-800">${s.name}</p>
+                                            <p class="text-xs text-gray-400 md:hidden">${s.phone}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-gray-500 hidden md:table-cell">${s.phone}</td>
+                                <td class="py-3 px-4 hidden lg:table-cell">
+                                    ${g ? `<span class="text-xs font-semibold px-2 py-1 rounded-lg" style="background:${c ? c.color+'15' : '#f3f4f6'};color:${c ? c.color : '#6b7280'}">${g.name}</span>
+                                    <span class="text-xs text-gray-400 ml-1">${c ? c.name : ''}</span>` : '<span class="text-gray-400">-</span>'}
+                                </td>
+                                <td class="py-3 px-4">${statusBadge(s.status)}</td>
+                                <td class="py-3 px-4 text-right hidden sm:table-cell">
+                                    <span class="${s.balance > 0 ? 'text-accent font-semibold' : 'text-gray-400'}">${formatMoney(s.balance)}</span>
+                                </td>
+                                <td class="py-3 px-4 text-center" onclick="event.stopPropagation()">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <button onclick="showStudentModal(${s.id})" class="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-accent flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <button onclick="confirmDeleteStudent(${s.id})" class="w-8 h-8 rounded-lg hover:bg-red-50 text-gray-400 hover:text-danger flex items-center justify-center"><i class="fa-solid fa-trash text-xs"></i></button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+                <p class="text-xs text-gray-400">${filtered.length} ta natija</p>
+            </div>
+        </div>
+    </div>`;
+}
+
+function showStudentModal(id) {
+    const s = id ? getStudent(id) : null;
+    const title = s ? 'Talabani tahrirlash' : 'Yangi talaba qo\'shish';
+    showModal(`
+        <div class="p-6">
+            <h2 class="text-lg font-bold mb-5">${title}</h2>
+            <form onsubmit="saveStudent(event, ${id || 0})" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ism familiya</label>
+                    <input name="name" value="${s ? s.name : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="Masalan: Karimov Aziz">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                        <input name="phone" value="${s ? s.phone : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="+998 90 123 45 67">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input name="email" type="email" value="${s ? s.email : ''}" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="email@mail.ru">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                        <select name="groupId" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                            <option value="">Tanlang</option>
+                            ${groups.filter(g => g.status === 'active').map(g => {
+                                const c = getCourse(g.courseId);
+                                return `<option value="${g.id}" ${s && s.groupId === g.id ? 'selected' : ''}>${g.name} (${c ? c.name : ''})</option>`;
+                            }).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Holat</label>
+                        <select name="status" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                            <option value="active" ${s && s.status === 'active' ? 'selected' : ''}>Aktiv</option>
+                            <option value="inactive" ${s && s.status === 'inactive' ? 'selected' : ''}>Nofaol</option>
+                            <option value="frozen" ${s && s.status === 'frozen' ? 'selected' : ''}>Muzlatilgan</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Boshlang'ich balans (so'm)</label>
+                    <input name="balance" type="number" value="${s ? s.balance : 0}" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="hideModal()" class="flex-1 btn-secondary py-2.5 rounded-xl font-medium text-sm">Bekor qilish</button>
+                    <button type="submit" class="flex-1 btn-primary py-2.5 rounded-xl font-medium text-sm">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    `);
+}
+
+function saveStudent(e, id) {
+    e.preventDefault();
+    const f = e.target;
+    const data = {
+        name: f.name.value.trim(),
+        phone: f.phone.value.trim(),
+        email: f.email.value.trim(),
+        groupId: parseInt(f.groupId.value) || null,
+        status: f.status.value,
+        balance: parseInt(f.balance.value) || 0,
+    };
+    if (!data.name || !data.phone) { showToast('Ism va telefon majburiy', 'error'); return; }
+    if (id) {
+        const s = getStudent(id);
+        if (s) Object.assign(s, data);
+        showToast('Talaba muvaffaqiyatli tahrirlandi');
+    } else {
+        data.id = nextId.student++;
+        data.joinDate = new Date().toISOString().split('T')[0];
+        students.push(data);
+        showToast('Yangi talaba muvaffaqiyatli qo\'shildi');
+    }
+    hideModal();
+    renderSidebar();
+    renderContent();
+}
+
+function confirmDeleteStudent(id) {
+    const s = getStudent(id);
+    showConfirm('Talabani o\'chirish', `"${s.name}" talabasini o'chirishni xohlaysizmi? Bu amalni qaytarib bo'lmaydi.`, () => {
+        students = students.filter(st => st.id !== id);
+        payments = payments.filter(p => p.studentId !== id);
+        showToast('Talaba muvaffaqiyatli o\'chirildi');
+        renderSidebar();
+        renderContent();
+    });
+}
+
+function showStudentDetail(id) {
+    const s = getStudent(id);
+    if (!s) return;
+    const g = getGroup(s.groupId);
+    const c = g ? getCourse(g.courseId) : null;
+    const t = g ? getTeacher(g.teacherId) : null;
+    const stPayments = payments.filter(p => p.studentId === id).sort((a, b) => b.date.localeCompare(a.date));
+    const totalPaid = stPayments.filter(p => p.status === 'confirmed').reduce((a, p) => a + p.amount, 0);
+
+    showDetailPanel(`
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold">Talaba ma'lumotlari</h2>
+                <button onclick="hideDetailPanel()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Profil -->
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-3" style="background:${c ? c.color : '#6b7280'}">${getInitials(s.name)}</div>
+                <h3 class="font-bold text-gray-900 text-lg">${s.name}</h3>
+                <p class="text-sm text-gray-400 mt-1">${statusBadge(s.status)}</p>
+            </div>
+
+            <!-- Ma'lumotlar -->
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-phone w-5 text-gray-400 text-center"></i><span class="text-gray-600">${s.phone}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-envelope w-5 text-gray-400 text-center"></i><span class="text-gray-600">${s.email || '-'}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-layer-group w-5 text-gray-400 text-center"></i><span class="text-gray-600">${g ? g.name : 'Guruh yo\'q'} ${c ? '(' + c.name + ')' : ''}</span></div>
+                ${t ? `<div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-chalkboard-user w-5 text-gray-400 text-center"></i><span class="text-gray-600">${t.name}</span></div>` : ''}
+                <div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-calendar w-5 text-gray-400 text-center"></i><span class="text-gray-600">Qo'shilgan: ${formatDate(s.joinDate)}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-wallet w-5 text-gray-400 text-center"></i><span class="font-semibold ${s.balance > 0 ? 'text-accent' : 'text-gray-600'}">${formatMoney(s.balance)}</span></div>
+            </div>
+
+            <!-- To'lovlar -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-sm text-gray-800">To'lov tarixi</h4>
+                    <span class="text-xs text-gray-400">Jami: ${formatMoney(totalPaid)}</span>
+                </div>
+                <div class="space-y-2">
+                    ${stPayments.length === 0 ? '<p class="text-sm text-gray-400 text-center py-4">To\'lovlar yo\'q</p>' :
+                    stPayments.map(p => `
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-gray-400"><i class="fa-solid ${paymentTypeIcon(p.type)} text-xs"></i></div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800">${formatMoney(p.amount)}</p>
+                                <p class="text-xs text-gray-400">${formatDate(p.date)} &middot; ${paymentTypeLabel(p.type)}</p>
+                            </div>
+                            ${paymentStatusBadge(p.status)}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Amallar -->
+            <div class="space-y-2">
+                <button onclick="hideDetailPanel();showStudentModal(${s.id})" class="w-full btn-secondary py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-pen text-xs"></i> Tahrirlash
+                </button>
+                <button onclick="hideDetailPanel();showPaymentModalForStudent(${s.id})" class="w-full btn-primary py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus text-xs"></i> To'lov qo'shish
+                </button>
+            </div>
+        </div>
+    `);
+}
+
+// ===== GURUHLAR =====
+function renderGroups() {
+    return `<div class="page-enter">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Guruhlar</h1>
+                <p class="text-sm text-gray-400 mt-0.5">Jami ${groups.length} ta guruh</p>
+            </div>
+            <button onclick="showGroupModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 self-start">
+                <i class="fa-solid fa-plus text-xs"></i> Guruh qo'shish
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            ${groups.map(g => {
+                const c = getCourse(g.courseId);
+                const t = getTeacher(g.teacherId);
+                const cnt = getGroupCount(g.id);
+                const pct = Math.round((cnt / g.maxStudents) * 100);
+                return `<div class="group-card bg-white rounded-2xl p-5 border border-gray-100 cursor-pointer" onclick="showGroupDetail(${g.id})">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold" style="background:${c ? c.color : '#666'}">${g.name}</div>
+                        <div class="flex gap-1">
+                            <button onclick="event.stopPropagation();showGroupModal(${g.id})" class="w-7 h-7 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-accent flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            <button onclick="event.stopPropagation();confirmDeleteGroup(${g.id})" class="w-7 h-7 rounded-lg hover:bg-red-50 text-gray-400 hover:text-danger flex items-center justify-center"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-1">${c ? c.name : 'Kurs yo\'q'}</h3>
+                    <p class="text-xs text-gray-400 mb-3">${t ? t.name : 'O\'qituvchi yo\'q'} &middot; Xona ${g.room}</p>
+                    <div class="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>${g.days.map(d => dayShort[d] || d).join(', ')} ${g.time}</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between text-xs mb-1.5">
+                            <span class="text-gray-500 font-medium">${cnt}/${g.maxStudents} talaba</span>
+                            <span class="font-semibold" style="color:${pct > 80 ? '#ef4444' : c ? c.color : '#666'}">${pct}%</span>
+                        </div>
+                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${c ? c.color : '#666'}"></div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`;
+}
+
+function showGroupModal(id) {
+    const g = id ? getGroup(id) : null;
+    showModal(`
+        <div class="p-6">
+            <h2 class="text-lg font-bold mb-5">${g ? 'Guruhni tahrirlash' : 'Yangi guruh qo\'shish'}</h2>
+            <form onsubmit="saveGroup(event, ${id || 0})" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Guruh nomi</label>
+                    <input name="name" value="${g ? g.name : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="Masalan: Web-03">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kurs</label>
+                        <select name="courseId" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                            ${courses.map(c => `<option value="${c.id}" ${g && g.courseId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">O\'qituvchi</label>
+                        <select name="teacherId" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                            ${teachers.map(t => `<option value="${t.id}" ${g && g.teacherId === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Maksimal talabalar</label>
+                        <input name="maxStudents" type="number" value="${g ? g.maxStudents : 12}" min="1" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Xona</label>
+                        <input name="room" value="${g ? g.room : ''}" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="201">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Dars vaqti</label>
+                    <input name="time" value="${g ? g.time : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="09:00-11:00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dars kunlari</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${dayOrder.slice(0, 6).map(d => `
+                            <label class="flex items-center gap-1.5 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200 cursor-pointer hover:bg-gray-100 text-sm">
+                                <input type="checkbox" name="days" value="${d}" ${g && g.days.includes(d) ? 'checked' : ''} class="accent-accent">
+                                ${dayShort[d]}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="hideModal()" class="flex-1 btn-secondary py-2.5 rounded-xl font-medium text-sm">Bekor qilish</button>
+                    <button type="submit" class="flex-1 btn-primary py-2.5 rounded-xl font-medium text-sm">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    `);
+}
+
+function saveGroup(e, id) {
+    e.preventDefault();
+    const f = e.target;
+    const days = [...f.querySelectorAll('input[name="days"]:checked')].map(c => c.value);
+    const data = {
+        name: f.name.value.trim(),
+        courseId: parseInt(f.courseId.value),
+        teacherId: parseInt(f.teacherId.value),
+        maxStudents: parseInt(f.maxStudents.value) || 12,
+        room: f.room.value.trim(),
+        time: f.time.value.trim(),
+        days: days,
+        status: 'active',
+    };
+    if (!data.name || !data.time) { showToast('Nom va vaqt majburiy', 'error'); return; }
+    if (id) {
+        const g = getGroup(id);
+        if (g) Object.assign(g, data);
+        showToast('Guruh muvaffaqiyatli tahrirlandi');
+    } else {
+        data.id = nextId.group++;
+        groups.push(data);
+        showToast('Yangi guruh muvaffaqiyatli qo\'shildi');
+    }
+    hideModal();
+    renderContent();
+}
+
+function confirmDeleteGroup(id) {
+    const g = getGroup(id);
+    const cnt = getGroupCount(id);
+    showConfirm('Guruhni o\'chirish', `"${g.name}" guruhini o\'chirishni xohlaysizmi? Guruhda ${cnt} ta talaba bor.`, () => {
+        students.filter(s => s.groupId === id).forEach(s => s.groupId = null);
+        groups = groups.filter(gr => gr.id !== id);
+        showToast('Guruh muvaffaqiyatli o\'chirildi');
+        renderContent();
+    });
+}
+
+function showGroupDetail(id) {
+    const g = getGroup(id);
+    if (!g) return;
+    const c = getCourse(g.courseId);
+    const t = getTeacher(g.teacherId);
+    const groupStudents = students.filter(s => s.groupId === id);
+
+    showDetailPanel(`
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold">Guruh ma'lumotlari</h2>
+                <button onclick="hideDetailPanel()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-3" style="background:${c ? c.color : '#666'}">${g.name}</div>
+                <h3 class="font-bold text-gray-900">${c ? c.name : ''}</h3>
+                <p class="text-sm text-gray-400 mt-1">${t ? t.name : ''} &middot; Xona ${g.room}</p>
+            </div>
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center gap-3 text-sm"><i class="fa-regular fa-clock w-5 text-gray-400 text-center"></i><span class="text-gray-600">${g.days.join(', ')} ${g.time}</span></div>
+                <div class="flex items-center gap-3 text-sm"><i class="fa-solid fa-users w-5 text-gray-400 text-center"></i><span class="text-gray-600">${groupStudents.length}/${g.maxStudents} talaba</span></div>
+            </div>
+            <h4 class="font-semibold text-sm text-gray-800 mb-3">Talabalar ro'yxati</h4>
+            <div class="space-y-2">
+                ${groupStudents.length === 0 ? '<p class="text-sm text-gray-400 text-center py-4">Talabalar yo\'q</p>' :
+                groupStudents.map(s => `
+                    <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 cursor-pointer" onclick="hideDetailPanel();setTimeout(()=>showStudentDetail(${s.id}),350)">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold" style="background:${c ? c.color : '#666'}">${getInitials(s.name)}</div>
+                        <div class="flex-1"><p class="text-sm font-medium text-gray-800">${s.name}</p><p class="text-xs text-gray-400">${s.phone}</p></div>
+                        ${statusBadge(s.status)}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `);
+}
+
+// ===== KURSLAR =====
+function renderCourses() {
+    return `<div class="page-enter">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Kurslar</h1>
+                <p class="text-sm text-gray-400 mt-0.5">Jami ${courses.length} ta kurs</p>
+            </div>
+            <button onclick="showCourseModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 self-start">
+                <i class="fa-solid fa-plus text-xs"></i> Kurs qo'shish
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${courses.map(c => {
+                const sCnt = getCourseStudentCount(c.id);
+                const gCnt = getCourseGroupCount(c.id);
+                return `<div class="bg-white rounded-2xl p-6 border border-gray-100 group-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white" style="background:${c.color}">
+                            <i class="fa-solid ${c.icon} text-lg"></i>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="showCourseModal(${c.id})" class="w-7 h-7 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-accent flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            <button onclick="confirmDeleteCourse(${c.id})" class="w-7 h-7 rounded-lg hover:bg-red-50 text-gray-400 hover:text-danger flex items-center justify-center"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-1">${c.name}</h3>
+                    <p class="text-xs text-gray-400 mb-4">${c.description}</p>
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div class="flex gap-4">
+                            <div class="text-center"><p class="text-lg font-bold text-gray-900">${gCnt}</p><p class="text-[10px] text-gray-400 uppercase">Guruh</p></div>
+                            <div class="text-center"><p class="text-lg font-bold text-gray-900">${sCnt}</p><p class="text-[10px] text-gray-400 uppercase">Talaba</p></div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold" style="color:${c.color}">${formatMoney(c.price)}</p>
+                            <p class="text-[10px] text-gray-400">${c.duration} oy</p>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`;
+}
+
+function showCourseModal(id) {
+    const c = id ? getCourse(id) : null;
+    const colors = ['#00b074', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
+    showModal(`
+        <div class="p-6">
+            <h2 class="text-lg font-bold mb-5">${c ? 'Kursni tahrirlash' : 'Yangi kurs qo\'shish'}</h2>
+            <form onsubmit="saveCourse(event, ${id || 0})" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kurs nomi</label>
+                    <input name="name" value="${c ? c.name : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tavsif</label>
+                    <textarea name="description" rows="2" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none">${c ? c.description : ''}</textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Davomiylik (oy)</label>
+                        <input name="duration" type="number" value="${c ? c.duration : 3}" min="1" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Narx (so'm)</label>
+                        <input name="price" type="number" value="${c ? c.price : 0}" min="0" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rang</label>
+                    <div class="flex gap-2 flex-wrap">
+                        ${colors.map(cl => `<label class="w-8 h-8 rounded-full cursor-pointer border-2 ${c && c.color === cl ? 'border-gray-900 scale-110' : 'border-transparent hover:scale-105'} transition" style="background:${cl}">
+                            <input type="radio" name="color" value="${cl}" ${c && c.color === cl ? 'checked' : ''} class="hidden">
+                        </label>`).join('')}
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="hideModal()" class="flex-1 btn-secondary py-2.5 rounded-xl font-medium text-sm">Bekor qilish</button>
+                    <button type="submit" class="flex-1 btn-primary py-2.5 rounded-xl font-medium text-sm">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    `);
+}
+
+function saveCourse(e, id) {
+    e.preventDefault();
+    const f = e.target;
+    const colorEl = f.querySelector('input[name="color"]:checked');
+    const data = {
+        name: f.name.value.trim(),
+        description: f.description.value.trim(),
+        duration: parseInt(f.duration.value) || 3,
+        price: parseInt(f.price.value) || 0,
+        color: colorEl ? colorEl.value : '#00b074',
+        icon: 'fa-graduation-cap',
+    };
+    if (!data.name) { showToast('Kurs nomi majburiy', 'error'); return; }
+    if (id) {
+        const c = getCourse(id);
+        if (c) Object.assign(c, data);
+        showToast('Kurs muvaffaqiyatli tahrirlandi');
+    } else {
+        data.id = nextId.course++;
+        courses.push(data);
+        showToast('Yangi kurs muvaffaqiyatli qo\'shildi');
+    }
+    hideModal();
+    renderContent();
+}
+
+function confirmDeleteCourse(id) {
+    const c = getCourse(id);
+    const gCnt = getCourseGroupCount(id);
+    showConfirm('Kursni o\'chirish', `"${c.name}" kursini o\'chirishni xohlaysizmi? ${gCnt} ta guruh bog\'langan.`, () => {
+        groups.filter(g => g.courseId === id).forEach(g => g.courseId = null);
+        courses = courses.filter(co => co.id !== id);
+        showToast('Kurs muvaffaqiyatli o\'chirildi');
+        renderContent();
+    });
+}
+
+// ===== TO'LOVLAR =====
+function renderPayments() {
+    let filtered = [...payments];
+    if (searchQuery) filtered = filtered.filter(p => { const s = getStudent(p.studentId); return s && (s.name.toLowerCase().includes(searchQuery) || s.phone.includes(searchQuery)); });
+    if (filters.status !== 'all') filtered = filtered.filter(p => p.status === filters.status);
+    if (filters.type !== 'all') filtered = filtered.filter(p => p.type === filters.type);
+
+    const totalConfirmed = payments.filter(p => p.status === 'confirmed').reduce((a, p) => a + p.amount, 0);
+    const totalPending = payments.filter(p => p.status === 'pending').reduce((a, p) => a + p.amount, 0);
+
+    return `<div class="page-enter">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">To'lovlar</h1>
+                <p class="text-sm text-gray-400 mt-0.5">Jami ${payments.length} ta to'lov</p>
+            </div>
+            <button onclick="showPaymentModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 self-start">
+                <i class="fa-solid fa-plus text-xs"></i> To'lov qo'shish
+            </button>
+        </div>
+
+        <!-- Umumiy -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+            <div class="bg-white rounded-2xl p-4 border border-gray-100">
+                <p class="text-xs text-gray-400 mb-1">Tasdiqlangan</p>
+                <p class="text-xl font-bold text-accent">${formatMoney(totalConfirmed)}</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-gray-100">
+                <p class="text-xs text-gray-400 mb-1">Kutilmoqda</p>
+                <p class="text-xl font-bold text-warning">${formatMoney(totalPending)}</p>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-gray-100">
+                <p class="text-xs text-gray-400 mb-1">Jami</p>
+                <p class="text-xl font-bold text-gray-900">${formatMoney(totalConfirmed + totalPending)}</p>
+            </div>
+        </div>
+
+        <!-- Filtrlar -->
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+            <div class="flex flex-wrap gap-3">
+                <div class="flex items-center bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 flex-1 min-w-[200px]">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm mr-2"></i>
+                    <input type="text" placeholder="Talaba bo'yicha qidirish..." value="${searchQuery}" oninput="searchQuery=this.value.toLowerCase();renderContent()" class="bg-transparent text-sm w-full outline-none">
+                </div>
+                <select onchange="filters.status=this.value;renderContent()" class="form-input bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 text-sm outline-none">
+                    <option value="all" ${filters.status==='all'?'selected':''}>Barcha holatlar</option>
+                    <option value="confirmed" ${filters.status==='confirmed'?'selected':''}>Tasdiqlangan</option>
+                    <option value="pending" ${filters.status==='pending'?'selected':''}>Kutilmoqda</option>
+                    <option value="cancelled" ${filters.status==='cancelled'?'selected':''}>Bekor qilingan</option>
+                </select>
+                <select onchange="filters.type=this.value;renderContent()" class="form-input bg-gray-50 rounded-xl px-3 py-2 border border-gray-200 text-sm outline-none">
+                    <option value="all" ${filters.type==='all'?'selected':''}>Barcha turlar</option>
+                    <option value="cash" ${filters.type==='cash'?'selected':''}>Naqt</option>
+                    <option value="card" ${filters.type==='card'?'selected':''}>Karta</option>
+                    <option value="transfer" ${filters.type==='transfer'?'selected':''}>O'tkazma</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Jadval -->
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase">Talaba</th>
+                            <th class="text-right py-3 px-4 font-semibold text-gray-500 text-xs uppercase">Summa</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase hidden sm:table-cell">Sana</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase hidden md:table-cell">Turi</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-500 text-xs uppercase">Holat</th>
+                            <th class="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase w-24">Amal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filtered.length === 0 ? `<tr><td colspan="6" class="py-12 text-center text-gray-400"><i class="fa-solid fa-inbox text-3xl mb-3 block"></i>To'lovlar topilmadi</td></tr>` :
+                        [...filtered].sort((a,b) => b.date.localeCompare(a.date)).map(p => {
+                            const s = getStudent(p.studentId);
+                            return `<tr class="table-row border-b border-gray-50">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs font-semibold flex-shrink-0">${s ? getInitials(s.name) : '??'}</div>
+                                        <div>
+                                            <p class="font-medium text-gray-800">${s ? s.name : 'Noma\'lum'}</p>
+                                            <p class="text-xs text-gray-400 sm:hidden">${formatDate(p.date)}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-gray-800">${formatMoney(p.amount)}</td>
+                                <td class="py-3 px-4 text-gray-500 hidden sm:table-cell">${formatDate(p.date)}</td>
+                                <td class="py-3 px-4 hidden md:table-cell">
+                                    <span class="flex items-center gap-1.5 text-gray-500"><i class="fa-solid ${paymentTypeIcon(p.type)} text-xs"></i>${paymentTypeLabel(p.type)}</span>
+                                </td>
+                                <td class="py-3 px-4">${paymentStatusBadge(p.status)}</td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex items-center justify-center gap-1">
+                                        ${p.status === 'pending' ? `<button onclick="confirmPayment(${p.id})" class="w-8 h-8 rounded-lg hover:bg-green-50 text-gray-400 hover:text-accent flex items-center justify-center" title="Tasdiqlash"><i class="fa-solid fa-check text-xs"></i></button>` : ''}
+                                        <button onclick="confirmDeletePayment(${p.id})" class="w-8 h-8 rounded-lg hover:bg-red-50 text-gray-400 hover:text-danger flex items-center justify-center"><i class="fa-solid fa-trash text-xs"></i></button>
+                                    </div>
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-4 py-3 border-t border-gray-100"><p class="text-xs text-gray-400">${filtered.length} ta natija</p></div>
+        </div>
+    </div>`;
+}
+
+function showPaymentModal(studentId) {
+    const preselected = studentId || '';
+    showModal(`
+        <div class="p-6">
+            <h2 class="text-lg font-bold mb-5">Yangi to'lov qo'shish</h2>
+            <form onsubmit="savePayment(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Talaba</label>
+                    <select name="studentId" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                        <option value="">Tanlang</option>
+                        ${students.map(s => `<option value="${s.id}" ${preselected == s.id ? 'selected' : ''}>${s.name} (${s.phone})</option>`).join('')}
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Summa (so'm)</label>
+                        <input name="amount" type="number" min="1000" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="500000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sana</label>
+                        <input name="date" type="date" value="${new Date().toISOString().split('T')[0]}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To'lov turi</label>
+                        <select name="type" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                            <option value="cash">Naqt</option>
+                            <option value="card">Karta</option>
+                            <option value="transfer">O'tkazma</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Holat</label>
+                        <select name="status" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                            <option value="confirmed">Tasdiqlangan</option>
+                            <option value="pending">Kutilmoqda</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Izoh</label>
+                    <input name="note" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="To'lov haqida izoh...">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="hideModal()" class="flex-1 btn-secondary py-2.5 rounded-xl font-medium text-sm">Bekor qilish</button>
+                    <button type="submit" class="flex-1 btn-primary py-2.5 rounded-xl font-medium text-sm">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    `);
+}
+
+function showPaymentModalForStudent(studentId) {
+    showPaymentModal(studentId);
+}
+
+function savePayment(e) {
+    e.preventDefault();
+    const f = e.target;
+    const data = {
+        id: nextId.payment++,
+        studentId: parseInt(f.studentId.value),
+        amount: parseInt(f.amount.value) || 0,
+        date: f.date.value,
+        type: f.type.value,
+        status: f.status.value,
+        note: f.note.value.trim(),
+    };
+    if (!data.studentId || data.amount <= 0) { showToast('Talaba va summa majburiy', 'error'); return; }
+    // Balansni yangilash
+    const s = getStudent(data.studentId);
+    if (s && data.status === 'confirmed') s.balance += data.amount;
+    payments.push(data);
+    showToast('To\'lov muvaffaqiyatli qo\'shildi');
+    hideModal();
+    renderContent();
+}
+
+function confirmPayment(id) {
+    const p = payments.find(p => p.id === id);
+    if (p) {
+        p.status = 'confirmed';
+        const s = getStudent(p.studentId);
+        if (s) s.balance += p.amount;
+        showToast('To\'lov tasdiqlandi');
+        renderContent();
+    }
+}
+
+function confirmDeletePayment(id) {
+    showConfirm('To\'lovni o\'chirish', 'Ushbu to\'lovni o\'chirishni xohlaysizmi?', () => {
+        const p = payments.find(pay => pay.id === id);
+        if (p && p.status === 'confirmed') {
+            const s = getStudent(p.studentId);
+            if (s) s.balance = Math.max(0, s.balance - p.amount);
+        }
+        payments = payments.filter(pay => pay.id !== id);
+        showToast('To\'lov o\'chirildi');
+        renderContent();
+    });
+}
+
+// ===== DARS JADVALI =====
+function renderSchedule() {
+    const days = dayOrder.slice(0, 6);
+    const hours = [];
+    for (let h = 8; h <= 20; h++) hours.push(h);
+
+    const activeGroups = groups.filter(g => g.status === 'active');
+
+    function getGroupsForDayHour(day, hour) {
+        return activeGroups.filter(g => {
+            if (!g.days.includes(day)) return false;
+            const startH = parseInt(g.time.split(':')[0]);
+            return startH === hour;
+        });
+    }
+
+    return `<div class="page-enter">
+        <div class="mb-5">
+            <h1 class="text-xl font-bold text-gray-900">Dars jadvali</h1>
+            <p class="text-sm text-gray-400 mt-0.5">Haftalik dars jadvali</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-[700px]">
+                    <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="py-3 px-3 text-left font-semibold text-gray-500 text-xs uppercase w-20 bg-gray-50">Vaqt</th>
+                            ${days.map(d => `<th class="py-3 px-2 text-center font-semibold text-gray-500 text-xs uppercase bg-gray-50">${d}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${hours.map(h => {
+                            return `<tr class="border-b border-gray-50">
+                                <td class="py-2 px-3 text-xs text-gray-400 font-mono bg-gray-50/50 whitespace-nowrap">${String(h).padStart(2,'0')}:00</td>
+                                ${days.map(d => {
+                                    const grps = getGroupsForDayHour(d, h);
+                                    if (grps.length === 0) return `<td class="py-2 px-1"></td>`;
+                                    return `<td class="py-2 px-1">
+                                        ${grps.map(g => {
+                                            const c = getCourse(g.courseId);
+                                            const t = getTeacher(g.teacherId);
+                                            const cnt = getGroupCount(g.id);
+                                            const endH = parseInt(g.time.split('-')[1].split(':')[0]);
+                                            const spanH = endH - parseInt(g.time.split(':')[0]);
+                                            return `<div class="schedule-block rounded-xl p-2.5 text-white mb-1" style="background:${c ? c.color : '#666'}" onclick="showGroupDetail(${g.id})">
+                                                <p class="font-bold text-xs">${g.name}</p>
+                                                <p class="text-[10px] opacity-80 mt-0.5">${c ? c.name : ''}</p>
+                                                <p class="text-[10px] opacity-70 mt-0.5">${t ? t.name : ''} &middot; ${g.time}</p>
+                                                <p class="text-[10px] opacity-70">Xona ${g.room} &middot; ${cnt}/${g.maxStudents}</p>
+                                            </div>`;
+                                        }).join('')}
+                                    </td>`;
+                                }).join('')}
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ===== O'QITUVCHILAR =====
+function renderTeachers() {
+    return `<div class="page-enter">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">O'qituvchilar</h1>
+                <p class="text-sm text-gray-400 mt-0.5">Jami ${teachers.length} ta o'qituvchi</p>
+            </div>
+            <button onclick="showTeacherModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 self-start">
+                <i class="fa-solid fa-plus text-xs"></i> O'qituvchi qo'shish
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${teachers.map(t => {
+                const teacherGroups = groups.filter(g => g.teacherId === t.id);
+                const teacherCourses = t.courseIds.map(cid => getCourse(cid)).filter(Boolean);
+                const totalStudents = teacherGroups.reduce((a, g) => a + getGroupCount(g.id), 0);
+                return `<div class="bg-white rounded-2xl p-5 border border-gray-100 group-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-emerald-400 flex items-center justify-center text-white font-bold text-sm">${getInitials(t.name)}</div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">${t.name}</h3>
+                                <p class="text-xs text-gray-400">${t.phone}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="showTeacherModal(${t.id})" class="w-7 h-7 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-accent flex items-center justify-center"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            <button onclick="confirmDeleteTeacher(${t.id})" class="w-7 h-7 rounded-lg hover:bg-red-50 text-gray-400 hover:text-danger flex items-center justify-center"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        ${teacherCourses.map(c => `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md text-white" style="background:${c.color}">${c.name}</span>`).join('')}
+                    </div>
+                    <div class="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                        <span><i class="fa-solid fa-layer-group mr-1"></i>${teacherGroups.length} guruh</span>
+                        <span><i class="fa-solid fa-users mr-1"></i>${totalStudents} talaba</span>
+                        ${statusBadge(t.status)}
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`;
+}
+
+function showTeacherModal(id) {
+    const t = id ? getTeacher(id) : null;
+    showModal(`
+        <div class="p-6">
+            <h2 class="text-lg font-bold mb-5">${t ? 'O\'qituvchini tahrirlash' : 'Yangi o\'qituvchi qo\'shish'}</h2>
+            <form onsubmit="saveTeacher(event, ${id || 0})" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ism familiya</label>
+                    <input name="name" value="${t ? t.name : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                    <input name="phone" value="${t ? t.phone : ''}" required class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm" placeholder="+998 90 123 45 67">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Kurslar</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${courses.map(c => `<label class="flex items-center gap-1.5 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200 cursor-pointer hover:bg-gray-100 text-sm">
+                            <input type="checkbox" name="courseIds" value="${c.id}" ${t && t.courseIds.includes(c.id) ? 'checked' : ''} class="accent-accent">
+                            ${c.name}
+                        </label>`).join('')}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Holat</label>
+                    <select name="status" class="form-input w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm">
+                        <option value="active" ${t && t.status === 'active' ? 'selected' : ''}>Aktiv</option>
+                        <option value="inactive" ${t && t.status === 'inactive' ? 'selected' : ''}>Nofaol</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="hideModal()" class="flex-1 btn-secondary py-2.5 rounded-xl font-medium text-sm">Bekor qilish</button>
+                    <button type="submit" class="flex-1 btn-primary py-2.5 rounded-xl font-medium text-sm">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    `);
+}
+
+function saveTeacher(e, id) {
+    e.preventDefault();
+    const f = e.target;
+    const courseIds = [...f.querySelectorAll('input[name="courseIds"]:checked')].map(c => parseInt(c.value));
+    const data = {
+        name: f.name.value.trim(),
+        phone: f.phone.value.trim(),
+        courseIds: courseIds,
+        status: f.status.value,
+    };
+    if (!data.name || !data.phone) { showToast('Ism va telefon majburiy', 'error'); return; }
+    if (id) {
+        const t = getTeacher(id);
+        if (t) Object.assign(t, data);
+        showToast('O\'qituvchi muvaffaqiyatli tahrirlandi');
+    } else {
+        data.id = nextId.teacher++;
+        teachers.push(data);
+        showToast('Yangi o\'qituvchi muvaffaqiyatli qo\'shildi');
+    }
+    hideModal();
+    renderContent();
+}
+
+function confirmDeleteTeacher(id) {
+    const t = getTeacher(id);
+    showConfirm('O\'qituvchini o\'chirish', `"${t.name}" o\'qituvchisini o\'chirishni xohlaysizmi?`, () => {
+        groups.filter(g => g.teacherId === id).forEach(g => g.teacherId = null);
+        teachers = teachers.filter(te => te.id !== id);
+        showToast('O\'qituvchi o\'chirildi');
+        renderContent();
+    });
+}
+
+// ===== ISHGA TUSHIRISH =====
+function init() {
+    renderSidebar();
+    renderBreadcrumb();
+    renderContent();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

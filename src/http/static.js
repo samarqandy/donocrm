@@ -14,16 +14,20 @@ const MIME = {
   ".svg": "image/svg+xml",
 };
 
-const PUBLIC_FILES = new Set(["index.html", "app.js", "styles.css"]);
-const PUBLIC_PREFIXES = ["screeshots/"];
+const PUBLIC_FILES = new Set(["index.html", "app.config.js", "app.js", "styles.css", "docs/openapi.yaml"]);
+const PUBLIC_ASSETS = new Set(["screenshots/donocrmlogo.png", "screenshots/favicon.svg"]);
+
+function normalizeTarget(target) {
+  return target.replace(/^screeshots\//, "screenshots/");
+}
 
 function allowedTarget(target) {
   if (PUBLIC_FILES.has(target)) return true;
-  return PUBLIC_PREFIXES.some((prefix) => target.startsWith(prefix));
+  return PUBLIC_ASSETS.has(target);
 }
 
 function staticFile(req, res, pathname) {
-  const target = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+  const target = normalizeTarget(pathname === "/" ? "index.html" : pathname.replace(/^\/+/, ""));
   if (!allowedTarget(target)) {
     res.writeHead(404);
     res.end("Not found");
@@ -41,7 +45,10 @@ function staticFile(req, res, pathname) {
       res.end("Not found");
       return;
     }
-    res.writeHead(200, { "Content-Type": MIME[path.extname(filePath)] || "application/octet-stream" });
+    res.writeHead(200, {
+      "Content-Type": MIME[path.extname(filePath)] || "application/octet-stream",
+      "Cache-Control": "no-store",
+    });
     res.end(data);
   });
 }

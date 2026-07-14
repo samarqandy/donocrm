@@ -12,7 +12,7 @@ function seed(db) {
   try {
     db.prepare(
       "INSERT INTO tenants (id, name, type, status, plan, language, telegram_bot, telegram_bot_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    ).run("tenant_main", "EduCenter", "learning_center", "active", "standard", "uz", "@dono_bot", "", createdAt);
+    ).run("tenant_main", "EduCenter", "learning_center", "active", "standard", "uz", "@donocrm_bot", "", createdAt);
 
     db.prepare("INSERT INTO users (id, tenant_id, username, password, name, role) VALUES (?, ?, ?, ?, ?, ?)").run(
       "user_admin",

@@ -3,6 +3,7 @@ const { getDb } = require("../db/client");
 const { api } = require("./api");
 const { sendJson } = require("./json");
 const { staticFile } = require("./static");
+const { processTenantQueue, startTelegramQueueCron } = require("../workers/telegramQueueWorker");
 
 function securityHeaders(res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -37,4 +38,4 @@ function createServer() {
   });
 }
 
-module.exports = { createServer };
+module.exports = { createServer, processTenantQueue, startTelegramQueueCron };
