@@ -162,9 +162,9 @@ This command validates the approved inventory, not missing test implementations.
 
 ## Gate Separation
 
-WF-PRE-06 does not resolve:
+WF-PRE-06 does not itself resolve:
 
-- WF-PRE-07 bounded-context seams;
+- WF-PRE-07 bounded-context seams, subsequently approved in the [seam decision](workforce-bounded-context-seams.md);
 - WF-PRE-11 target transaction/consistency behavior;
 - WF-PRE-13 fixtures, repository/port contracts, legacy-target parity, thresholds, rollback cases, or execution ownership;
 - WF-PRE-14 migration/canary/rollback procedure;
@@ -178,4 +178,4 @@ The full Testing Readiness section is still failed because 48 operation rows and
 
 Ten out of ten operations contain explicit success/failure/invariant rows, all 69 applicable operation rows have stable test IDs, every non-applicable category has a reason, tenant/role/privacy cases are explicit, and current evidence gaps are measurable rather than implied away.
 
-The next ordered prerequisite is WF-PRE-07: decide bounded-context seams for Identity, Organization/Branches, Group/Lesson blockers, profile composition, and Audit.
+WF-PRE-07 subsequently approved the bounded-context seams. The next ordered prerequisite is WF-PRE-08: approve the exact table ownership/access manifest.

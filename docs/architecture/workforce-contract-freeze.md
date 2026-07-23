@@ -257,4 +257,4 @@ Security defects are corrected through explicit governed remediation, not perman
 
 All ten current operations, accepted request fields, exact response DTO fields, status/error behavior, authorization/privacy rules, ordering/limits, and OpenAPI coverage/gaps are inventoried and approved as the current compatibility baseline.
 
-This closes only current-contract freeze. It does not define the target public Application facade, pass target parity, resolve the privacy mismatch, or authorize extraction. WF-PRE-06 subsequently approved the [ten-operation behavior matrix](workforce-behavior-matrix.md); the next ordered prerequisite is WF-PRE-07.
+This closes only current-contract freeze. It does not define the target public Application facade, pass target parity, resolve the privacy mismatch, or authorize extraction. WF-PRE-06 subsequently approved the [ten-operation behavior matrix](workforce-behavior-matrix.md), and WF-PRE-07 approved the [bounded-context seams](workforce-bounded-context-seams.md); the next ordered prerequisite is WF-PRE-08.

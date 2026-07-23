@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-07",
+  "status": "approved",
+  "seamModelId": "workforce-context-seams-2026-07-24.1",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "1757ae811fcf20a412ba8372e9da321a8f704df0",
+  "sourceFingerprints": {
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2",
+    "src/repositories/appRepository.js": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc",
+    "docs/architecture/bounded-contexts.md": "a2d4782047b1180e1a13d7cc5f83979843fecf9aba70069c45540e0a481ff9c4",
+    "docs/architecture/module-dependencies.md": "8f509d9a2d92109d8aa10ba2a79f9cce1a33a46a00807de2b54d93053bc60337",
+    "docs/architecture/adrs/ADR-005-bounded-context-strategy.md": "38486fffec086bb1dad7a9707bc8f073d22abdf249c5852b0537ce78141ca9c9",
+    "docs/architecture/adrs/ADR-006-dependency-rule.md": "2bd9030873b5fe7671808475e8a1e460f810798fe0d4cdc04a704d859597a0ff",
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712",
+    "architecture/workforce-behavior-matrix.json": "84b7206ae682fe417b7f2b2f6314591b46bc56768e4a6b8de54148982dbcfc2d"
+  },
+  "architecturePolicy": {
+    "coordinationOwner": "Workforce Compatibility Application Coordinator",
+    "coordinationPlacement": "Outer application workflow assembled by Bootstrap and invoked by the existing Workforce HTTP compatibility adapter",
+    "coordinationAuthority": "None; it coordinates provider-owned commands/queries and maps the frozen HTTP result but owns no business data",
+    "dependencyRule": "The coordinator may call public application contracts. Bounded contexts may not import another context's repository, infrastructure, private domain, database model, or table.",
+    "cycleRule": "Academic Groups, Scheduling, Lesson Delivery, and other consumers continue to depend on Workforce Teacher-reference contracts. Reverse reads needed by Workforce HTTP compatibility are performed by the outer coordinator, not by Workforce Domain/Application importing those consumers.",
+    "transactionRule": "No target local transaction may write data owned by more than one bounded context. Exact ordering, compensation, retry, and idempotency are deferred to WF-PRE-11.",
+    "eventRule": "WF-PRE-07 approves synchronous first-extraction seams only. No integration event is approved; WF-PRE-12 may supersede a seam with a versioned committed fact.",
+    "legacyRule": "Current cross-table joins and writes remain frozen legacy debt. They are not target precedent or a temporary module exception."
+  },
+  "contexts": [
+    {
+      "id": "workforce",
+      "name": "Workforce",
+      "owns": ["Teacher business profile and lifecycle", "Teacher Working Hour identity and policy", "Teacher-safe projection policy"]
+    },
+    {
+      "id": "identity-access",
+      "name": "Identity & Access",
+      "owns": ["User identity", "Username and credential policy", "Roles and permissions", "Sessions", "User Branch access grants"]
+    },
+    {
+      "id": "organization-branches",
+      "name": "Organization & Branches",
+      "owns": ["Branch identity", "Branch active validity", "Main/default Branch selection"]
+    },
+    {
+      "id": "academic-groups",
+      "name": "Academic Groups",
+      "owns": ["Group lifecycle", "Current and historical Teacher assignment", "Active Group archive-blocker fact", "Group profile summary"]
+    },
+    {
+      "id": "scheduling",
+      "name": "Scheduling",
+      "owns": ["Recurring schedule rules", "Scheduled workload projection"]
+    },
+    {
+      "id": "lesson-delivery",
+      "name": "Lesson Delivery",
+      "owns": ["Lesson lifecycle", "Upcoming/completed Lesson projection", "Upcoming Lesson archive-blocker fact"]
+    },
+    {
+      "id": "student-information",
+      "name": "Student Information",
+      "owns": ["Student lifecycle", "Teacher-directory student-count source facts"]
+    },
+    {
+      "id": "audit-history",
+      "name": "Audit & History",
+      "owns": ["Tenant audit records", "Audit append semantics", "Audit retention and query policy"]
+    }
+  ],
+  "seams": [
+    {
+      "id": "WF-SEAM-01",
+      "capability": "Teacher portal-access lifecycle",
+      "operations": ["WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["workforce", "identity-access"],
+      "direction": "coordinator -> Workforce public command; coordinator -> Identity & Access public command",
+      "mode": "synchronous_command",
+      "authority": {
+        "workforce": "Teacher profile, status, and TeacherId",
+        "identity-access": "User, credential hash, Teacher role, access status, Branch grant, and sessions"
+      },
+      "interaction": "Create/update/archive is one compatibility workflow composed from provider-owned outcomes. Identity receives an opaque tenant-scoped Teacher reference and the minimum portal intent; it never persists Teacher business fields.",
+      "failurePolicy": "A required provider failure prevents a success response. No provider error may be translated into success or a partial DTO.",
+      "consistencyBoundary": "Each provider changes only its owned state. Cross-provider ordering, compensation, retry, and reconciliation remain blocking under WF-PRE-11.",
+      "forbidden": [
+        "Workforce writes users, roles, user_roles, user_branch_access, or sessions",
+        "Identity writes teachers or teacher_working_hours",
+        "Either context imports the other's repository/infrastructure"
+      ],
+      "legacyEvidence": ["AppRepository.createTeacher:1998-2029", "AppRepository.updateTeacher:2032-2069", "AppRepository.archiveTeacher:2072-2083"],
+      "transition": "Replace the shared SQLite transaction only after WF-PRE-09/10 contracts and WF-PRE-11 consistency policy are approved."
+    },
+    {
+      "id": "WF-SEAM-02",
+      "capability": "Teacher credential reset and session invalidation",
+      "operations": ["WF-HTTP-07"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["workforce", "identity-access"],
+      "direction": "coordinator -> Workforce Teacher-reference query; coordinator -> Identity & Access credential-reset command",
+      "mode": "synchronous_command",
+      "authority": {
+        "workforce": "Tenant-scoped Teacher existence/reference",
+        "identity-access": "Portal linkage, password validation/hashing, credential replacement, and session invalidation"
+      },
+      "interaction": "The compatibility route remains under the Workforce HTTP surface, but credential semantics and execution are delegated to Identity. The coordinator preserves the frozen 404/422/200 mapping.",
+      "failurePolicy": "Identity failure prevents success acknowledgement. Credential or session details are never returned to Workforce.",
+      "consistencyBoundary": "Credential replacement and invalidation of all sessions are one Identity-owned consistency requirement. Its exact unit-of-work and retry behavior are decided by WF-PRE-11.",
+      "forbidden": [
+        "Workforce hashes or stores passwords",
+        "Workforce deletes sessions",
+        "Identity reads Teacher tables directly"
+      ],
+      "legacyEvidence": ["AppService.resetTeacherPassword:581-591", "AppRepository.resetTeacherPassword:2091-2096"],
+      "transition": "The route adapter maps the Identity outcome to the frozen HTTP envelope; target Identity contract details remain WF-PRE-09/10."
+    },
+    {
+      "id": "WF-SEAM-03",
+      "capability": "Branch validation and default resolution",
+      "operations": ["WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-09"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["organization-branches"],
+      "direction": "coordinator -> Organization & Branches public reference query",
+      "mode": "synchronous_query",
+      "authority": {
+        "organization-branches": "Branch existence, tenant ownership, active validity, and main/default selection",
+        "workforce": "Stores only the resolved BranchId reference on owned records"
+      },
+      "interaction": "Explicit Branch references are resolved for the active tenant; omitted references request the Organization-owned main/default Branch. Workforce does not infer defaults from Branch tables.",
+      "failurePolicy": "Invalid explicit reference fails closed with the compatibility-mapped validation result; provider unavailability prevents mutation.",
+      "consistencyBoundary": "Branch resolution is a precondition snapshot. Later Branch lifecycle changes do not transfer Branch ownership to Workforce.",
+      "forbidden": [
+        "Workforce queries branches or selects a main Branch directly",
+        "Workforce creates or updates Branch state",
+        "Identity Branch grants define Branch business validity"
+      ],
+      "legacyEvidence": ["AppService.validateTeacherBranch:500-503", "AppRepository.createTeacher:1998-2029", "AppRepository.createTeacherWorkingHour:5005-5030"],
+      "transition": "WF-SEAM-RISK-01 blocks target Working Hour parity until the current unvalidated explicit branchId behavior receives governed compatibility treatment."
+    },
+    {
+      "id": "WF-SEAM-04",
+      "capability": "Active Group archive blocker",
+      "operations": ["WF-HTTP-05"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["academic-groups"],
+      "direction": "coordinator -> Academic Groups public blocker query",
+      "mode": "synchronous_query",
+      "authority": {
+        "academic-groups": "Whether the Teacher has any tenant-active Group assignment that blocks archive",
+        "workforce": "Teacher archive decision after all external preconditions pass"
+      },
+      "interaction": "The provider returns a semantic blocker decision, not mutable Group rows or repository access.",
+      "failurePolicy": "Unknown or unavailable blocker state fails closed; Teacher is not archived.",
+      "consistencyBoundary": "The blocker is a request-time precondition. Race prevention between blocker check and archive is decided by WF-PRE-11.",
+      "forbidden": [
+        "Workforce reads groups or group_teacher_assignments tables",
+        "Workforce changes Group assignments while archiving",
+        "Academic Groups changes Teacher lifecycle state"
+      ],
+      "legacyEvidence": ["AppService.archiveTeacher:551-566", "AppRepository.teachers:1946-1970"],
+      "transition": "Replace groupsCount/direct SQL with a Groups-owned semantic query after WF-PRE-09/10."
+    },
+    {
+      "id": "WF-SEAM-05",
+      "capability": "Upcoming Lesson archive blocker",
+      "operations": ["WF-HTTP-05"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["lesson-delivery"],
+      "direction": "coordinator -> Lesson Delivery public blocker query",
+      "mode": "synchronous_query",
+      "authority": {
+        "lesson-delivery": "Whether a non-cancelled tenant Lesson on/after the effective current date blocks Teacher archive",
+        "workforce": "Teacher archive decision after all external preconditions pass"
+      },
+      "interaction": "The provider returns a semantic blocker decision using its own Lesson lifecycle meaning and clock/date policy.",
+      "failurePolicy": "Unknown or unavailable blocker state fails closed; Teacher is not archived.",
+      "consistencyBoundary": "The blocker is a request-time precondition. Race prevention and effective clock ownership are finalized in WF-PRE-09/11.",
+      "forbidden": [
+        "Workforce reads lessons, groups, or schedules to derive the blocker",
+        "Workforce changes Lesson lifecycle while archiving",
+        "Lesson Delivery changes Teacher lifecycle state"
+      ],
+      "legacyEvidence": ["AppService.archiveTeacher:551-566", "AppRepository.teacherDetails:1972-1995"],
+      "transition": "Replace upcomingLessons raw projection use with a Lesson-owned blocker query after WF-PRE-09/10."
+    },
+    {
+      "id": "WF-SEAM-06",
+      "capability": "Teacher directory and profile compatibility composition",
+      "operations": ["WF-HTTP-01", "WF-HTTP-02"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["workforce", "identity-access", "academic-groups", "scheduling", "lesson-delivery", "student-information"],
+      "direction": "coordinator -> provider public read contracts; no provider -> coordinator dependency",
+      "mode": "synchronous_composed_query",
+      "authority": {
+        "providers": "Each context remains authoritative for its facts",
+        "coordinator": "Owns only compatibility composition, ordering/limit mapping, authorization-safe selection, and final HTTP DTO mapping"
+      },
+      "interaction": "The coordinator first obtains an actor-safe Workforce Teacher reference/projection, then requests only approved provider facts. It produces a non-authoritative compatibility read model.",
+      "failurePolicy": "A required provider failure fails the whole query; no partial profile, stale fallback, raw database row, or cross-tenant result is returned.",
+      "consistencyBoundary": "No distributed snapshot is required for this read. Each provider result is request-time authoritative; version skew is tolerated only within the frozen observable contract and must be characterized by WF-PRE-13.",
+      "forbidden": [
+        "Workforce Domain/Application imports Group, Scheduling, Lesson, Student, or Identity internals",
+        "The coordinator becomes an authoritative data store",
+        "Provider credentials, finance fields, or mutable entities cross the seam",
+        "Teacher self profile exposes Group monthlyFee in the approved target"
+      ],
+      "legacyEvidence": ["AppRepository.teachers:1946-1970", "AppRepository.teacherDetails:1972-1995", "WF-CONTRACT-RISK-01"],
+      "transition": "WF-PRE-09 defines exact provider/result DTOs; WF-PRE-10 defines focused query ports/adapters; WFT-PROFILE-006/007 distinguish legacy privacy characterization from approved target remediation."
+    },
+    {
+      "id": "WF-SEAM-07",
+      "capability": "Workforce audit intent append",
+      "operations": ["WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-07", "WF-HTTP-09", "WF-HTTP-10"],
+      "coordinator": "Workforce Compatibility Application Coordinator",
+      "providers": ["audit-history"],
+      "direction": "coordinator -> Audit & History public append command",
+      "mode": "synchronous_command",
+      "authority": {
+        "workforce": "Business action and affected Workforce reference",
+        "audit-history": "Audit record identity, immutable storage, actor/tenant conventions, retention, and query"
+      },
+      "interaction": "After a successful business outcome, the coordinator submits minimum audit intent containing verified actor/tenant, action, entity type/reference, and correlation metadata.",
+      "failurePolicy": "The compatibility workflow does not acknowledge success when mandatory audit append fails. It must not fabricate or locally persist an Audit-owned record.",
+      "consistencyBoundary": "Audit is not written inside a Workforce transaction. Commit ordering, durable handoff, retry, compensation, and reconciliation are blocking WF-PRE-11/12 decisions.",
+      "forbidden": [
+        "Workforce writes audit_logs or platform_audit_logs",
+        "Audit & History writes Workforce state",
+        "Sensitive credential material is included in audit intent"
+      ],
+      "legacyEvidence": ["AppService audit calls:535,547,565,577,590,797,808", "AppRepository.audit:5397-5408"],
+      "transition": "Use synchronous append for first-extraction contract design unless WF-PRE-12 approves a versioned reliable event."
+    }
+  ],
+  "operationSeamDisposition": [
+    { "operationId": "WF-HTTP-01", "seamIds": ["WF-SEAM-06"] },
+    { "operationId": "WF-HTTP-02", "seamIds": ["WF-SEAM-06"] },
+    { "operationId": "WF-HTTP-03", "seamIds": ["WF-SEAM-01", "WF-SEAM-03", "WF-SEAM-07"] },
+    { "operationId": "WF-HTTP-04", "seamIds": ["WF-SEAM-01", "WF-SEAM-03", "WF-SEAM-07"] },
+    { "operationId": "WF-HTTP-05", "seamIds": ["WF-SEAM-01", "WF-SEAM-04", "WF-SEAM-05", "WF-SEAM-07"] },
+    { "operationId": "WF-HTTP-06", "seamIds": ["WF-SEAM-07"] },
+    { "operationId": "WF-HTTP-07", "seamIds": ["WF-SEAM-02", "WF-SEAM-07"] },
+    { "operationId": "WF-HTTP-08", "seamIds": [], "reason": "Teacher and Working Hour facts are both Workforce-owned; verified actor/tenant context is a platform interface precondition, not a Workforce business seam." },
+    { "operationId": "WF-HTTP-09", "seamIds": ["WF-SEAM-03", "WF-SEAM-07"] },
+    { "operationId": "WF-HTTP-10", "seamIds": ["WF-SEAM-07"] }
+  ],
+  "blockingRisks": [
+    {
+      "id": "WF-SEAM-RISK-01",
+      "seamId": "WF-SEAM-03",
+      "severity": "high",
+      "issue": "Current Working Hour creation accepts explicit branchId without validation.",
+      "treatment": "Do not reproduce direct Branch-table access or silently bless invalid references. WF-PRE-08/09/13 must approve the exact compatibility/remediation treatment before target routing."
+    },
+    {
+      "id": "WF-CONTRACT-RISK-01",
+      "seamId": "WF-SEAM-06",
+      "severity": "high",
+      "issue": "Current Teacher self-profile can expose Group monthlyFee.",
+      "treatment": "Target composition omits monthlyFee and records the intentional compatibility delta; security parity test WFT-PROFILE-007 remains mandatory."
+    },
+    {
+      "id": "WF-SEAM-RISK-02",
+      "seamId": "WF-SEAM-01",
+      "severity": "high",
+      "issue": "Current Teacher/Identity writes share one SQLite transaction.",
+      "treatment": "No extraction of create/update/archive before WF-PRE-11 approves ordering, compensation, retry, and reconciliation."
+    },
+    {
+      "id": "WF-SEAM-RISK-03",
+      "seamId": "WF-SEAM-07",
+      "severity": "high",
+      "issue": "Current audit append occurs after business persistence and can return failure after state committed.",
+      "treatment": "WF-PRE-11/12 must approve durable handoff and response semantics; no local cross-context audit write is permitted."
+    }
+  ],
+  "deferredDecisions": {
+    "WF-PRE-08": "Exact table ownership/access manifest and any temporary legacy adapter exception.",
+    "WF-PRE-09": "Exact public commands, queries, DTOs, semantic errors, authorization context, and Teacher reference/status contract.",
+    "WF-PRE-10": "Exact focused port boundaries and adapter ownership.",
+    "WF-PRE-11": "Transaction ordering, atomicity, compensation, retry, idempotency, reconciliation, and authority transition.",
+    "WF-PRE-12": "Whether any approved seam is replaced or supplemented by a versioned integration event.",
+    "WF-PRE-13": "Contract, failure, tenant, parity, privacy, and rollback test implementation.",
+    "WF-PRE-14": "Per-operation migration routing and rollback execution."
+  },
+  "approvals": [
+    { "role": "Architecture Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Workforce Module Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Identity & Access Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Organization & Branches Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Academic Groups Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Lesson Delivery Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Audit & History Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Security Owner", "approver": "Sukhrob Khaydarov", "decision": "approved with blocking risk treatments" }
+  ]
+}

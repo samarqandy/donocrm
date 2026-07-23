@@ -6,9 +6,9 @@ Candidate source: [migration-candidate-evaluation.md](migration-candidate-evalua
 
 ## Post-Review Decision Update
 
-WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation.
+WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06 and WF-PRE-07 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation. The [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md) assigns provider authority, outer orchestration, synchronous communication, failure boundaries, and forbidden shortcuts for all current cross-context workflows.
 
-This resolves product scope, module-definition completeness, current HTTP contract baselining, and behavior-inventory approval only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing approved seams, ports, Application contracts, transaction decisions, executable test/parity plan, and runbook keep the candidate not ready.
+This resolves product scope, module-definition completeness, current HTTP contract baselining, behavior-inventory approval, and bounded-context seam direction only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing table-access manifest, ports, exact Application contracts, transaction decisions, executable test/parity plan, and runbook keep the candidate not ready.
 
 ## Scope of Review
 
@@ -50,7 +50,7 @@ Approval: [WF-PRE-03](workforce-product-scope.md). Evidence: `bounded-contexts.m
 
 ### Boundary readiness
 
-The product boundary and non-ownership list are approved, but current transactions cross Workforce and Identity. Read projections also join Groups, Students, Schedules, Lessons, and Users. Those technical seams must be replaced by public contracts or explicitly composed projections before extraction can be approved.
+The product boundary/non-ownership list and target seam direction are approved. Current transactions still cross Workforce and Identity, and current projections still join Groups, Students, Schedules, Lessons, and Users. WF-PRE-07 requires these to become provider public contracts coordinated outside Workforce; exact access, contracts, ports, and consistency remain blocking.
 
 ## Current Application Use Cases
 
@@ -89,7 +89,7 @@ The module definition must specify focused capabilities for:
 - active Group/upcoming Lesson archive blockers;
 - audit intent.
 
-Whether each capability is a Domain repository, Application query port, synchronous public module contract, or composed Reporting query is an open design decision. One broad port reproducing `AppRepository` is forbidden.
+WF-PRE-07 decides which context provides each capability and places cross-context compatibility orchestration outside Workforce. WF-PRE-10 still decides exact focused port divisions and adapter ownership. One broad port reproducing `AppRepository` is forbidden.
 
 ## Infrastructure Adapters
 
@@ -261,4 +261,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, WF-PRE-05 froze current HTTP compatibility, and WF-PRE-06 approved the behavior inventory; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
+Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, WF-PRE-05 froze current HTTP compatibility, WF-PRE-06 approved the behavior inventory, and WF-PRE-07 approved bounded-context seams; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).

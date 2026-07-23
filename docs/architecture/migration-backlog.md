@@ -14,9 +14,10 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | WF-PRE-04 | Completed | 2026-07-23 | [Approved Workforce module definition](workforce-module-definition.md) instantiates every mandatory template section and records later readiness blockers without authorizing extraction |
 | WF-PRE-05 | Completed | 2026-07-23 | [Approved Workforce contract freeze](workforce-contract-freeze.md) and [machine-readable baseline](../../architecture/workforce-contract-baseline.json) inventory all ten HTTP operations, DTOs, status/errors, authorization/privacy, ordering, and OpenAPI gaps |
 | WF-PRE-06 | Completed | 2026-07-24 | [Approved Workforce behavior matrix](workforce-behavior-matrix.md) maps 81 explicit behavior rows across ten operations to 69 stable test IDs or 12 explicit N/A decisions, while preserving coverage gaps |
+| WF-PRE-07 | Completed | 2026-07-24 | [Approved bounded-context seam decision](workforce-bounded-context-seams.md) assigns eight context authorities, seven synchronous seams, 10/10 operation dispositions, four blocking risk treatments, and an acyclic outer-coordinator rule |
 | WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
 
-WF-PRE-07 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
+WF-PRE-08 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
 
 ## Ordering Rules
 
@@ -25,7 +26,7 @@ WF-PRE-07 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item 
 - “During extraction” items describe future controlled migration work; they are not authorized by this document.
 - “Later” items are explicitly outside the first Workforce extraction unless new evidence changes scope.
 - Every item requires a named owner before work begins.
-- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision depends on the then-remaining preparation gates, currently WF-PRE-07 through WF-PRE-14, and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
+- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision depends on the then-remaining preparation gates, currently WF-PRE-08 through WF-PRE-14, and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
 
 ## Must Complete Before Migration
 
@@ -37,7 +38,7 @@ WF-PRE-07 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item 
 | 4 | WF-PRE-04 | **Completed 2026-07-23 — Complete the Workforce module definition** | Every section of [module-template.md](module-template.md) is completed, evidence-linked, owned, and explicitly identifies later readiness blockers; final Module Readiness remains WF-PRE-16 | [Workforce Module Definition](workforce-module-definition.md); readiness review is not a substitute |
 | 5 | WF-PRE-05 | **Completed 2026-07-23 — Freeze current contracts** | All ten current Teacher/working-hours HTTP operations, DTO fields, status/error behavior, authorization, and OpenAPI definitions are inventoried | [Workforce Contract Freeze](workforce-contract-freeze.md); [machine baseline](../../architecture/workforce-contract-baseline.json) |
 | 6 | WF-PRE-06 | **Completed 2026-07-24 — Approve the behavior matrix** | Ten current use-case candidates and all success/failure/invariant categories are mapped to stable tests or explicit N/A decisions, including tenant and role cases | [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md); [machine matrix](../../architecture/workforce-behavior-matrix.json) |
-| 7 | WF-PRE-07 | Decide bounded-context seams | Record ownership/communication for Identity provisioning/reset/session invalidation, branch validation/default, group and lesson archive blockers, profile composition, and audit | Current cross-table transactions/joins in `AppRepository:1946-2096` |
+| 7 | WF-PRE-07 | **Completed 2026-07-24 — Decide bounded-context seams** | Ownership, direction, synchronous communication, failure boundaries, forbidden shortcuts, risk treatment, and outer coordination are approved for Identity, Branch, Group/Lesson blockers, profile composition, and Audit | [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md); [machine seam model](../../architecture/workforce-context-seams.json) |
 | 8 | WF-PRE-08 | Approve table ownership/access manifest | `teachers` and `teacher_working_hours` are owned; every foreign table read/write has a target contract or temporary exact exception | Database ownership table in readiness review |
 | 9 | WF-PRE-09 | Define public Application contracts | Commands, queries, DTOs, errors, authorization context, and downstream Teacher reference/status contract are documented without changing HTTP behavior | No current Workforce facade exists |
 | 10 | WF-PRE-10 | Define focused ports | Teacher persistence, working hours, identity, branch reference, archive blockers, profile projection, clock/ID, and audit capabilities are separated by consumer ownership | Current `AppRepository` must not become one broad port |
