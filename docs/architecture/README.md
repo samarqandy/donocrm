@@ -38,6 +38,7 @@ Architecture documentation does not override business requirements. The primary 
 | [`legacy-freeze-report.md`](legacy-freeze-report.md) | LEGACY/MIGRATING/MODERN classification and evidence for every major repository component. |
 | [`migration-candidate-evaluation.md`](migration-candidate-evaluation.md) | Scored evaluation of all bounded contexts and Workforce candidate recommendation. |
 | [`workforce-module-readiness.md`](workforce-module-readiness.md) | Workforce boundaries, contracts, data, dependencies, risks, rollback/testing feasibility, and readiness score. |
+| [`workforce-product-scope.md`](workforce-product-scope.md) | Approved WF-PRE-03 Teacher Management product scope, ten-operation accounting, compatibility commitments, and explicit non-goals. |
 | [`migration-backlog.md`](migration-backlog.md) | Ordered preparation, future extraction, and deferred Workforce migration backlog. |
 | [`phase-1b-exit-criteria.md`](phase-1b-exit-criteria.md) | Objective mandatory criteria for authorizing the first Workforce migration. |
 | [`phase-1b-gate-review.md`](phase-1b-gate-review.md) | Phase 1B summary, blockers, and final gate decision. |
