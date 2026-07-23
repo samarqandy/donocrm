@@ -49,7 +49,7 @@ Candidate: Workforce
 - [ ] Focused ports are defined for Teacher persistence, Working Hours, Identity, Organization, blockers/projections, and Audit as applicable.
 - [ ] No proposed port reproduces the multi-context `AppRepository` surface.
 - [ ] Every upstream/downstream dependency has owner, direction, mode, and consistency behavior.
-- [ ] No target design requires direct foreign-table access.
+- [x] The approved [WF-PRE-07 seam decision](workforce-bounded-context-seams.md) forbids target foreign-table access and routes every current cross-context workflow through provider public contracts and an outer non-authoritative coordinator.
 
 **Pass measure:** every dependency in the readiness review resolves to one approved public contract/event or an exact temporary exception.
 
