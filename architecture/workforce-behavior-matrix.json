@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-06",
+  "status": "approved",
+  "matrixId": "workforce-behavior-2026-07-24.1",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "9581763b848f4b7f973f450b9b9c82f488bb7158",
+  "contractBaseline": {
+    "id": "workforce-http-2026-07-23.1",
+    "sha256": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712"
+  },
+  "testSourceFingerprints": {
+    "scripts/test-backend-logic.js": "aec25dae4cb8503d1761d4ff8a37530c2c33afaf4e813536ab017dbc0a42ab33",
+    "scripts/qa-smoke.js": "63ad6287f8ac0a857b0f63fca38c34d8b473ec8277759c670d1aa60d2c90f155",
+    "scripts/test-p0-hardening.js": "54812e05847959d0b5d5e1c972975cd9d619fae0e65e0765d31ade0b7990e2c9"
+  },
+  "coveragePolicy": {
+    "covered": "A focused automated assertion proves the complete row against the frozen legacy path.",
+    "partial": "Automated evidence proves part of the row, but at least one stated expectation remains unasserted.",
+    "missing": "The stable test ID is approved and required, but no accepted automated implementation exists yet.",
+    "not_applicable": "The category cannot arise from this operation; an approved reason is mandatory.",
+    "approvalMeaning": "Approval freezes the required behavior inventory and test mapping. It does not convert partial or missing rows into passing test evidence."
+  },
+  "requiredCategories": [
+    "success",
+    "validation",
+    "authorization",
+    "not_found",
+    "conflict",
+    "tenant_isolation",
+    "infrastructure_failure",
+    "invariant"
+  ],
+  "operations": [
+    {
+      "operationId": "WF-HTTP-01",
+      "behaviorId": "WF-BHV-01",
+      "name": "List Teachers",
+      "cases": [
+        { "id": "WF-BHV-01-S01", "testId": "WFT-LIST-001", "category": "success", "coverage": "partial", "scenario": "Admin lists tenant Teachers.", "expected": "200 envelope; tenant rows only; active before inactive then name; exact Admin Teacher projection.", "evidence": ["scripts/qa-smoke.js:hydrateAdminData"] },
+        { "id": "WF-BHV-01-V00", "category": "validation", "coverage": "not_applicable", "reason": "The query has no path, query, or body input." },
+        { "id": "WF-BHV-01-A01", "testId": "WFT-LIST-002", "category": "authorization", "coverage": "missing", "scenario": "Unauthenticated request and authenticated Teacher request.", "expected": "No session returns 401; Teacher receives only their own safe projection without credential fields.", "evidence": [] },
+        { "id": "WF-BHV-01-N00", "category": "not_found", "coverage": "not_applicable", "reason": "A collection query has no addressed resource and returns an empty collection." },
+        { "id": "WF-BHV-01-C00", "category": "conflict", "coverage": "not_applicable", "reason": "The read has no state transition or conflict precondition." },
+        { "id": "WF-BHV-01-T01", "testId": "WFT-LIST-003", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A contains Teachers also visible to a Tenant B actor.", "expected": "Each actor receives only their tenant rows; Teacher self-scoping remains tenant-bound.", "evidence": [] },
+        { "id": "WF-BHV-01-I01", "testId": "WFT-LIST-004", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Teacher list projection dependency fails.", "expected": "500 JSON error; no cross-tenant fallback, partial payload, or cacheable response.", "evidence": [] },
+        { "id": "WF-BHV-01-R01", "testId": "WFT-LIST-005", "category": "invariant", "coverage": "missing", "scenario": "List contains active/inactive Teachers and a Teacher actor.", "expected": "Stable ordering, exact DTO field set, no pagination, and Teacher credentials omitted for self view.", "evidence": [] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-02",
+      "behaviorId": "WF-BHV-02",
+      "name": "Get Teacher Profile",
+      "cases": [
+        { "id": "WF-BHV-02-S01", "testId": "WFT-PROFILE-001", "category": "success", "coverage": "partial", "scenario": "Admin reads a tenant Teacher and Teacher reads their own profile.", "expected": "200 TeacherProfile; role-safe Teacher projection; groups/hours/upcoming lessons composed with frozen ordering and limit.", "evidence": ["scripts/qa-smoke.js:1128"] },
+        { "id": "WF-BHV-02-V00", "category": "validation", "coverage": "not_applicable", "reason": "The path identifier is opaque and has no syntactic validation." },
+        { "id": "WF-BHV-02-A01", "testId": "WFT-PROFILE-002", "category": "authorization", "coverage": "partial", "scenario": "Teacher requests their own and another Teacher profile; request has no session.", "expected": "Own profile succeeds; another Teacher returns 403; missing session returns 401.", "evidence": ["scripts/qa-smoke.js:1128"] },
+        { "id": "WF-BHV-02-N01", "testId": "WFT-PROFILE-003", "category": "not_found", "coverage": "missing", "scenario": "Admin requests a nonexistent Teacher identifier.", "expected": "404 Teacher not found.", "evidence": [] },
+        { "id": "WF-BHV-02-C00", "category": "conflict", "coverage": "not_applicable", "reason": "The read has no state transition or conflict precondition." },
+        { "id": "WF-BHV-02-T01", "testId": "WFT-PROFILE-004", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A actor requests Tenant B Teacher ID with cross-context profile rows present.", "expected": "404 and no Teacher, Group, Working Hour, Lesson, credential, or finance data leaks.", "evidence": [] },
+        { "id": "WF-BHV-02-I01", "testId": "WFT-PROFILE-005", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Any profile projection dependency fails.", "expected": "500 JSON error; no partial profile is returned.", "evidence": [] },
+        { "id": "WF-BHV-02-R01", "testId": "WFT-PROFILE-006", "category": "invariant", "coverage": "partial", "scenario": "Teacher self-profile includes composed Group rows on the frozen legacy path.", "expected": "Credential fields are absent; current monthlyFee exposure is detected as characterization evidence; groups/hours/lessons preserve frozen ordering and lessons are limited to 20.", "evidence": ["scripts/qa-smoke.js:1128", "WF-CONTRACT-RISK-01"] },
+        { "id": "WF-BHV-02-R02", "testId": "WFT-PROFILE-007", "category": "invariant", "coverage": "missing", "scenario": "Security-approved target profile is compared with the frozen legacy privacy risk.", "expected": "Target Teacher self projection omits Group monthlyFee; the intentional compatibility delta is explicit and cannot pass as silent parity.", "evidence": [] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-03",
+      "behaviorId": "WF-BHV-03",
+      "name": "Create Teacher",
+      "cases": [
+        { "id": "WF-BHV-03-S01", "testId": "WFT-CREATE-001", "category": "success", "coverage": "covered", "scenario": "Admin creates Teachers without and with portal access.", "expected": "201; no User without access; shared Teacher/User ID, Teacher role, branch access, PBKDF2 credential, and active identity with access.", "evidence": ["scripts/test-backend-logic.js:1780"] },
+        { "id": "WF-BHV-03-V01", "testId": "WFT-CREATE-002", "category": "validation", "coverage": "missing", "scenario": "Required name, employment type, hire date, workload, branch, username, and password inputs are invalid.", "expected": "Frozen 422 field-specific errors; no Teacher or Identity residue.", "evidence": [] },
+        { "id": "WF-BHV-03-A01", "testId": "WFT-CREATE-003", "category": "authorization", "coverage": "covered", "scenario": "Teacher actor attempts create.", "expected": "403 Admin role is required and no rows are created.", "evidence": ["scripts/test-backend-logic.js:1807"] },
+        { "id": "WF-BHV-03-N00", "category": "not_found", "coverage": "not_applicable", "reason": "Invalid supplied Branch is represented by the frozen 422 validation contract, not 404." },
+        { "id": "WF-BHV-03-C01", "testId": "WFT-CREATE-004", "category": "conflict", "coverage": "covered", "scenario": "Portal username already exists.", "expected": "409 Username already exists; transaction leaves no orphan Teacher.", "evidence": ["scripts/test-backend-logic.js:1810"] },
+        { "id": "WF-BHV-03-T01", "testId": "WFT-CREATE-005", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A creates using Tenant B branch or username context.", "expected": "Tenant B Branch cannot be used; created Teacher/Identity belongs only to A; same username treatment follows tenant-scoped frozen behavior.", "evidence": [] },
+        { "id": "WF-BHV-03-I01", "testId": "WFT-CREATE-006", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Failure is injected at each Teacher/Identity/role/branch-access/audit boundary.", "expected": "500 according to frozen transport; authoritative rows remain atomic or the exact current non-atomic audit outcome is characterized.", "evidence": [] },
+        { "id": "WF-BHV-03-R01", "testId": "WFT-CREATE-007", "category": "invariant", "coverage": "partial", "scenario": "Create aliases/defaults and unknown fields are exercised.", "expected": "Stable shared ID, active status, main-branch default, aliases and rounding follow baseline; unknown fields do not persist.", "evidence": ["scripts/test-backend-logic.js:1780"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-04",
+      "behaviorId": "WF-BHV-04",
+      "name": "Update Teacher",
+      "cases": [
+        { "id": "WF-BHV-04-S01", "testId": "WFT-UPDATE-001", "category": "success", "coverage": "partial", "scenario": "Admin updates Teacher profile and enabled identity name.", "expected": "200 exact Admin Teacher projection and synchronized User name/access outcome.", "evidence": ["scripts/test-backend-logic.js:1819"] },
+        { "id": "WF-BHV-04-V01", "testId": "WFT-UPDATE-002", "category": "validation", "coverage": "missing", "scenario": "Name/profile/access inputs are invalid or access is enabled for inactive Teacher.", "expected": "Frozen 422 error and no partial Teacher/Identity change.", "evidence": [] },
+        { "id": "WF-BHV-04-A01", "testId": "WFT-UPDATE-003", "category": "authorization", "coverage": "missing", "scenario": "Teacher actor or unauthenticated caller attempts update.", "expected": "403 or 401 respectively; no mutation.", "evidence": [] },
+        { "id": "WF-BHV-04-N01", "testId": "WFT-UPDATE-004", "category": "not_found", "coverage": "missing", "scenario": "Admin updates nonexistent Teacher.", "expected": "404 Teacher not found and no identity mutation.", "evidence": [] },
+        { "id": "WF-BHV-04-C01", "testId": "WFT-UPDATE-005", "category": "conflict", "coverage": "missing", "scenario": "Update changes portal username to an existing username.", "expected": "409 Username already exists; Teacher and Identity remain unchanged.", "evidence": [] },
+        { "id": "WF-BHV-04-T01", "testId": "WFT-UPDATE-006", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A updates Tenant B Teacher ID or assigns Tenant B Branch.", "expected": "Foreign Teacher is 404; foreign Branch is 422; no cross-tenant row changes.", "evidence": [] },
+        { "id": "WF-BHV-04-I01", "testId": "WFT-UPDATE-007", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Failure is injected during Teacher/Identity/session/audit updates.", "expected": "500 and characterized atomicity; no unapproved split-brain state.", "evidence": [] },
+        { "id": "WF-BHV-04-R01", "testId": "WFT-UPDATE-008", "category": "invariant", "coverage": "missing", "scenario": "Omitted, empty, alias, access-disable, and no-password update semantics are exercised.", "expected": "Clear/preserve/default semantics, session invalidation, exact DTO, and stable Teacher ID match the frozen baseline.", "evidence": [] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-05",
+      "behaviorId": "WF-BHV-05",
+      "name": "Archive Teacher",
+      "cases": [
+        { "id": "WF-BHV-05-S01", "testId": "WFT-ARCHIVE-001", "category": "success", "coverage": "covered", "scenario": "Admin archives an unassigned active Teacher with portal access.", "expected": "200 inactive Teacher; User inactive; sessions invalidated; login denied.", "evidence": ["scripts/test-backend-logic.js:1871"] },
+        { "id": "WF-BHV-05-V01", "testId": "WFT-ARCHIVE-002", "category": "validation", "coverage": "missing", "scenario": "Ignored request body is malformed or exceeds the parser limit.", "expected": "400 or 413 before use-case execution; no mutation.", "evidence": [] },
+        { "id": "WF-BHV-05-A01", "testId": "WFT-ARCHIVE-003", "category": "authorization", "coverage": "missing", "scenario": "Teacher actor or unauthenticated caller attempts archive.", "expected": "403 or 401 respectively; Teacher and Identity remain active.", "evidence": [] },
+        { "id": "WF-BHV-05-N01", "testId": "WFT-ARCHIVE-004", "category": "not_found", "coverage": "missing", "scenario": "Admin archives nonexistent Teacher.", "expected": "404 Teacher not found.", "evidence": [] },
+        { "id": "WF-BHV-05-C01", "testId": "WFT-ARCHIVE-005", "category": "conflict", "coverage": "partial", "scenario": "Teacher has active Groups or upcoming Lessons.", "expected": "409 blocker and no Teacher/User/session mutation; each blocker source is independently proven.", "evidence": ["scripts/test-backend-logic.js:1869"] },
+        { "id": "WF-BHV-05-T01", "testId": "WFT-ARCHIVE-006", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A archives Tenant B Teacher ID and cross-tenant blocker rows exist.", "expected": "404; no cross-tenant mutation or blocker leakage.", "evidence": [] },
+        { "id": "WF-BHV-05-I01", "testId": "WFT-ARCHIVE-007", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Failure is injected during Teacher/User/session/audit changes.", "expected": "500 and characterized atomicity; no unapproved partially archived identity.", "evidence": [] },
+        { "id": "WF-BHV-05-R01", "testId": "WFT-ARCHIVE-008", "category": "invariant", "coverage": "partial", "scenario": "Teacher with historical lessons but no current blocker is archived.", "expected": "Historical Teacher references remain unchanged; soft archive never deletes Teacher or history.", "evidence": ["scripts/test-backend-logic.js:1841"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-06",
+      "behaviorId": "WF-BHV-06",
+      "name": "Restore Teacher",
+      "cases": [
+        { "id": "WF-BHV-06-S01", "testId": "WFT-RESTORE-001", "category": "success", "coverage": "missing", "scenario": "Admin restores inactive Teacher.", "expected": "200 active Teacher; Workforce status restored without silently enabling Identity access.", "evidence": [] },
+        { "id": "WF-BHV-06-V01", "testId": "WFT-RESTORE-002", "category": "validation", "coverage": "missing", "scenario": "Ignored request body is malformed or exceeds the parser limit.", "expected": "400 or 413 before use-case execution; no mutation.", "evidence": [] },
+        { "id": "WF-BHV-06-A01", "testId": "WFT-RESTORE-003", "category": "authorization", "coverage": "missing", "scenario": "Teacher actor or unauthenticated caller attempts restore.", "expected": "403 or 401 respectively; no mutation.", "evidence": [] },
+        { "id": "WF-BHV-06-N01", "testId": "WFT-RESTORE-004", "category": "not_found", "coverage": "missing", "scenario": "Admin restores nonexistent Teacher.", "expected": "404 Teacher not found.", "evidence": [] },
+        { "id": "WF-BHV-06-C00", "category": "conflict", "coverage": "not_applicable", "reason": "Current restore is repeatable and has no conflict response." },
+        { "id": "WF-BHV-06-T01", "testId": "WFT-RESTORE-005", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A restores Tenant B Teacher ID.", "expected": "404 and no cross-tenant status change.", "evidence": [] },
+        { "id": "WF-BHV-06-I01", "testId": "WFT-RESTORE-006", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Teacher restore or audit persistence fails.", "expected": "500; current transaction/audit boundary is characterized and no false success is returned.", "evidence": [] },
+        { "id": "WF-BHV-06-R01", "testId": "WFT-RESTORE-007", "category": "invariant", "coverage": "missing", "scenario": "Inactive and already-active Teachers are restored.", "expected": "Teacher ID/history remain stable; result is active; Identity status/access are not implicitly restored.", "evidence": [] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-07",
+      "behaviorId": "WF-BHV-07",
+      "name": "Reset Teacher Password",
+      "cases": [
+        { "id": "WF-BHV-07-S01", "testId": "WFT-RESET-001", "category": "success", "coverage": "covered", "scenario": "Admin resets password for Teacher with portal identity.", "expected": "200 success; password rehashed; all sessions invalidated; old password fails and new password works.", "evidence": ["scripts/test-backend-logic.js:1863"] },
+        { "id": "WF-BHV-07-V01", "testId": "WFT-RESET-002", "category": "validation", "coverage": "missing", "scenario": "Password is absent, blank, too short, body malformed, or oversized.", "expected": "Frozen 422, 400, or 413 response and credential/session state unchanged.", "evidence": [] },
+        { "id": "WF-BHV-07-A01", "testId": "WFT-RESET-003", "category": "authorization", "coverage": "missing", "scenario": "Teacher actor or unauthenticated caller attempts reset.", "expected": "403 or 401 respectively; credential and sessions unchanged.", "evidence": [] },
+        { "id": "WF-BHV-07-N01", "testId": "WFT-RESET-004", "category": "not_found", "coverage": "missing", "scenario": "Teacher does not exist or has no portal identity.", "expected": "404 with the frozen Teacher or portal-access message.", "evidence": [] },
+        { "id": "WF-BHV-07-C00", "category": "conflict", "coverage": "not_applicable", "reason": "Password reset has no current 409 conflict response." },
+        { "id": "WF-BHV-07-T01", "testId": "WFT-RESET-005", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A resets Tenant B Teacher ID.", "expected": "404 and Tenant B credential/sessions remain unchanged.", "evidence": [] },
+        { "id": "WF-BHV-07-I01", "testId": "WFT-RESET-006", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Credential update, session invalidation, or audit persistence fails.", "expected": "500 with characterized atomicity; no accepted split between credential and session state.", "evidence": [] },
+        { "id": "WF-BHV-07-R01", "testId": "WFT-RESET-007", "category": "invariant", "coverage": "partial", "scenario": "Alias and session fan-out are exercised.", "expected": "newPassword/new_password are equivalent, PBKDF2 format is retained, every active session is invalidated, Teacher profile is unchanged.", "evidence": ["scripts/test-backend-logic.js:1863"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-08",
+      "behaviorId": "WF-BHV-08",
+      "name": "List Working Hours",
+      "cases": [
+        { "id": "WF-BHV-08-S01", "testId": "WFT-HOURS-LIST-001", "category": "success", "coverage": "partial", "scenario": "Admin lists tenant hours and Teacher lists own hours.", "expected": "200 envelope; Admin tenant rows and Teacher self-only rows; exact nine-field projection.", "evidence": ["scripts/test-backend-logic.js:428"] },
+        { "id": "WF-BHV-08-V00", "category": "validation", "coverage": "not_applicable", "reason": "The query has no path, query, or body input." },
+        { "id": "WF-BHV-08-A01", "testId": "WFT-HOURS-LIST-002", "category": "authorization", "coverage": "partial", "scenario": "Teacher and unauthenticated callers list hours.", "expected": "Teacher receives own rows only; missing session returns 401.", "evidence": ["scripts/test-backend-logic.js:436"] },
+        { "id": "WF-BHV-08-N00", "category": "not_found", "coverage": "not_applicable", "reason": "A collection query returns an empty collection instead of 404." },
+        { "id": "WF-BHV-08-C00", "category": "conflict", "coverage": "not_applicable", "reason": "The read has no state transition or conflict precondition." },
+        { "id": "WF-BHV-08-T01", "testId": "WFT-HOURS-LIST-003", "category": "tenant_isolation", "coverage": "missing", "scenario": "Both tenants contain Teachers and intervals with colliding references.", "expected": "No foreign intervals or Teacher names appear for either Admin or Teacher actor.", "evidence": [] },
+        { "id": "WF-BHV-08-I01", "testId": "WFT-HOURS-LIST-004", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Working-hour projection dependency fails.", "expected": "500 JSON error and no partial list.", "evidence": [] },
+        { "id": "WF-BHV-08-R01", "testId": "WFT-HOURS-LIST-005", "category": "invariant", "coverage": "partial", "scenario": "Rows span Teachers, weekdays, and start times.", "expected": "Ordering is Teacher name, numeric weekday, then start time; Teacher self filtering and exact DTO stay stable.", "evidence": ["scripts/test-backend-logic.js:436"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-09",
+      "behaviorId": "WF-BHV-09",
+      "name": "Create Working Hour",
+      "cases": [
+        { "id": "WF-BHV-09-S01", "testId": "WFT-HOURS-CREATE-001", "category": "success", "coverage": "partial", "scenario": "Authorized Admin creates a valid interval.", "expected": "201 exact Working Hour projection with tenant, Teacher, branch/default, weekday, and times.", "evidence": ["scripts/test-backend-logic.js:1827", "scripts/test-backend-logic.js:428"] },
+        { "id": "WF-BHV-09-V01", "testId": "WFT-HOURS-CREATE-002", "category": "validation", "coverage": "missing", "scenario": "Teacher ID, weekday, clocks, ordering, active status, or body syntax/size is invalid.", "expected": "Frozen 422, 400, or 413 response and no interval.", "evidence": [] },
+        { "id": "WF-BHV-09-A01", "testId": "WFT-HOURS-CREATE-003", "category": "authorization", "coverage": "missing", "scenario": "System Teacher without lessons.manage or unauthenticated caller creates interval.", "expected": "403 Permission is required or 401; no interval.", "evidence": [] },
+        { "id": "WF-BHV-09-N01", "testId": "WFT-HOURS-CREATE-004", "category": "not_found", "coverage": "missing", "scenario": "Teacher ID does not exist in active tenant.", "expected": "404 Teacher not found and no interval.", "evidence": [] },
+        { "id": "WF-BHV-09-C01", "testId": "WFT-HOURS-CREATE-005", "category": "conflict", "coverage": "partial", "scenario": "New same-Teacher/day interval overlaps existing interval; adjacent interval is also checked.", "expected": "Overlap returns 409 and no row; exact adjacency succeeds.", "evidence": ["scripts/test-backend-logic.js:1833"] },
+        { "id": "WF-BHV-09-T01", "testId": "WFT-HOURS-CREATE-006", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A creates hours for Tenant B Teacher or supplies foreign Branch ID.", "expected": "Foreign Teacher is 404; current unvalidated Branch behavior is explicitly characterized without enabling data access.", "evidence": [] },
+        { "id": "WF-BHV-09-I01", "testId": "WFT-HOURS-CREATE-007", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Overlap read, interval insert, or audit persistence fails.", "expected": "500 and no false success; insert/audit boundary and concurrent-overlap behavior are characterized.", "evidence": [] },
+        { "id": "WF-BHV-09-R01", "testId": "WFT-HOURS-CREATE-008", "category": "invariant", "coverage": "missing", "scenario": "Aliases, main-branch default, unknown fields, multiple days, and boundary times are exercised.", "expected": "Aliases/defaults match baseline; intervals remain tenant/Teacher scoped and non-overlapping.", "evidence": [] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-10",
+      "behaviorId": "WF-BHV-10",
+      "name": "Delete Working Hour",
+      "cases": [
+        { "id": "WF-BHV-10-S01", "testId": "WFT-HOURS-DELETE-001", "category": "success", "coverage": "partial", "scenario": "Admin deletes tenant Working Hour.", "expected": "200 deleted nine-field projection; interval is absent afterwards.", "evidence": ["scripts/test-backend-logic.js:1839"] },
+        { "id": "WF-BHV-10-V01", "testId": "WFT-HOURS-DELETE-002", "category": "validation", "coverage": "missing", "scenario": "Ignored request body is malformed or exceeds the parser limit.", "expected": "400 or 413 before use-case execution; interval remains.", "evidence": [] },
+        { "id": "WF-BHV-10-A01", "testId": "WFT-HOURS-DELETE-003", "category": "authorization", "coverage": "missing", "scenario": "Teacher actor or unauthenticated caller deletes interval.", "expected": "403 Admin role is required or 401; interval remains.", "evidence": [] },
+        { "id": "WF-BHV-10-N01", "testId": "WFT-HOURS-DELETE-004", "category": "not_found", "coverage": "missing", "scenario": "Interval does not exist or is deleted twice.", "expected": "404 Working hour not found.", "evidence": [] },
+        { "id": "WF-BHV-10-C00", "category": "conflict", "coverage": "not_applicable", "reason": "Current deletion has no conflict precondition or 409 response." },
+        { "id": "WF-BHV-10-T01", "testId": "WFT-HOURS-DELETE-005", "category": "tenant_isolation", "coverage": "missing", "scenario": "Tenant A deletes Tenant B interval ID.", "expected": "404; Tenant B interval remains unchanged.", "evidence": [] },
+        { "id": "WF-BHV-10-I01", "testId": "WFT-HOURS-DELETE-006", "category": "infrastructure_failure", "coverage": "missing", "scenario": "Delete or audit persistence fails.", "expected": "500 and characterized delete/audit atomicity; no false success.", "evidence": [] },
+        { "id": "WF-BHV-10-R01", "testId": "WFT-HOURS-DELETE-007", "category": "invariant", "coverage": "partial", "scenario": "Deleted row is mapped without Teacher join.", "expected": "Returned teacherName is the frozen empty-string quirk; other fields identify exactly the deleted tenant row.", "evidence": ["scripts/test-backend-logic.js:1839"] }
+      ]
+    }
+  ],
+  "crossCuttingRequirements": [
+    {
+      "id": "WF-BHV-X01",
+      "testId": "WFT-COMMON-001",
+      "coverage": "missing",
+      "scenario": "Every operation is invoked without a valid session and under missing/suspended tenant context.",
+      "expected": "401 or 403 follows the frozen common contract and no operation leaks or mutates data."
+    },
+    {
+      "id": "WF-BHV-X02",
+      "testId": "WFT-COMMON-002",
+      "coverage": "missing",
+      "scenario": "Every body-consuming operation receives invalid and oversized JSON.",
+      "expected": "400 or 413 occurs before use-case execution, including ignored-body archive/restore/delete routes."
+    },
+    {
+      "id": "WF-BHV-X03",
+      "testId": "WFT-COMMON-003",
+      "coverage": "missing",
+      "scenario": "Two independent tenant fixtures execute every query and mutation.",
+      "expected": "Identifiers, joins, conflicts, blockers, credentials, sessions, audit facts, and returned DTOs remain tenant-isolated."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "WF-CONTRACT-RISK-01",
+      "behaviorCaseId": "WF-BHV-02-R02",
+      "severity": "blocking",
+      "decision": "Current Teacher self-profile Group monthlyFee exposure is observed but is not approved target behavior. WFT-PROFILE-006 characterizes the legacy risk; WFT-PROFILE-007 must assert the security-approved target omission before target parity can pass."
+    }
+  ],
+  "deferredGates": {
+    "WF-PRE-07": "Bounded-context seam decisions remain open.",
+    "WF-PRE-11": "Target atomicity, retry, compensation, and idempotency semantics remain open.",
+    "WF-PRE-13": "Test fixtures, target contract suites, parity thresholds, commands, and rollback evidence remain open."
+  },
+  "approvals": [
+    { "role": "Workforce Module Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Quality Owner", "approver": "Sukhrob Khaydarov", "decision": "approved with explicit coverage gaps" },
+    { "role": "Security Owner", "approver": "Sukhrob Khaydarov", "decision": "approved with WF-CONTRACT-RISK-01 blocking target parity" },
+    { "role": "Architecture Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" }
+  ]
+}
