@@ -1,6 +1,6 @@
 # Architecture Remediation Verification
 
-Status: **TECHNICAL REMEDIATION VERIFIED; RELEASE GATE STILL OPEN**
+Status: **PASSED — TECHNICAL, FORMAL, AND OPERATIONAL GATES CLOSED**
 Evidence date: **2026-07-23 (Asia/Tashkent)**
 Scope: deterministic regression, Attendance SQLite/PostgreSQL repository parity, and Architecture Enforcement candidate evidence.
 
@@ -18,7 +18,7 @@ The previously blocking deterministic regression and Critical Attendance reposit
 - `replaceForLesson`: 9 PASS, including finance rejection, rollback, tenant isolation, and concurrent writers;
 - `reopenLesson`: 10 PASS, including finance rejection, rollback, tenant isolation, and concurrency;
 - architecture scanner: 68 candidate-baseline findings, 0 unbaselined findings;
-- candidate configuration hash: `978751ecfea3578fe521961e79e6676d3f220b0c09d9ecae3e9943f3c2c62d3b`.
+- approved configuration hash: `2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d`.
 
 The checks used disposable PostgreSQL fixtures. Temporary schemas and the RAM-backed test container were removed after execution.
 
@@ -31,7 +31,7 @@ The checks used disposable PostgreSQL fixtures. Temporary schemas and the RAM-ba
 5. Restored full `findByLesson` DTO mapping.
 6. Preserved the public `legacy` lesson finance state in PostgreSQL and backfill.
 7. Changed the PostgreSQL touch trigger to preserve an explicitly supplied canonical `updated_at`, while still auto-touching updates that do not supply a new timestamp.
-8. Added deterministic SQLite/PostgreSQL contract fixtures to the warning-only GitHub workflow.
+8. Added deterministic SQLite/PostgreSQL contract fixtures and relay-ordering regression to the blocking GitHub workflow.
 9. Removed four obsolete PostgreSQL cross-context fingerprints from the candidate baseline and made its configuration hash stable and non-self-referential.
 10. Injected deterministic ID/clock dependencies into Attendance adapters for exact write-contract verification.
 11. Normalized duplicate Attendance reason codes to the same stable `409` domain error in both stores.
@@ -53,18 +53,22 @@ Schema changes are isolated in:
 6. guarded replace/correction cases;
 7. guarded reopen cases.
 
-The GitHub workflow provisions an isolated PostgreSQL 16 service for this suite. The workflow change is locally validated but has not yet produced a remote GitHub Actions artifact because the working tree is not committed or pushed.
+The GitHub workflow provisions an isolated PostgreSQL 16 service for this suite. Blocking run `30027584361` passed for operational commit `568fe4c17dec0aa4a96c34d6c39340edb91065b1`; artifact `8571938611` is retained for 30 days and copied into the host gate evidence bundle.
 
-## Remaining gate blockers
+## Formal and operational closure
 
-1. Commit and review the exact working tree, then record that commit and approver in `architecture/baseline.json`. The baseline remains `pending-approval`.
-2. Obtain a remote CI evidence artifact and only then decide whether to promote selected rules from OBSERVE to blocking.
-3. Execute a controlled route-switch rollback drill with paired restorable backups, fault injection, measured RTO/RPO, and an observation window.
-4. Reconcile the deployed `tenant_main` PostgreSQL routing state with an explicit Architecture Owner authorization record.
-5. Approve operational alert thresholds, relay-lag limits, and stop criteria.
+All five prior blockers are closed:
+
+1. baseline commit and Architecture Owner approval are recorded;
+2. remote blocking CI and artifact evidence exist;
+3. paired backup/restore, two-way route-switch, measured RTO/RPO, and post-cutover observation passed;
+4. `tenant_main` PostgreSQL Attendance authority is explicitly recorded;
+5. numeric relay, parity, readiness, recovery, and stop thresholds are approved.
+
+Detailed evidence and scope boundaries are in [Formal and Operational Gate Closure](formal-operational-gate-closure-2026-07-23.md).
 
 ## Gate decision
 
-**NOT READY for Workforce migration or Architecture Enforcement fail mode.**
+**PASSED for current `tenant_main` Attendance PostgreSQL authority and architecture no-growth enforcement.**
 
-The deterministic regression and all 20 Attendance repository method contracts are verified in isolated fixtures, but the signed baseline, remote CI artifact, and release-qualified rollback/observability evidence are still mandatory.
+This does not authorize Workforce extraction or legacy/SQLite retirement.

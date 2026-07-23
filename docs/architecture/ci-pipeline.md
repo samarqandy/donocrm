@@ -1,6 +1,6 @@
 # DONOCRM Architecture CI Pipeline
 
-Status: Provider-neutral mandatory design; no CI configuration implemented
+Status: Stage 3 structural enforcement and deterministic Attendance contract gate implemented
 Effective date: 2026-07-22
 Owners: Architecture Owner, Quality Owner, Operations Owner
 Related documents: [Architecture Gates](architecture-gates.md), [Contract Testing](contract-testing.md), [Legacy Freeze Manifest](legacy-freeze-manifest.md)

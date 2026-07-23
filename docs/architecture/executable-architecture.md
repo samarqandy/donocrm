@@ -1,13 +1,13 @@
 # DONOCRM Executable Architecture Infrastructure
 
-Status: Implemented in OBSERVE mode
+Status: Stage 3 blocking no-growth enforcement active
 Effective date: 2026-07-22
 Scope: Architecture validation infrastructure only
 Owners: Architecture Owner, Quality Owner, Data Owner
 
 ## Outcome
 
-DONOCRM now has executable, warning-only architecture validation backed by machine-readable ownership manifests. The implementation does not modify runtime behavior, business logic, APIs, database schema, `AppService`, or `AppRepository`, and it authorizes no module migration.
+DONOCRM now has executable, blocking no-growth architecture validation backed by machine-readable ownership manifests. The original Phase 1A implementation began in warning-only mode; on 2026-07-23 the baseline was approved and the required GitHub check was activated. The historical assessment below is retained to show the promotion path. Current evidence is owned by [Formal and Operational Gate Closure](formal-operational-gate-closure-2026-07-23.md).
 
 Generated evidence is written under `artifacts/architecture/` and excluded from version control.
 
