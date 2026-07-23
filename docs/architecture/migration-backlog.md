@@ -11,9 +11,10 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | WF-PRE-01 | Completed | 2026-07-22 | [Single-Founder Governance ownership register](architecture-governance.md#architecture-governance-model) assigns Sukhrob Khaydarov as Architecture Owner, Product Authority, every Module Owner, and final specialist/gate approver |
 | WF-PRE-02 | Completed | 2026-07-23 | Approved 68-fingerprint baseline, commit/configuration hash, owner record, and [formal gate closure](formal-operational-gate-closure-2026-07-23.md) |
 | WF-PRE-03 | Completed | 2026-07-23 | [Approved Workforce product scope](workforce-product-scope.md) accounts for all ten operations, owned/non-owned responsibilities, compatibility commitments, and explicit non-goals |
+| WF-PRE-04 | Completed | 2026-07-23 | [Approved Workforce module definition](workforce-module-definition.md) instantiates every mandatory template section and records later readiness blockers without authorizing extraction |
 | WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
 
-WF-PRE-04 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
+WF-PRE-05 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
 
 ## Ordering Rules
 
@@ -22,6 +23,7 @@ WF-PRE-04 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item 
 - “During extraction” items describe future controlled migration work; they are not authorized by this document.
 - “Later” items are explicitly outside the first Workforce extraction unless new evidence changes scope.
 - Every item requires a named owner before work begins.
+- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision depends on WF-PRE-05 through WF-PRE-14 and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
 
 ## Must Complete Before Migration
 
@@ -30,7 +32,7 @@ WF-PRE-04 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item 
 | 1 | WF-PRE-01 | **Completed 2026-07-22 — Assign accountable owners** | Architecture Owner, Workforce Module Owner, Product Authority, Identity/Organization owners, Data, Operations, Quality, and Security approvers are named in governance | [Architecture Governance](architecture-governance.md) |
 | 2 | WF-PRE-02 | **Completed 2026-07-23 — Approve Legacy Freeze baseline** | Repository commit, Phase 1A fingerprints, classifications, approvers, and exception register are recorded | [Legacy Freeze Manifest](legacy-freeze-manifest.md); [formal gate closure](formal-operational-gate-closure-2026-07-23.md) |
 | 3 | WF-PRE-03 | **Completed 2026-07-23 — Approve Workforce product scope** | Product Authority confirms Teacher profile, lifecycle, working hours, and portal coordination are in scope and lists explicit non-goals | [Workforce Product Scope Decision](workforce-product-scope.md); no new requirements permitted |
-| 4 | WF-PRE-04 | Complete the Workforce module definition | Every section of [module-template.md](module-template.md) is completed, evidence-linked, owned, and passes Module Readiness Gate | Readiness review is not a substitute for module definition |
+| 4 | WF-PRE-04 | **Completed 2026-07-23 — Complete the Workforce module definition** | Every section of [module-template.md](module-template.md) is completed, evidence-linked, owned, and explicitly identifies later readiness blockers; final Module Readiness remains WF-PRE-16 | [Workforce Module Definition](workforce-module-definition.md); readiness review is not a substitute |
 | 5 | WF-PRE-05 | Freeze current contracts | All ten current Teacher/working-hours HTTP operations, DTO fields, status/error behavior, authorization, and OpenAPI definitions are inventoried | `api.js:283-296`, `:385-418`; OpenAPI Teacher paths |
 | 6 | WF-PRE-06 | Approve the behavior matrix | Ten current use-case candidates and success/failure/invariant cases are mapped to tests, including tenant and role cases | `AppService:472-591`, `:767-809`; focused test `:1780-1872` |
 | 7 | WF-PRE-07 | Decide bounded-context seams | Record ownership/communication for Identity provisioning/reset/session invalidation, branch validation/default, group and lesson archive blockers, profile composition, and audit | Current cross-table transactions/joins in `AppRepository:1946-2096` |

@@ -232,4 +232,6 @@ No repository evidence supports expanding the first extraction beyond the approv
 
 Teacher profile/lifecycle, working hours, portal-access coordination, ten current operations, owned/non-owned responsibilities, compatibility commitments, and explicit non-goals are approved.
 
-This result closes only WF-PRE-03. Workforce remains **NOT READY** for migration. The next ordered prerequisite is WF-PRE-04: complete and approve the Workforce module definition.
+This result closes only WF-PRE-03. Workforce remains **NOT READY** for migration.
+
+Post-decision status: WF-PRE-04 subsequently passed on 2026-07-23 through the approved [Workforce Module Definition](workforce-module-definition.md). The current next ordered prerequisite is WF-PRE-05.

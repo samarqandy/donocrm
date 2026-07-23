@@ -35,7 +35,7 @@ Candidate: Workforce
 ## Module Definition
 
 - [x] Workforce product scope and explicit non-goals are approved in [WF-PRE-03](workforce-product-scope.md).
-- [ ] Every mandatory section in `module-template.md` is completed; `N/A` entries include approved evidence.
+- [x] Every mandatory section in `module-template.md` is completed in the approved [Workforce Module Definition](workforce-module-definition.md); the single not-applicable external-integration entry includes evidence and approval.
 - [x] Owned and non-owned product responsibilities are unambiguous in the approved scope decision.
 - [x] All ten current use-case candidates map to an included documented operation; none is excluded.
 - [ ] The Module Readiness Gate has named approvers and a Passed decision.

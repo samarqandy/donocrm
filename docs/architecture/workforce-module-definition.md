@@ -1,0 +1,328 @@
+# Workforce Module Definition
+
+Definition ID: WF-PRE-04
+Definition status: Approved and complete
+Implementation status: Legacy; target module not created
+Module Readiness: Failed; later prerequisites remain blocking
+Last reviewed: 2026-07-23
+
+This document instantiates every mandatory section of [module-template.md](module-template.md). It distinguishes approved scope, current legacy evidence, target constraints, and decisions deliberately reserved for later Workforce preparation gates.
+
+## Module Metadata
+
+| Field | Required value |
+|---|---|
+| Module name | Workforce |
+| Bounded context | Workforce |
+| Status | Legacy |
+| Module Owner | Sukhrob Khaydarov |
+| Product Authority | Sukhrob Khaydarov |
+| Current source location | `src/services/appService.js`, `src/repositories/appRepository.js`, `src/http/api.js`, and `src/db/schema.js` |
+| Approved future source location | `src/modules/workforce/`, created only after migration authorization |
+| Last reviewed | 2026-07-23 |
+| Related decisions | [ADR-001](adrs/ADR-001-target-architecture.md), [ADR-004](adrs/ADR-004-migration-strategy.md), [ADR-005](adrs/ADR-005-bounded-context-strategy.md), [ADR-006](adrs/ADR-006-dependency-rule.md), [ADR-007](adrs/ADR-007-shared-kernel.md), [ADR-008](adrs/ADR-008-api-versioning.md), and [WF-PRE-03](workforce-product-scope.md) |
+
+`Legacy` means the capability is operational but has no compliant Workforce module boundary. A documented future path is not evidence that migration started.
+
+## Purpose
+
+Workforce manages a tenant's Teacher business profiles, employment lifecycle, working-hour availability, and coordination of Teacher portal-access outcomes. Tenant Admins manage Teachers; authenticated Teachers receive only their own safe profile and working-hours view. Academic Groups, Scheduling, Lesson Delivery, Attendance, and Lesson Finance consume stable Teacher references.
+
+The capability exists in the current Teacher HTTP routes, `AppService` Teacher/working-hours methods, `AppRepository` Teacher persistence/projections, the `teachers` and `teacher_working_hours` tables, OpenAPI, and the Teacher Management backend scenario.
+
+## Responsibilities
+
+### Owns
+
+- Teacher business identity and tenant-scoped stable reference.
+- Teacher name, contact data, specialization, employment type, hire date, workload ceiling, note, and active/inactive status.
+- Teacher create, update, soft archive, and restore lifecycle.
+- Teacher working-hour interval identity, weekday/time validity, and non-overlap policy.
+- The Workforce side of portal-access coordination without owning Identity state.
+- Teacher-safe privacy projection rules at the Workforce application boundary.
+- Workforce-owned persistence intent for `teachers` and `teacher_working_hours`.
+
+### Does not own
+
+- Tenant lifecycle or settings; owned by Platform Administration & Tenancy.
+- Credentials, password hashing, users, roles, permissions, sessions, authentication, or branch-access grants; owned by Identity & Access.
+- Branch lifecycle, defaulting authority, or organization hierarchy; owned by Organization & Branches.
+- Group lifecycle or Teacher assignment/history; owned by Academic Groups.
+- Schedule assignment, recurring workload, or conflict policy; owned by Scheduling.
+- Lesson occurrences, Teacher snapshots, homework, or lesson history; owned by Lesson Delivery.
+- Student records or roster state; owned by Student Information.
+- Attendance facts or attendance workflows; owned by Attendance.
+- Teacher rate rules, accruals, settlements, or payroll; owned by Lesson Finance & Payroll.
+- Audit-log storage, retention, or queries; owned by Audit & History.
+- Telegram or any other external-provider communication.
+
+## Bounded Context
+
+- **Context name:** Workforce.
+- **Ubiquitous language:**
+  - **Teacher:** a tenant-scoped employed or contracted educator business profile; not an authentication account.
+  - **Teacher status:** Workforce lifecycle state, currently `active` or `inactive`.
+  - **Employment type:** `full_time`, `part_time`, or `contract`.
+  - **Workload ceiling:** maximum intended weekly minutes; it is not scheduled workload.
+  - **Working hour:** one weekday clock interval during which an active Teacher is available.
+  - **Portal access:** Identity-owned ability to authenticate as a Teacher.
+  - **Portal-access coordination:** Workforce request for an Identity outcome while preserving separate ownership.
+  - **Teacher reference:** stable Teacher ID plus the minimum approved status/display facts a consumer needs.
+  - **Profile projection:** a read result composed from Workforce facts and explicitly contracted foreign facts.
+- **Upstream contexts:** Platform Administration & Tenancy for tenant context; Identity & Access for portal outcomes; Organization & Branches for Branch validity/default; Academic Groups and Lesson Delivery for archive blockers/profile facts; Scheduling and Student Information for workload/count projections; Audit & History for audit recording.
+- **Downstream contexts:** Academic Groups, Scheduling, Lesson Delivery, Attendance, Lesson Finance & Payroll, and Reporting consume Teacher references or approved projections.
+- **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at Workforce's Application boundary; published language for future Teacher reference/status contracts; composed projection for the multi-context profile.
+- **Boundary uncertainties:** exact Identity workflow, consistency/compensation, Branch contract, blocker/profile composition, public Application DTOs, event need, and migration routing remain assigned to WF-PRE-05 through WF-PRE-14.
+
+No target code module currently exists. The bounded context is implemented across legacy technical layers and cross-context SQL. The future directory will implement this bounded context; the directory itself will not define or expand it.
+
+## Public API
+
+The table accounts for required application capabilities. Names are stable capability identifiers for this definition, not approved JavaScript class or method signatures. WF-PRE-05 freezes the legacy transport contract and WF-PRE-09 approves exact Application DTOs, errors, and facade signatures.
+
+| Operation/contract | Type | Input | Output | Authorization | Compatibility owner |
+|---|---|---|---|---|---|
+| List Teachers | Query | Verified actor/tenant context | Role-safe Teacher summaries | Admin: tenant directory; Teacher: self only | Workforce Module Owner |
+| Get Teacher Profile | Query | Actor context and Teacher ID | Teacher profile plus approved composed facts | Admin: tenant Teacher; Teacher: self only | Workforce Module Owner |
+| Create Teacher | Command | Actor context and Teacher profile/access intent | Created Teacher summary | Admin only | Workforce Module Owner |
+| Update Teacher | Command | Actor context, Teacher ID, profile/access intent | Updated Teacher summary | Admin only | Workforce Module Owner |
+| Archive Teacher | Command | Actor context and Teacher ID | Inactive Teacher summary | Admin only; blockers apply | Workforce Module Owner |
+| Restore Teacher | Command | Actor context and Teacher ID | Active Teacher summary | Admin only | Workforce Module Owner |
+| Reset Teacher Password | Facade | Actor context, Teacher ID, new credential intent | Success acknowledgement | Admin only | Workforce for route compatibility; Identity for credential semantics |
+| List Working Hours | Query | Verified actor/tenant context | Working-hour summaries | Admin: tenant; Teacher: self only | Workforce Module Owner |
+| Create Working Hour | Command | Actor context, Teacher ID, weekday/time/Branch reference | Created working-hour summary | Current `lessons.manage` permission | Workforce Module Owner |
+| Delete Working Hour | Command | Actor context and Working Hour ID | Deleted working-hour summary | Admin only | Workforce Module Owner |
+| Teacher Reference/Status | Query contract | Tenant and Teacher ID | Minimum approved Teacher reference/status | Approved in-process consumers only | Workforce Module Owner |
+
+The Teacher reference/status contract is required but not yet defined; WF-PRE-09 remains blocking. In the target source tree, only the declared Workforce public facade/contract package may be imported by another module. `domain/`, `application/`, `infrastructure/`, `http/`, adapter, mapper, and repository implementation packages are private.
+
+## Use Cases
+
+This matrix defines current product intent. WF-PRE-06 must expand it into an approved behavior/test matrix, and WF-PRE-11 must approve target transaction and idempotency semantics.
+
+| Use case | Actor/trigger | Preconditions | Outcome | Failure cases | Current transaction/idempotency |
+|---|---|---|---|---|---|
+| List Teachers | Admin or Teacher | Authenticated, active tenant | Tenant directory or safe self row | Unauthorized/tenant failure | Read-only; no idempotency concern |
+| Get Teacher Profile | Admin or Teacher | Teacher exists in tenant; Teacher actor requests self | Profile, hours, and composed facts | `403` other-profile; `404` missing | Read-only composed query |
+| Create Teacher | Admin | Valid profile, Branch reference, access intent, unique username when access requested | Active Teacher; optional portal outcome | Validation; `409` username; Identity/infrastructure failure | Current SQLite transaction spans Teacher and Identity; no request idempotency |
+| Update Teacher | Admin | Existing Teacher; valid profile/access transition | Updated profile and coordinated access state | `404`; validation; `409` username; Identity failure | Current SQLite transaction spans Teacher and Identity; no request idempotency |
+| Archive Teacher | Admin | Existing Teacher; zero active groups and upcoming lessons | Teacher inactive; portal disabled/sessions invalidated | `404`; `409` blocker; Identity/infrastructure failure | Blocker reads precede current cross-context SQLite transaction |
+| Restore Teacher | Admin | Existing inactive Teacher | Teacher active; portal state unchanged | `404`; persistence failure | Current single Workforce-table update; retry outcome not specified |
+| Reset Teacher Password | Admin | Configured portal identity; credential length valid | Credential replaced; sessions invalidated | Validation; `404` no portal access; Identity failure | Current Identity update then session delete without explicit transaction; no idempotency |
+| List Working Hours | Admin or Teacher | Authenticated active tenant | Tenant intervals or self intervals | Unauthorized/tenant failure | Read-only |
+| Create Working Hour | Authorized actor | Existing active Teacher; valid weekday/time; no overlap | New interval | `404` Teacher; validation; `409` overlap; persistence failure | Check then insert; concurrency/idempotency not specified |
+| Delete Working Hour | Admin | Interval exists in tenant | Interval removed and returned | `404`; persistence failure | Read then delete; no explicit transaction/idempotency |
+
+## Entities
+
+These are approved target domain meanings; implementation and persistence-independent tests do not yet exist.
+
+| Entity/Aggregate Root | Identity | Lifecycle | Owned invariants | Persistence independence evidence |
+|---|---|---|---|---|
+| **Teacher (Aggregate Root)** | Tenant-scoped `TeacherId` | Created active; updated; archived to inactive; restored to active | Valid employment type/status; workload ceiling 60–4,800 minutes; required name; stable identity; portal state is not embedded | Target definition only; Domain tests required by WF-PRE-13 |
+| **TeacherWorkingHour (Aggregate Root)** | Tenant-scoped `WorkingHourId`, referencing `TeacherId` | Created and deleted | Weekday 1–7; normalized start/end; end after start; no overlap for same Teacher/weekday; creation only for active Teacher | Target definition only; Domain and repository contract tests required by WF-PRE-13 |
+
+`BranchId`, tenant identity, Group IDs, Lesson IDs, User IDs, and consumer references are external identities, not Workforce entities.
+
+## Value Objects
+
+| Value object | Meaning | Validity/equality rules | Serialization boundary |
+|---|---|---|---|
+| `TeacherId` | Stable Workforce identity | Non-empty opaque string; equal by exact value within tenant | HTTP/persistence adapters map strings |
+| `WorkingHourId` | Stable interval identity | Non-empty opaque string; equal by exact value within tenant | HTTP/persistence adapters map strings |
+| `TeacherName` | Required display/business name | Trimmed, non-empty; exact maximum remains contract decision | Transport/persistence mapper |
+| `EmploymentType` | Employment relationship | Exactly `full_time`, `part_time`, or `contract` | String at adapters |
+| `TeacherStatus` | Workforce lifecycle state | Exactly `active` or `inactive`; transitions through lifecycle use cases | String at adapters |
+| `WorkloadCeiling` | Maximum weekly workload | Integer minutes from 60 through 4,800 | Legacy HTTP maps `maxWeeklyHours`; persistence uses minutes |
+| `Weekday` | Weekly availability day | Integer-domain meaning 1–7; legacy serialization is string | Adapter maps legacy string |
+| `ClockInterval` | One local weekday time interval | Normalized `HH:mm`; start before end; equal by start/end | Adapter maps two legacy fields |
+| `BranchReference` | Organization-owned Branch reference | Empty/default or opaque Branch ID according to approved Organization contract | Application boundary and persistence mapper |
+
+Tenant identity is supplied in verified Application context and is not admitted to Shared Kernel by this definition.
+
+## Domain Services
+
+| Domain service | Domain policy | Why behavior does not belong to one entity/value object | Dependencies |
+|---|---|---|---|
+| `WorkingHourOverlapPolicy` | Candidate interval must not intersect another interval for the same Teacher and weekday | The rule compares a collection of intervals rather than one interval alone | `ClockInterval` and existing interval values only |
+
+Archive blocker evaluation and multi-context profile composition are Application orchestration, not Domain services, because their facts belong to other contexts.
+
+## Repositories
+
+The following are required focused capabilities, not final port signatures. WF-PRE-10 approves exact port division and WF-PRE-13 supplies contract suites.
+
+| Port | Layer owning port | Aggregate/query | Required operations | Implementing adapters | Contract tests |
+|---|---|---|---|---|---|
+| `TeacherRepository` | Domain | Teacher aggregate | Find tenant Teacher; create/save; persist lifecycle state | Current: methods inside legacy `AppRepository`; target adapter absent | Missing; WF-PRE-13 |
+| `WorkingHourRepository` | Domain | TeacherWorkingHour aggregate | List by tenant/Teacher; detect overlap; add; find/delete | Current: methods inside legacy `AppRepository`; target adapter absent | Missing; WF-PRE-13 |
+| `TeacherDirectoryQuery` | Application | Teacher list projection | Role-safe tenant/self list with stable ordering | Current: legacy cross-context SQL; target adapter/composition absent | Missing; WF-PRE-13 |
+| `TeacherProfileQuery` | Application | Teacher detail projection | Base profile and approved composed facts | Current: legacy cross-context SQL; target adapter/composition absent | Missing; WF-PRE-13 |
+
+Identity, Branch, blocker, audit, clock, ID, and unit-of-work capabilities are Application ports or public module contracts, not Workforce repositories. A single broad replacement for `AppRepository` is forbidden.
+
+## Events
+
+### Published events
+
+None in current behavior. Repository search and readiness evidence show no Workforce domain or integration event. No event is approved by this definition; WF-PRE-12 must decide each evidenced consumer need before any event name/version exists.
+
+### Consumed events
+
+None in current behavior. Current Teacher workflows are HTTP-triggered and synchronous. Event consumption may not be added without WF-PRE-12 evidence and approval.
+
+## External Integrations
+
+| System/provider | Purpose | Port owner | Adapter | Timeout/retry | Failure mode | Sensitive data |
+|---|---|---|---|---|---|---|
+| None | Workforce has no direct third-party provider in current scope | Not applicable; approved by Architecture Owner because repository evidence shows no provider call | None | Not applicable | Not applicable | None |
+
+Identity & Access is an internal bounded context, not an external integration. Password hashing is Identity-owned infrastructure and must not enter Workforce Domain/Application.
+
+## Dependencies
+
+### Allowed dependencies
+
+Exact contract signatures remain gated; the direction and purpose are approved.
+
+| Dependency | Contract used | Direction | Synchronous/asynchronous | Rationale |
+|---|---|---|---|---|
+| Platform Administration & Tenancy | Verified tenant/actor context | Workforce consumer → Platform provider | Synchronous context | Tenant isolation and active-tenant authority |
+| Identity & Access | Provision/access-state/reset/session outcome | Workforce consumer → Identity provider | Synchronous workflow; consistency open | Preserve portal outcomes without credential ownership |
+| Organization & Branches | Branch validity/default reference | Workforce consumer → Organization provider | Synchronous query | Validate external Branch reference |
+| Academic Groups | Active assignment/archive blocker and profile summary | Workforce consumer → Groups provider | Synchronous query/composition | Archive safety and compatible profile |
+| Scheduling | Scheduled workload projection | Workforce consumer → Scheduling provider | Synchronous query/composition | Compatible workload projection |
+| Lesson Delivery | Upcoming-lesson blocker and completed/upcoming projection | Workforce consumer → Lesson provider | Synchronous query/composition | Archive safety and compatible profile |
+| Student Information | Active-student count projection | Workforce consumer → Student provider | Synchronous composed query | Compatible directory projection |
+| Audit & History | Audit intent | Workforce consumer → Audit provider | Mode pending WF-PRE-07/12 | Preserve mutation accountability |
+| Approved downstream consumers | Teacher reference/status contract | Consumer → Workforce provider | Synchronous query unless WF-PRE-12 approves facts | Stable Teacher references |
+
+### Forbidden or removed dependencies
+
+- Workforce Domain/Application importing legacy `AppService`, `AppRepository`, `db/client`, HTTP helpers, or SQL.
+- Any Workforce package importing another module's repository, Infrastructure, private Domain, or database model.
+- Workforce adapters reading or writing `users`, `sessions`, `user_roles`, `user_branch_access`, `branches`, `groups`, `group_teacher_assignments`, `schedules`, `lessons`, `students`, finance, or audit tables as a target design.
+- Other modules reading `teachers` or `teacher_working_hours` directly after their approved migration increment.
+- Teacher or any Workforce entity entering Shared Kernel.
+- Direct external-provider, password-hashing, environment, migration-router, or outbox implementation imports in Domain/Application.
+- Cyclic dependency from Workforce to downstream consumer internals.
+
+### Temporary exceptions
+
+| Exception | Owner | Expiry/removal condition | Compensating control |
+|---|---|---|---|
+| None approved | Sukhrob Khaydarov | Any required target deviation must use the formal exception process before implementation | Required architecture no-growth check; legacy baseline remains visible |
+
+Current legacy cross-table behavior is classified debt, not a new-module exception.
+
+## Database Ownership
+
+| Table/view/stream | Ownership | Authoritative store | Tenant key | Aggregate/projection | Writers | Readers |
+|---|---|---|---|---|---|---|
+| `teachers` | Owned | SQLite | `tenant_id` | Teacher aggregate persistence | Current legacy `AppRepository`; future Workforce adapter only after authorization | Workforce contracts; current legacy consumers during migration |
+| `teacher_working_hours` | Owned | SQLite | `tenant_id` | TeacherWorkingHour aggregate persistence | Current legacy `AppRepository`; future Workforce adapter only after authorization | Workforce contracts; current legacy consumers during migration |
+| `tenants` | External: Platform | SQLite | `id` | Tenant reference | Platform only | Verified context/reference contract |
+| `users`, `sessions`, `user_roles`, `user_branch_access` | External: Identity | SQLite | `tenant_id` where present | Portal-access state | Identity only in target | Identity public contract |
+| `branches` | External: Organization | SQLite | `tenant_id` | Branch reference/default | Organization only | Organization public contract |
+| `groups`, `group_teacher_assignments` | External: Academic Groups | SQLite | `tenant_id` | Assignment/blocker/projection | Academic Groups only | Groups public contract/composition |
+| `schedules` | External: Scheduling | SQLite | `tenant_id` | Workload/assignment projection | Scheduling only | Scheduling public contract/composition |
+| `lessons` | External: Lesson Delivery | SQLite | `tenant_id` | Blocker/history/projection | Lesson Delivery only | Lesson public contract/composition |
+| `students` | External: Student Information | SQLite | `tenant_id` | Count projection | Student Information only | Student public contract/composition |
+| `teacher_rate_rules`, `teacher_accruals`, settlement data | External: Lesson Finance & Payroll | SQLite | `tenant_id` | Teacher-reference consumers | Finance only | Workforce Teacher reference only |
+| `audit_logs` | External: Audit & History | SQLite | `tenant_id` | Immutable audit record | Audit only in target | Audit contract |
+
+Current constraints and decisions:
+
+- `teachers.tenant_id` references `tenants(id)` with cascade deletion; `teacher_working_hours` references both Tenant and Teacher.
+- Current schemas do not enforce a composite `(tenant_id, teacher_id)` foreign key. Tenant consistency is enforced by queries and must receive explicit contract/isolation tests.
+- `branch_id` is not currently protected by a composite foreign key; validation/default behavior is an Organization contract decision.
+- Teacher IDs are globally keyed strings and currently equal a configured Teacher User ID. Shared identity value does not imply shared aggregate ownership.
+- Current create/update/archive transactions write Workforce and Identity tables together. Reset and working-hour check/write sequences have atomicity/concurrency gaps. WF-PRE-11 owns the target consistency decision.
+- Teacher archive is soft. Working-hour deletion is hard, and current records have no separate retention/history policy.
+- Tenant deletion can cascade owned rows under Platform authority. No independent Workforce hard-delete or retention authority is approved.
+- Group/Schedule/Lesson `teacher_id` fields are consumer references or snapshots, not duplicate Workforce profile ownership.
+- No schema or authority change is included in the first extraction.
+
+## API Endpoints
+
+All endpoints are legacy compatibility adapters. Exact field, error, ordering, and status baselines remain WF-PRE-05 work.
+
+| Method/path | Application use case | Request/response contract | Auth/permission | Version/status | OpenAPI evidence |
+|---|---|---|---|---|---|
+| `GET /api/teachers` | List Teachers | No body; `{ teachers: Teacher[] }` | Authenticated; role-sensitive self projection | Legacy stable | `docs/openapi.yaml` `/api/teachers` |
+| `POST /api/teachers` | Create Teacher | Legacy profile/access body; Teacher | Admin | Legacy stable | `docs/openapi.yaml` `/api/teachers` |
+| `GET /api/teachers/{teacherId}` | Get Teacher Profile | Path ID; profile/details | Admin or self Teacher | Legacy stable | `docs/openapi.yaml` `/api/teachers/{teacherId}` |
+| `PUT /api/teachers/{teacherId}` | Update Teacher | Path ID plus legacy profile/access body; Teacher | Admin | Legacy stable | `docs/openapi.yaml` `/api/teachers/{teacherId}` |
+| `DELETE /api/teachers/{teacherId}` | Archive Teacher | Path ID; inactive Teacher | Admin | Legacy stable | `docs/openapi.yaml` `/api/teachers/{teacherId}` |
+| `POST /api/teachers/{teacherId}/restore` | Restore Teacher | Path ID; active Teacher | Admin | Legacy stable | `docs/openapi.yaml` restore path |
+| `POST /api/teachers/{teacherId}/reset-password` | Reset Teacher Password | Path ID plus new password; acknowledgement | Admin | Legacy stable | `docs/openapi.yaml` reset-password path |
+| `GET /api/teacher-working-hours` | List Working Hours | No body; `{ workingHours: WorkingHour[] }` | Authenticated; Teacher self-scoped | Legacy stable | `docs/openapi.yaml` `/api/teacher-working-hours` |
+| `POST /api/teacher-working-hours` | Create Working Hour | Legacy interval body; WorkingHour | `lessons.manage` | Legacy stable | `docs/openapi.yaml` `/api/teacher-working-hours` |
+| `DELETE /api/teacher-working-hours/{workingHourId}` | Delete Working Hour | Path ID; deleted WorkingHour | Admin | Legacy stable | `docs/openapi.yaml` working-hour item path |
+
+HTTP routes do not define ownership. ADR-008 remains Proposed, so no `/api/v1` route is authorized.
+
+## Tests
+
+| Test type | Required behavior | Evidence/path | Status |
+|---|---|---|---|
+| Domain | Teacher lifecycle, value rules, interval validity/overlap | No Workforce Domain package/test | Missing; WF-PRE-13 |
+| Use case | Ten operations, authorization, semantic failures, provider failures | Current behavior is embedded in `scripts/test-backend-logic.js` | Partial legacy coverage; dedicated tests missing |
+| Repository contract | Equivalent SQLite/target adapter behavior | No focused ports/adapters | Missing; WF-PRE-13 |
+| Integration | Teacher/Identity transaction and SQLite behavior | Teacher Management scenario in `scripts/test-backend-logic.js` | Passing legacy characterization |
+| HTTP contract | Ten routes, DTO privacy, validation/errors | Teacher Management and RBAC scenarios; OpenAPI | Partial; exact matrix/comparison missing |
+| Tenant isolation | Two-tenant reads and cross-ID attempts for every operation | General repository JOIN scenario follows Teacher test | Partial; per-operation matrix missing |
+| Migration | Route parity, shadow comparison, authority, rollback/reconciliation | No Workforce migration harness/runbook | Missing; WF-PRE-13/14 |
+| End-to-end | Profile, access, workload, hours, archive, history | `scripts/test-backend-logic.js` Teacher Management scenario | Passing: `npm run test:backend` expects 20/20 |
+| Architecture | No legacy growth or forbidden module edges | `npm run architecture:enforce` and required CI check | Passing baseline; Workforce-specific checks missing |
+
+Current objective commands are `npm run test:backend` and `npm run architecture:enforce`. Their success characterizes legacy behavior only and does not pass Module Readiness.
+
+## Migration Status
+
+| Field | Current evidence |
+|---|---|
+| Current architecture | Legacy HTTP branches call Teacher methods in shared `AppService` and shared cross-context `AppRepository` |
+| Current authority by tenant/data set | SQLite legacy path is authoritative for every tenant and all Teacher/working-hour operations |
+| Target authority | Workforce module through an approved SQLite compatibility adapter for first extraction; no transfer is authorized |
+| Migration phase | Not started; scope and module definition characterized only |
+| Backfill/parity state | No Workforce backfill; parity plan/harness missing |
+| Canary scope | None |
+| Rollback trigger and path | Not approved; legacy remains sole active path |
+| Legacy removal criterion | Approved cutover, observation, zero-use, reconciliation, rollback-window closure, and Legacy Retirement Gate |
+| Blocking decisions | WF-PRE-05 through WF-PRE-14 and final WF-PRE-16 |
+
+Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not authorized by this definition.
+
+## Future Work
+
+| Item | Reason/evidence | Dependency/decision | Priority authority | Status |
+|---|---|---|---|---|
+| Freeze ten HTTP/DTO/error/auth contracts | Current OpenAPI and code are incomplete as a formal baseline | WF-PRE-05 | Product/Quality | Next |
+| Approve behavior/test matrix | Legacy test is broad, not operation-complete | WF-PRE-06 | Quality/Module Owner | Open |
+| Decide cross-context seams | Current reads/writes cross six contexts | WF-PRE-07 | Architecture/affected owners | Open |
+| Approve access manifest | Conceptual ownership is not machine-enforced | WF-PRE-08 | Data/Architecture | Open |
+| Approve public Application contracts | No Workforce facade/reference contract exists | WF-PRE-09 | Module Owner/consumers | Open |
+| Approve focused ports | Current `AppRepository` is broad | WF-PRE-10 | Architecture/Module Owner | Open |
+| Approve consistency model | Teacher/Identity operations span authority | WF-PRE-11 | Architecture/Data/Security | Open |
+| Decide event requirements | No event or evidenced async need is approved | WF-PRE-12 | Architecture/consumers | Open |
+| Approve test/parity plan | Port, tenant, parity, rollback evidence is missing | WF-PRE-13 | Quality | Open |
+| Approve migration/rollback runbook | No cohort, threshold, routing, reconciliation, or drill exists | WF-PRE-14 | Operations/Data/Architecture | Open |
+| Pass final exit criteria | Migration must remain unauthorized until every mandatory criterion passes | WF-PRE-16 | Architecture and specialist roles | Open |
+
+Future work is preparation, not a feature or extraction commitment.
+
+## Architecture Approval
+
+| Gate | Decision | Approver | Date | Evidence/actions |
+|---|---|---|---|---|
+| Module Definition Completeness | Passed | Sukhrob Khaydarov, Architecture Owner and Workforce Module Owner | 2026-07-23 | Every mandatory template section is present; current/target/open states and owners are explicit |
+| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-23 | WF-PRE-05 through WF-PRE-14 and WF-PRE-16 remain blocking |
+| Migration Cutover | Pending | Architecture, Data, Operations, Security, and Module Owner roles | 2026-07-23 | No target path, parity, cohort, thresholds, or rollback drill |
+| Legacy Retirement | Pending | Architecture, Data, and Module Owner roles | 2026-07-23 | No migration or zero-use/observation evidence |
+
+## WF-PRE-04 Result
+
+**WF-PRE-04: PASSED — module definition completeness only.**
+
+The module definition is complete, evidence-linked, and owner-approved. This decision does not pass Module Readiness, authorize source creation, or resolve the later contract, seam, data-access, port, consistency, event, test, and runbook gates. The next ordered task is WF-PRE-05.
