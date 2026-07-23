@@ -65,10 +65,10 @@ Candidate: Workforce
 
 ## API Compatibility
 
-- [ ] All ten existing HTTP operations are represented in OpenAPI.
-- [ ] Request fields, response fields, status codes, semantic errors, authorization, ordering, and privacy projections have baseline contract evidence.
+- [x] All ten existing HTTP operations are represented in OpenAPI and accounted for by [WF-PRE-05](workforce-contract-freeze.md).
+- [x] Request fields, exact response fields, status codes, semantic errors, authorization, ordering, limits, and privacy projections have an approved [machine-readable baseline](../../architecture/workforce-contract-baseline.json).
 - [ ] An automated or reviewed contract comparison reports zero breaking change.
-- [ ] ADR-008 constraints are respected: existing `/api` remains compatible while versioning is Proposed.
+- [x] ADR-008 constraints are respected: existing `/api` is frozen as the compatibility surface while versioning remains Proposed.
 
 **Pass measure:** 10/10 operations covered and zero unapproved breaking changes.
 

@@ -11,6 +11,7 @@
     "architecture:parity": "node scripts/architecture/parity-report.js --mode observe",
     "architecture:observe": "node scripts/architecture/run-observe.js",
     "architecture:enforce": "node scripts/architecture/run-enforce.js",
+    "architecture:workforce-contract": "node scripts/architecture/verify-workforce-contract-freeze.js",
     "architecture:contract:fixture": "node scripts/architecture/test-repository-contract-fixture.js && node scripts/architecture/test-read-contract-parity.js && node scripts/architecture/test-find-lesson-parity.js && node scripts/architecture/test-has-active-settlement-parity.js && node scripts/architecture/test-reason-audit-parity.js && node scripts/architecture/test-replace-for-lesson-parity.js && node scripts/architecture/test-reopen-lesson-parity.js && node scripts/architecture/test-relay-ordering-parity.js",
     "postgres:schema": "node scripts/postgres-schema.js",
     "attendance:backfill": "node scripts/attendance-backfill.js",
