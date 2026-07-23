@@ -34,10 +34,10 @@ Candidate: Workforce
 
 ## Module Definition
 
-- [ ] Workforce product scope and explicit non-goals are approved.
+- [x] Workforce product scope and explicit non-goals are approved in [WF-PRE-03](workforce-product-scope.md).
 - [ ] Every mandatory section in `module-template.md` is completed; `N/A` entries include approved evidence.
-- [ ] Owned and non-owned responsibilities are unambiguous.
-- [ ] All ten current use-case candidates map to a documented operation or approved exclusion.
+- [x] Owned and non-owned product responsibilities are unambiguous in the approved scope decision.
+- [x] All ten current use-case candidates map to an included documented operation; none is excluded.
 - [ ] The Module Readiness Gate has named approvers and a Passed decision.
 
 **Pass measure:** 100% template-section completion and 10/10 current operations accounted for.
@@ -55,11 +55,11 @@ Candidate: Workforce
 
 ## Data and Transactions
 
-- [ ] `teachers` and `teacher_working_hours` are recorded as Workforce-owned.
+- [x] `teachers` and `teacher_working_hours` are approved as Workforce-owned authoritative data.
 - [ ] Every current foreign table read/write has a documented target owner and transition treatment.
 - [ ] Teacher/Identity create, update, access-disable, archive, password-reset, and session-invalidation consistency is approved.
 - [ ] Current and target authority is explicit for every tenant and operation.
-- [ ] No database schema change is included in the first extraction plan.
+- [x] Database schema and authority changes are explicit first-extraction non-goals.
 
 **Pass measure:** zero unowned tables and zero ambiguous authoritative writers in planned scope.
 
@@ -107,7 +107,7 @@ Candidate: Workforce
 
 ## Final Approval
 
-- [ ] Product Authority approves scope and compatibility.
+- [x] Product Authority approves WF-PRE-03 scope and preservation of the current ten-operation compatibility surface.
 - [ ] Workforce Module Owner approves module definition and test evidence.
 - [ ] Identity and Organization owners approve their contracts.
 - [ ] Data, Security, Quality, and Operations owners approve applicable evidence.

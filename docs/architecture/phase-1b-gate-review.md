@@ -16,7 +16,7 @@ Phase 1B has established:
 - an ordered preparation/extraction/later backlog;
 - measurable migration entry criteria.
 
-Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline) and WF-PRE-15 (blocking architecture no-growth CI). These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
+Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline), WF-PRE-03 (approved Workforce product scope and explicit non-goals), and WF-PRE-15 (blocking architecture no-growth CI). These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
 
 No runtime behavior, API, schema, business logic, module, use case, or existing functionality was changed.
 
@@ -62,7 +62,7 @@ The register preserves every blocker from the original gate review and marks sub
 1. **Resolved 2026-07-22 by WF-PRE-01:** Architecture, Workforce, Product, Identity, Organization, Data, Operations, Quality, and Security authority is assigned to Sukhrob Khaydarov under Single-Founder Governance.
 2. **Resolved 2026-07-23 by WF-PRE-02:** the Legacy Freeze has an approved baseline commit, signed 68-fingerprint inventory, configuration hash, and empty active exception register.
 3. Workforce has no completed module definition or passed Module Readiness Gate.
-4. Product scope and explicit non-goals for the Workforce extraction are not approved.
+4. **Resolved 2026-07-23 by WF-PRE-03:** Product Authority approved Teacher profile/lifecycle, working hours, portal-access coordination, all ten current operations, compatibility commitments, and explicit first-extraction non-goals.
 5. Identity provisioning, access disablement, password reset, session invalidation, and failure/compensation semantics are unresolved.
 6. Branch validation/defaulting and Group/Lesson archive-blocker/profile projection contracts are unresolved.
 7. Focused repository/application ports and public internal contracts are undefined.
@@ -74,6 +74,6 @@ The register preserves every blocker from the original gate review and marks sub
 
 ## Required Next Decision
 
-WF-PRE-01, WF-PRE-02, and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-03, approval of Workforce product scope. WF-PRE-03 through WF-PRE-14 and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
+WF-PRE-01, WF-PRE-02, WF-PRE-03, and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-04, completion of the Workforce module definition. WF-PRE-04 through WF-PRE-14 and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
 
 This gate does not authorize first-module migration.

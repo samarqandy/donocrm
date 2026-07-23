@@ -4,6 +4,12 @@ Status: Candidate selected; not ready for migration
 Assessment date: 2026-07-22
 Candidate source: [migration-candidate-evaluation.md](migration-candidate-evaluation.md)
 
+## Post-Review Decision Update
+
+WF-PRE-03 passed on 2026-07-23. The [Workforce Product Scope Decision](workforce-product-scope.md) now approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals.
+
+This resolves the product-scope blocker only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing module definition, seams, ports, contracts, transaction decisions, test/parity plan, and runbook keep the candidate not ready.
+
 ## Scope of Review
 
 This review assesses the Workforce bounded context currently implemented as Teacher Management. It does not define new behavior or authorize extraction.
@@ -20,7 +26,7 @@ Repository evidence identifies these current capability areas:
 
 ## Business Boundaries
 
-### Proposed owned responsibility based on current context map
+### Approved product responsibility
 
 - Teacher business profile and lifecycle.
 - Employment type, specialization, contact data, hire date, workload ceiling, and note.
@@ -28,7 +34,7 @@ Repository evidence identifies these current capability areas:
 - Stable Teacher identity/reference for downstream contexts.
 - Coordination of portal-access requests without owning credentials or sessions.
 
-Evidence: `bounded-contexts.md` Workforce section; `src/db/schema.js:42-56`, `:535-545`; `AppService:472-591`, `:767-809`.
+Approval: [WF-PRE-03](workforce-product-scope.md). Evidence: `bounded-contexts.md` Workforce section; `src/db/schema.js:42-56`, `:535-545`; `AppService:472-591`, `:767-809`.
 
 ### Explicitly outside Workforce ownership
 
@@ -44,7 +50,7 @@ Evidence: `bounded-contexts.md` Workforce section; `src/db/schema.js:42-56`, `:5
 
 ### Boundary readiness
 
-The conceptual boundary is documented, but current transactions cross Workforce and Identity. Read projections also join Groups, Students, Schedules, Lessons, and Users. Those seams must be replaced by public contracts or explicitly composed projections before extraction can be approved.
+The product boundary and non-ownership list are approved, but current transactions cross Workforce and Identity. Read projections also join Groups, Students, Schedules, Lessons, and Users. Those technical seams must be replaced by public contracts or explicitly composed projections before extraction can be approved.
 
 ## Current Application Use Cases
 
@@ -63,7 +69,7 @@ These are observable legacy operations, not extracted use-case implementations:
 | Create Working Hour | Validate teacher/status/time/weekday/overlap | `AppService:772-798`; `AppRepository:5005-5030` |
 | Delete Working Hour | Tenant-scoped deletion and audit | `AppService:801-809`; `AppRepository:5033-5037` |
 
-Names and boundaries must be approved in the module definition before implementation. This inventory does not prescribe class names.
+The ten product operations and their inclusion are approved by WF-PRE-03. Exact Application contract names and technical boundaries must still be approved in the module definition before implementation. This inventory does not prescribe class names.
 
 ## Repository Ports
 
@@ -253,4 +259,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. The required preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
+Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
