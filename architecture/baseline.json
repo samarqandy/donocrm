@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "status": "approved",
-  "mode": "observe",
+  "mode": "enforce",
   "capturedAt": "2026-07-23",
   "commit": "3bc3097e2903b4cc917807f9b799ca7628f54617",
   "approvedBy": "architecture-owner",
@@ -89,6 +89,7 @@
     "Candidate fingerprints were refreshed against the 68-finding scanner output on 2026-07-23.",
     "Configuration hash is captured and bound to implementation commit 3bc3097e2903b4cc917807f9b799ca7628f54617.",
     "Approved by architecture-owner under the Single-Founder Governance model on 2026-07-23.",
-    "Approved fingerprints remain visible technical debt; any new fingerprint is merge-blocking in enforce mode."
+    "Approved fingerprints remain visible technical debt; any new fingerprint is merge-blocking in enforce mode.",
+    "Blocking GitHub run 30027584361 passed for operational commit 568fe4c17dec0aa4a96c34d6c39340edb91065b1."
   ]
 }

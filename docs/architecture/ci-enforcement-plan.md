@@ -1,13 +1,13 @@
 # DONOCRM CI Architecture Enforcement Plan
 
-Status: Proposed provider-neutral plan; no CI configuration implemented in Phase 1A
+Status: Stage 3 blocking no-growth enforcement active on GitHub Actions
 Related documents: [Architecture Test Plan](architecture-test-plan.md), [Architecture Enforcement Report](architecture-enforcement-report.md), [Architecture Governance](architecture-governance.md)
 
 ## Current CI State
 
-No GitHub Actions, GitLab CI, Jenkins, or Azure Pipelines configuration was found in the repository locations inspected during Phase 1A. `package.json` has a `test:architecture` command, but it runs behavioral Attendance and Students checks rather than static architecture enforcement.
+GitHub Actions runs the required `architecture-enforce-blocking` job on pull requests and `main`. It enforces the approved 68-fingerprint baseline, runs deterministic SQLite/PostgreSQL repository fixtures including relay ordering, and retains artifacts for 30 days.
 
-The CI provider, branch-protection authority, artifact-retention location, and accountable CI owner are missing decisions. This plan therefore defines required behavior without inventing a provider.
+`operations-owner` is the accountable CI owner. `main` branch protection requires the strict check for administrators and ordinary authors, with linear history, resolved conversations, no force-push, and no deletion. Run `30027584361` is the first successful blocking evidence for commit `568fe4c17dec0aa4a96c34d6c39340edb91065b1`.
 
 ## Enforcement Strategy
 

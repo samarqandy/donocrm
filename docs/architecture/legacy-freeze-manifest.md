@@ -1,6 +1,6 @@
 # DONOCRM Legacy Freeze Manifest
 
-Status: Proposed semantic manifest; baseline commit and owner signature pending
+Status: Approved semantic manifest; blocking no-growth baseline active
 Assessment date: 2026-07-22
 Policy: [Legacy Freeze Policy](legacy-policy.md)
 Approval authority: Sukhrob Khaydarov
@@ -72,14 +72,14 @@ This manifest is the human-readable source for the future machine-readable no-gr
 
 | Field | Current value |
 |---|---|
-| Baseline commit | **Pending** |
-| Semantic fingerprint artifact | **Pending** |
-| Architecture Owner approval | **Pending** |
-| Module/Data/Security review | **Pending as applicable** |
-| CI configuration hash | **Pending** |
-| Effective blocking date | **Pending** |
+| Baseline commit | `3bc3097e2903b4cc917807f9b799ca7628f54617` |
+| Semantic fingerprint artifact | 68 approved fingerprints in `architecture/baseline.json`; remote run `30027584361` |
+| Architecture Owner approval | `architecture-owner`, 2026-07-23 |
+| Module/Data/Security review | Attendance/Data/Security authority recorded under Single-Founder Governance |
+| CI configuration hash | `2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d` |
+| Effective blocking date | 2026-07-23; required check `architecture-enforce-blocking` |
 
-Until all fields are recorded, this manifest defines manual review scope but cannot serve as an authoritative automated no-growth comparison.
+The manifest is the authoritative automated no-growth comparison. Approved fingerprints remain visible debt; any unbaselined fingerprint fails the required check.
 
 ## State Transition Rules
 

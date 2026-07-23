@@ -16,6 +16,8 @@ Phase 1B has established:
 - an ordered preparation/extraction/later backlog;
 - measurable migration entry criteria.
 
+Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline) and WF-PRE-15 (blocking architecture no-growth CI). These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
+
 No runtime behavior, API, schema, business logic, module, use case, or existing functionality was changed.
 
 ## Candidate Decision
@@ -58,7 +60,7 @@ The recommended candidate is selected, but real module migration cannot begin.
 The register preserves every blocker from the original gate review and marks subsequent resolution explicitly:
 
 1. **Resolved 2026-07-22 by WF-PRE-01:** Architecture, Workforce, Product, Identity, Organization, Data, Operations, Quality, and Security authority is assigned to Sukhrob Khaydarov under Single-Founder Governance.
-2. The Legacy Freeze has no approved baseline commit, signed fingerprint inventory, or operational exception register.
+2. **Resolved 2026-07-23 by WF-PRE-02:** the Legacy Freeze has an approved baseline commit, signed 68-fingerprint inventory, configuration hash, and empty active exception register.
 3. Workforce has no completed module definition or passed Module Readiness Gate.
 4. Product scope and explicit non-goals for the Workforce extraction are not approved.
 5. Identity provisioning, access disablement, password reset, session invalidation, and failure/compensation semantics are unresolved.
@@ -66,12 +68,12 @@ The register preserves every blocker from the original gate review and marks sub
 7. Focused repository/application ports and public internal contracts are undefined.
 8. Table ownership is documented conceptually but no approved machine-readable access/exception manifest exists.
 9. No Workforce-specific contract, parity, tenant-isolation, adapter, or rollback test plan has been approved as executable evidence.
-10. Structural no-growth architecture enforcement is not active in CI, and no CI owner/provider is recorded.
+10. **Resolved 2026-07-23 by WF-PRE-15:** structural no-growth enforcement is a required GitHub check, with Operations ownership and protected `main`.
 11. No Workforce migration/canary/authority/reconciliation/rollback runbook exists.
 12. The measurable exit checklist has not been completed or approved.
 
 ## Required Next Decision
 
-WF-PRE-01 is complete. The next recommended preparation step is WF-PRE-02, approval of the Legacy Freeze baseline. WF-PRE-02 through WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
+WF-PRE-01, WF-PRE-02, and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-03, approval of Workforce product scope. WF-PRE-03 through WF-PRE-14 and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
 
 This gate does not authorize first-module migration.

@@ -1,6 +1,6 @@
 # DONOCRM Legacy Freeze Report
 
-Status: Phase 1B classification baseline pending owner approval
+Status: Phase 1B classification baseline approved; blocking no-growth enforcement active
 Assessment date: 2026-07-22
 Policy: [legacy-policy.md](legacy-policy.md)
 

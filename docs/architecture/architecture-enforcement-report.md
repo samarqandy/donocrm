@@ -6,6 +6,8 @@ Scope: Current repository structure and approved architecture documents
 
 Closure note: The Phase 1B authorization dated 2026-07-22 explicitly declares Phase 1A complete. The analytical and planning deliverables are therefore closed; the unresolved gate items recorded below remain valid and are carried into the Phase 1B gate rather than treated as resolved.
 
+Post-review update: On 2026-07-23 the 68-fingerprint baseline was approved and GitHub required check `architecture-enforce-blocking` became active. The historical findings below remain the debt inventory; current enforcement and operational evidence is recorded in [Formal and Operational Gate Closure](formal-operational-gate-closure-2026-07-23.md).
+
 ## Executive Summary
 
 The approved architecture is documentable and largely machine-enforceable, but it is not currently enforced by static architecture tests or CI.

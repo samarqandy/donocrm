@@ -9,8 +9,10 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | ID | Status | Completed | Decision evidence |
 |---|---|---|---|
 | WF-PRE-01 | Completed | 2026-07-22 | [Single-Founder Governance ownership register](architecture-governance.md#architecture-governance-model) assigns Sukhrob Khaydarov as Architecture Owner, Product Authority, every Module Owner, and final specialist/gate approver |
+| WF-PRE-02 | Completed | 2026-07-23 | Approved 68-fingerprint baseline, commit/configuration hash, owner record, and [formal gate closure](formal-operational-gate-closure-2026-07-23.md) |
+| WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
 
-No later backlog item is completed or authorized by this record.
+WF-PRE-03 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
 
 ## Ordering Rules
 
@@ -25,7 +27,7 @@ No later backlog item is completed or authorized by this record.
 | Order | ID | Backlog item | Objective completion evidence | Dependencies/evidence |
 |---:|---|---|---|---|
 | 1 | WF-PRE-01 | **Completed 2026-07-22 — Assign accountable owners** | Architecture Owner, Workforce Module Owner, Product Authority, Identity/Organization owners, Data, Operations, Quality, and Security approvers are named in governance | [Architecture Governance](architecture-governance.md) |
-| 2 | WF-PRE-02 | Approve Legacy Freeze baseline | Repository commit, Phase 1A fingerprints, classifications, approvers, and exception register are recorded | [Legacy policy](legacy-policy.md); no authoritative baseline exists |
+| 2 | WF-PRE-02 | **Completed 2026-07-23 — Approve Legacy Freeze baseline** | Repository commit, Phase 1A fingerprints, classifications, approvers, and exception register are recorded | [Legacy Freeze Manifest](legacy-freeze-manifest.md); [formal gate closure](formal-operational-gate-closure-2026-07-23.md) |
 | 3 | WF-PRE-03 | Approve Workforce product scope | Product Authority confirms Teacher profile, lifecycle, working hours, and portal coordination are in scope and lists explicit non-goals | Current implementation evidence; no new requirements permitted |
 | 4 | WF-PRE-04 | Complete the Workforce module definition | Every section of [module-template.md](module-template.md) is completed, evidence-linked, owned, and passes Module Readiness Gate | Readiness review is not a substitute for module definition |
 | 5 | WF-PRE-05 | Freeze current contracts | All ten current Teacher/working-hours HTTP operations, DTO fields, status/error behavior, authorization, and OpenAPI definitions are inventoried | `api.js:283-296`, `:385-418`; OpenAPI Teacher paths |
@@ -38,7 +40,7 @@ No later backlog item is completed or authorized by this record.
 | 12 | WF-PRE-12 | Decide event requirements | For every downstream consumer, record synchronous query/facade, published fact, or no event with evidence; approve event versions only where needed | No current Workforce events exist |
 | 13 | WF-PRE-13 | Approve test and parity plan | Domain/use-case/repository/HTTP/tenant/parity/rollback tests have fixtures, commands, expected results, and owners | Existing tests are end-to-end/legacy, not port contracts |
 | 14 | WF-PRE-14 | Approve migration and rollback runbook | Route/use-case increments, authority, parity, cohort, stop triggers, fallback, reconciliation, observation window, and retirement conditions are documented | No Workforce runbook exists |
-| 15 | WF-PRE-15 | Activate architecture no-growth evidence | At minimum, CI warning reports and deterministic failures for new module/legacy violations are active; current baseline is visible | Phase 1A found no CI configuration |
+| 15 | WF-PRE-15 | **Completed 2026-07-23 — Activate architecture no-growth evidence** | Blocking deterministic failures for new module/legacy violations are active; current baseline remains visible | Required check `architecture-enforce-blocking`; run `30027584361` |
 | 16 | WF-PRE-16 | Pass Phase Exit Criteria | Every item in [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md) has linked evidence and required approval | Final prerequisite |
 
 ## Can Migrate During Extraction

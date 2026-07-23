@@ -51,7 +51,7 @@ Each category is scored from 0 to 100 against evidence required to operate the A
 |---|---|---|
 | Architecture rule set approved and executable | Failed | Rule design exists; scanner/configuration and fixtures do not |
 | Gates A–F produce reproducible artifacts | Failed | No CI execution or protected check exists |
-| Legacy Freeze baseline is authoritative | Failed | Baseline commit, semantic artifact, and owner signature pending |
+| Legacy Freeze baseline is authoritative | Resolved 2026-07-23 | Approved baseline commit, 68-fingerprint artifact, configuration hash, owner approval, and blocking CI evidence recorded |
 | Full regression baseline is green | Failed | Teacher Management date fixture currently makes `npm test` fail |
 | Table/module/Shared Kernel manifests are machine-readable and approved | Failed | Human-readable policy exists; executable manifests do not |
 | Repository parity supports Attendance authority | Failed | SQLite/PostgreSQL `hasActiveSettlement` semantics differ |

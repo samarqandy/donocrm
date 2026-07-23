@@ -16,8 +16,8 @@ Candidate: Workforce
 - [x] A named Architecture Owner and current delegate status are recorded: Sukhrob Khaydarov; no delegate is appointed under Single-Founder Governance.
 - [x] A named Workforce Module Owner is recorded: Sukhrob Khaydarov.
 - [x] Product, Identity, Organization, Data, Operations, Quality, and Security decision authority is recorded: Sukhrob Khaydarov currently holds each role.
-- [ ] The Legacy Freeze baseline commit and exact violation fingerprints are approved.
-- [ ] Every active exception has an owner, expiry, compensating control, and removal condition.
+- [x] The Legacy Freeze baseline commit and exact 68 violation fingerprints are approved.
+- [x] Every active exception has an owner, expiry, compensating control, and removal condition; the active exception register is empty.
 
 **Pass measure:** 100% of required ownership fields are named; zero expired or ownerless exceptions.
 
@@ -74,8 +74,8 @@ Candidate: Workforce
 
 ## Testing Readiness
 
-- [ ] The existing Teacher Management scenario passes unchanged.
-- [ ] Full approved backend, smoke, hardening, and architecture baselines pass from a clean test environment.
+- [x] The existing Teacher Management scenario passes unchanged.
+- [x] Full approved backend, smoke, hardening, and architecture baselines pass from a clean test environment.
 - [ ] A test matrix covers each of the ten use-case candidates for authorized success and applicable validation, authorization, not-found, conflict, and infrastructure failures.
 - [ ] Two-tenant isolation cases exist for every planned query and mutation.
 - [ ] Repository/port contract tests are specified for every planned adapter.
@@ -86,9 +86,9 @@ Candidate: Workforce
 
 ## Architecture Enforcement
 
-- [ ] Dependency/layer graph generation runs reproducibly in CI.
-- [ ] New cycles, inner-to-outer dependencies, cross-module private imports, Shared Kernel additions, Presentation SQL, and legacy growth fail deterministically.
-- [ ] Current legacy fingerprints remain visible with ownership rather than being broadly ignored.
+- [x] Dependency/layer graph generation runs reproducibly in CI.
+- [x] New cycles, inner-to-outer dependencies, cross-module private imports, Shared Kernel additions, Presentation SQL, and legacy growth fail deterministically against the approved baseline.
+- [x] Current legacy fingerprints remain visible with ownership rather than being broadly ignored.
 - [ ] Workforce module definition/table ownership checks are active.
 - [ ] Architecture checklist evidence is attached to migration pull requests.
 
