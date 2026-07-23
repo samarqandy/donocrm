@@ -234,4 +234,4 @@ Teacher profile/lifecycle, working hours, portal-access coordination, ten curren
 
 This result closes only WF-PRE-03. Workforce remains **NOT READY** for migration.
 
-Post-decision status: WF-PRE-04 subsequently passed on 2026-07-23 through the approved [Workforce Module Definition](workforce-module-definition.md). The current next ordered prerequisite is WF-PRE-05.
+Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23 through the approved [Workforce Module Definition](workforce-module-definition.md) and [Workforce Contract Freeze](workforce-contract-freeze.md). The current next ordered prerequisite is WF-PRE-06.

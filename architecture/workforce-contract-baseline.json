@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 1,
+  "status": "approved",
+  "decisionId": "WF-PRE-05",
+  "baselineId": "workforce-http-2026-07-23.1",
+  "capturedAt": "2026-07-23",
+  "implementationCommit": "283ebf935c9912279816d1ac4db43f2da8ace9bc",
+  "approvedBy": {
+    "productAuthority": "Sukhrob Khaydarov",
+    "workforceModuleOwner": "Sukhrob Khaydarov",
+    "qualityOwner": "Sukhrob Khaydarov",
+    "securityOwner": "Sukhrob Khaydarov",
+    "architectureOwner": "Sukhrob Khaydarov"
+  },
+  "sourceFingerprints": {
+    "src/http/api.js": "917b8e348eb99dd0ac344eec31104a10bab05ac2f3fe9c166cdf78d9152d0f09",
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2",
+    "src/services/validation.js": "578be1d68b3c55fe59f6a721b4a15b694bef80c73a3cdbeeca599e89f8e6381e",
+    "src/repositories/appRepository.js": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc",
+    "docs/openapi.yaml": "1d26df4d95bc0cd120afe09096eb6e2a130d891ccff2ed6311393d8b796ae0e7"
+  },
+  "commonHttpContract": {
+    "security": "HttpOnly dono_session cookie",
+    "tenantContext": "required for all ten operations",
+    "successContentType": "application/json; charset=utf-8",
+    "cacheControl": "no-store",
+    "errorEnvelope": {
+      "requiredFields": [
+        "error"
+      ],
+      "optionalFields": [
+        "details"
+      ]
+    },
+    "commonErrors": [
+      {
+        "status": 400,
+        "condition": "malformed URL or invalid JSON on an operation that consumes a body"
+      },
+      {
+        "status": 401,
+        "error": "Unauthorized",
+        "condition": "missing, invalid, or expired session"
+      },
+      {
+        "status": 403,
+        "errors": [
+          "Tenant context is required",
+          "Tenant is suspended"
+        ],
+        "condition": "tenant context policy fails"
+      },
+      {
+        "status": 413,
+        "error": "Payload too large",
+        "condition": "consumed request body exceeds 1000000 characters"
+      },
+      {
+        "status": 500,
+        "condition": "unhandled application or infrastructure error"
+      }
+    ],
+    "idempotency": "No Workforce HTTP operation accepts an idempotency key",
+    "pagination": "None",
+    "version": "Unversioned legacy /api compatibility surface"
+  },
+  "requestDtos": {
+    "TeacherWriteRequest": {
+      "required": [
+        "name"
+      ],
+      "acceptedFields": [
+        "name",
+        "phone",
+        "email",
+        "specialization",
+        "employmentType",
+        "employment_type",
+        "hiredAt",
+        "hired_at",
+        "maxWeeklyHours",
+        "max_weekly_hours",
+        "note",
+        "branchId",
+        "branch_id",
+        "accessEnabled",
+        "access_enabled",
+        "username",
+        "password"
+      ],
+      "rules": [
+        "name is trimmed and non-empty",
+        "email is empty or matches the current email pattern",
+        "employmentType is full_time, part_time, or contract",
+        "hiredAt is empty or a real YYYY-MM-DD date",
+        "maxWeeklyHours is numeric from 1 through 80 and is persisted as rounded minutes",
+        "branchId is empty/defaulted or must exist in the active tenant",
+        "create with an empty branchId defaults to the active tenant main Branch when one exists",
+        "username is 3 through 80 characters from A-Z, a-z, 0-9, dot, underscore, at, plus, or hyphen when access is enabled",
+        "password is at least 8 characters when first enabling access and whenever supplied",
+        "accessEnabled and access_enabled use current JavaScript boolean coercion, so non-empty strings are truthy",
+        "an inactive Teacher must be restored before portal access is enabled"
+      ],
+      "updateSemantics": [
+        "PUT still requires name",
+        "omitted phone, email, specialization, and note are cleared to empty strings",
+        "omitted employmentType, hiredAt, maxWeeklyHours, branchId, access state, and username inherit current values",
+        "empty hiredAt clears the date",
+        "empty branchId does not clear an existing Branch reference"
+      ]
+    },
+    "ResetTeacherPasswordRequest": {
+      "requiredAlternatives": [
+        "newPassword",
+        "new_password"
+      ],
+      "rules": [
+        "trimmed value is required",
+        "minimum length is 8"
+      ]
+    },
+    "CreateTeacherWorkingHourRequest": {
+      "acceptedFields": [
+        "teacherId",
+        "teacher_id",
+        "weekday",
+        "startTime",
+        "start_time",
+        "endTime",
+        "end_time",
+        "branchId",
+        "branch_id"
+      ],
+      "requiredAlternatives": [
+        "teacherId or teacher_id",
+        "startTime or start_time",
+        "endTime or end_time"
+      ],
+      "rules": [
+        "Teacher exists in the active tenant and is active",
+        "weekday serializes as string 1 through 7",
+        "startTime and endTime use strict HH:mm",
+        "endTime is later than startTime",
+        "same-Teacher same-weekday intervals do not overlap",
+        "branchId is accepted but is not validated by the current use case",
+        "empty branchId defaults to the active tenant main Branch when one exists"
+      ]
+    },
+    "IgnoredJsonBody": {
+      "required": [],
+      "semantics": "Body is parsed and then ignored; malformed or oversized bodies still fail"
+    }
+  },
+  "responseDtos": {
+    "TeacherAdmin": {
+      "fields": [
+        "id",
+        "tenantId",
+        "branchId",
+        "name",
+        "phone",
+        "email",
+        "specialization",
+        "employmentType",
+        "status",
+        "hiredAt",
+        "maxWeeklyMinutes",
+        "weeklyMinutes",
+        "workloadPercent",
+        "note",
+        "createdAt",
+        "groupsCount",
+        "studentsCount",
+        "completedLessons",
+        "hasAccess",
+        "username",
+        "accessStatus"
+      ]
+    },
+    "TeacherSelf": {
+      "base": "TeacherAdmin",
+      "omittedFields": [
+        "username",
+        "accessStatus"
+      ],
+      "retainedAccessField": "hasAccess"
+    },
+    "TeacherWorkingHour": {
+      "fields": [
+        "id",
+        "tenantId",
+        "branchId",
+        "teacherId",
+        "teacherName",
+        "weekday",
+        "startTime",
+        "endTime",
+        "createdAt"
+      ]
+    },
+    "TeacherProfile": {
+      "fields": [
+        "teacher",
+        "groups",
+        "workingHours",
+        "upcomingLessons"
+      ],
+      "teacher": "TeacherAdmin for Admin; TeacherSelf for Teacher",
+      "groups": "TeacherProfileGroup[]",
+      "workingHours": "TeacherWorkingHour[]",
+      "upcomingLessons": "TeacherProfileLesson[]"
+    },
+    "TeacherProfileGroup": {
+      "fields": [
+        "id",
+        "tenantId",
+        "branchId",
+        "name",
+        "subject",
+        "description",
+        "level",
+        "teacherId",
+        "teacherName",
+        "room",
+        "monthlyFee",
+        "capacity",
+        "startDate",
+        "endDate",
+        "status",
+        "color",
+        "note",
+        "archivedAt",
+        "archiveReason",
+        "createdAt",
+        "updatedAt",
+        "active",
+        "studentsCount",
+        "occupancyPercent",
+        "schedulesCount",
+        "scheduleSummary",
+        "totalLessons",
+        "plannedLessons",
+        "completedLessons",
+        "cancelledLessons",
+        "attendanceRate",
+        "nextLessonDate"
+      ]
+    },
+    "TeacherProfileLesson": {
+      "fields": [
+        "id",
+        "tenantId",
+        "branchId",
+        "groupId",
+        "scheduleId",
+        "date",
+        "time",
+        "startTime",
+        "endTime",
+        "occurrenceDate",
+        "scheduleSeriesId",
+        "occurrenceKey",
+        "overrideMask",
+        "baseScheduleId",
+        "baseScheduleVersion",
+        "lessonType",
+        "status",
+        "attendanceData",
+        "attendanceVersion",
+        "financialStatus",
+        "financialVersion",
+        "version",
+        "groupName",
+        "subject",
+        "roomId",
+        "room",
+        "teacherId",
+        "teacherName",
+        "topic",
+        "homework",
+        "note",
+        "cancelledReason",
+        "rescheduleReason",
+        "createdBy",
+        "createdAt",
+        "updatedBy",
+        "updatedAt",
+        "completedBy",
+        "completedAt",
+        "cancelledBy",
+        "cancelledAt",
+        "financialReversedBy",
+        "financialReversedAt",
+        "financialReversalReason"
+      ]
+    },
+    "Success": {
+      "fields": [
+        "success"
+      ],
+      "success": true
+    }
+  },
+  "operations": [
+    {
+      "id": "WF-HTTP-01",
+      "method": "GET",
+      "path": "/api/teachers",
+      "useCase": "List Teachers",
+      "authorization": "Authenticated tenant actor; Admin receives tenant directory, Teacher receives only own row",
+      "request": "No body or query parameters",
+      "successStatus": 200,
+      "response": "{ teachers: TeacherAdmin[] } for Admin or zero/one { teachers: TeacherSelf[] } row for Teacher",
+      "ordering": "active before inactive, then SQLite name ordering",
+      "semanticErrors": []
+    },
+    {
+      "id": "WF-HTTP-02",
+      "method": "GET",
+      "path": "/api/teachers/{teacherId}",
+      "useCase": "Get Teacher Profile",
+      "authorization": "Admin may read a tenant Teacher; Teacher may read only matching context.userId",
+      "request": "Required decoded path teacherId; no body or query parameters",
+      "successStatus": 200,
+      "response": "TeacherProfile",
+      "ordering": "groups active descending then name; working hours by Teacher name, numeric weekday, startTime; upcoming lessons by date then time, maximum 20",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Only own teacher profile is available"
+        },
+        {
+          "status": 404,
+          "error": "Teacher not found"
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-03",
+      "method": "POST",
+      "path": "/api/teachers",
+      "useCase": "Create Teacher",
+      "authorization": "Admin role required",
+      "request": "TeacherWriteRequest",
+      "successStatus": 201,
+      "response": "TeacherAdmin",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Admin role is required"
+        },
+        {
+          "status": 409,
+          "error": "Username already exists"
+        },
+        {
+          "status": 422,
+          "errors": [
+            "name is required",
+            "username is invalid",
+            "password must contain at least 8 characters",
+            "maxWeeklyHours must be between 1 and 80",
+            "email is invalid",
+            "employmentType is invalid",
+            "hiredAt is invalid",
+            "branchId is invalid"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-04",
+      "method": "PUT",
+      "path": "/api/teachers/{teacherId}",
+      "useCase": "Update Teacher",
+      "authorization": "Admin role required",
+      "request": "Decoded path teacherId plus TeacherWriteRequest",
+      "successStatus": 200,
+      "response": "TeacherAdmin",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Admin role is required"
+        },
+        {
+          "status": 404,
+          "error": "Teacher not found"
+        },
+        {
+          "status": 409,
+          "error": "Username already exists"
+        },
+        {
+          "status": 422,
+          "errors": [
+            "name is required",
+            "Restore teacher before enabling portal access",
+            "username is invalid",
+            "password must contain at least 8 characters",
+            "maxWeeklyHours must be between 1 and 80",
+            "email is invalid",
+            "employmentType is invalid",
+            "hiredAt is invalid",
+            "branchId is invalid"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-05",
+      "method": "DELETE",
+      "path": "/api/teachers/{teacherId}",
+      "useCase": "Archive Teacher",
+      "authorization": "Admin role required",
+      "request": "Decoded path teacherId plus IgnoredJsonBody",
+      "successStatus": 200,
+      "response": "TeacherAdmin with status inactive and accessStatus inactive when configured",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Admin role is required"
+        },
+        {
+          "status": 404,
+          "error": "Teacher not found"
+        },
+        {
+          "status": 409,
+          "error": "Teacher has active groups or upcoming lessons; reassign them before archiving"
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-06",
+      "method": "POST",
+      "path": "/api/teachers/{teacherId}/restore",
+      "useCase": "Restore Teacher",
+      "authorization": "Admin role required",
+      "request": "Decoded path teacherId plus IgnoredJsonBody",
+      "successStatus": 200,
+      "response": "TeacherAdmin with status active; portal access state is unchanged",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Admin role is required"
+        },
+        {
+          "status": 404,
+          "error": "Teacher not found"
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-07",
+      "method": "POST",
+      "path": "/api/teachers/{teacherId}/reset-password",
+      "useCase": "Reset Teacher Password",
+      "authorization": "Admin role required",
+      "request": "Decoded path teacherId plus ResetTeacherPasswordRequest",
+      "successStatus": 200,
+      "response": "Success",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Admin role is required"
+        },
+        {
+          "status": 404,
+          "error": "Teacher portal access is not configured"
+        },
+        {
+          "status": 422,
+          "errors": [
+            "newPassword is required",
+            "password must contain at least 8 characters"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-08",
+      "method": "GET",
+      "path": "/api/teacher-working-hours",
+      "useCase": "List Working Hours",
+      "authorization": "Authenticated tenant actor; Teacher is self-scoped, Admin receives all tenant intervals",
+      "request": "No body or query parameters",
+      "successStatus": 200,
+      "response": "{ workingHours: TeacherWorkingHour[] }",
+      "ordering": "Teacher name, numeric weekday, then startTime",
+      "semanticErrors": []
+    },
+    {
+      "id": "WF-HTTP-09",
+      "method": "POST",
+      "path": "/api/teacher-working-hours",
+      "useCase": "Create Working Hour",
+      "authorization": "lessons.manage permission required; system Teacher role does not currently have it",
+      "request": "CreateTeacherWorkingHourRequest",
+      "successStatus": 201,
+      "response": "TeacherWorkingHour",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Permission is required"
+        },
+        {
+          "status": 404,
+          "error": "Teacher not found"
+        },
+        {
+          "status": 409,
+          "error": "Working hours overlap with an existing interval"
+        },
+        {
+          "status": 422,
+          "errors": [
+            "teacherId is required",
+            "Teacher is inactive",
+            "startTime is required",
+            "startTime is invalid",
+            "endTime is required",
+            "endTime is invalid",
+            "endTime must be after startTime",
+            "weekday is invalid"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "WF-HTTP-10",
+      "method": "DELETE",
+      "path": "/api/teacher-working-hours/{workingHourId}",
+      "useCase": "Delete Working Hour",
+      "authorization": "Admin role required",
+      "request": "Decoded path workingHourId plus IgnoredJsonBody",
+      "successStatus": 200,
+      "response": "TeacherWorkingHour; current delete response has teacherName as empty string",
+      "ordering": "Not applicable",
+      "semanticErrors": [
+        {
+          "status": 403,
+          "error": "Admin role is required"
+        },
+        {
+          "status": 404,
+          "error": "Working hour not found"
+        }
+      ]
+    }
+  ],
+  "openapiInventory": {
+    "file": "docs/openapi.yaml",
+    "documentVersion": "2026.07.13",
+    "operationCoverage": "10/10",
+    "exactContractCoverage": "partial",
+    "gaps": [
+      "Teacher schema omits note and createdAt",
+      "Teacher safe/admin variants are not separate schemas and accessStatus privacy is not described",
+      "No TeacherWriteRequest, ResetTeacherPasswordRequest, TeacherWorkingHour, TeacherProfile, list-envelope, or success schema is attached",
+      "Teacher profile Group and Lesson projections are not exact schemas",
+      "Request bodies are absent for all mutations",
+      "Most 400, 401, 403, 404, 409, 413, 422, and 500 responses are absent",
+      "Ordering, no-pagination, alias, update-clear/default, and ignored-body semantics are absent"
+    ],
+    "authority": "This approved baseline is authoritative for current exact behavior until OpenAPI is reconciled through an approved compatibility change"
+  },
+  "knownRisks": [
+    {
+      "id": "WF-CONTRACT-RISK-01",
+      "severity": "high",
+      "classification": "observed legacy privacy mismatch; not an approved target guarantee",
+      "evidence": "Teacher self-profile removes username and accessStatus but returns raw composed Group rows, including monthlyFee, while OpenAPI marks Group.monthlyFee Admin only",
+      "treatment": "Must be resolved through Product and Security review before target parity acceptance; migration must not silently preserve or expand the exposure"
+    },
+    {
+      "id": "WF-CONTRACT-RISK-02",
+      "severity": "medium",
+      "classification": "OpenAPI documentation gap",
+      "evidence": "All ten operations are listed but exact schemas and most failure responses are absent",
+      "treatment": "Use this baseline for WF-PRE-06 and WF-PRE-13; reconcile OpenAPI before Module Readiness passes"
+    },
+    {
+      "id": "WF-CONTRACT-RISK-03",
+      "severity": "medium",
+      "classification": "legacy implementation quirk",
+      "evidence": "Delete Working Hour returns teacherName as empty string because the deleted row is mapped without the Teacher join",
+      "treatment": "Treat as observed behavior, not a new target design; any normalization requires compatibility approval"
+    }
+  ],
+  "changeControl": {
+    "breakingDimensions": [
+      "method or path",
+      "accepted or required request field",
+      "response field, envelope, type, omission, or ordering",
+      "success status",
+      "semantic error status or meaning",
+      "authorization, tenant, privacy, or credential behavior",
+      "idempotency or pagination behavior"
+    ],
+    "requiredApproval": [
+      "Product Authority",
+      "Workforce Module Owner",
+      "affected consumer owner",
+      "Quality Owner",
+      "Security Owner when authorization, tenant, privacy, or credentials are affected",
+      "Architecture Owner"
+    ],
+    "requiredEvidence": [
+      "updated baseline and OpenAPI",
+      "consumer impact and compatibility plan",
+      "contract tests",
+      "rollback treatment"
+    ]
+  }
+}

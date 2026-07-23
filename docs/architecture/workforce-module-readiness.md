@@ -6,9 +6,9 @@ Candidate source: [migration-candidate-evaluation.md](migration-candidate-evalua
 
 ## Post-Review Decision Update
 
-WF-PRE-03 and WF-PRE-04 passed on 2026-07-23. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) now completes every mandatory template section and records current, target, and open decisions.
+WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence.
 
-This resolves the product-scope and module-definition-completeness blockers only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing approved seams, ports, contracts, transaction decisions, test/parity plan, and runbook keep the candidate not ready.
+This resolves product scope, module-definition completeness, and current HTTP contract baselining only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing approved seams, ports, Application contracts, transaction decisions, test/parity plan, and runbook keep the candidate not ready.
 
 ## Scope of Review
 
@@ -115,6 +115,8 @@ The first extraction may use a compatibility SQLite adapter, but its table acces
 - `DELETE /api/teacher-working-hours/{workingHourId}`
 
 Evidence: `src/http/api.js:283-296`, `:385-418`; `docs/openapi.yaml:861-925`, `:1741-1764`.
+
+WF-PRE-05 exact evidence: [human-readable decision](workforce-contract-freeze.md) and [machine-readable baseline](../../architecture/workforce-contract-baseline.json). OpenAPI lists all ten operations but remains schema/error-incomplete; those gaps are explicit rather than treated as target precedent.
 
 ### Missing contracts
 
@@ -259,4 +261,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope and WF-PRE-04 completed the module definition; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
+Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, and WF-PRE-05 froze current HTTP compatibility; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
