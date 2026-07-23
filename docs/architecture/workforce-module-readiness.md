@@ -6,9 +6,9 @@ Candidate source: [migration-candidate-evaluation.md](migration-candidate-evalua
 
 ## Post-Review Decision Update
 
-WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence.
+WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation.
 
-This resolves product scope, module-definition completeness, and current HTTP contract baselining only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing approved seams, ports, Application contracts, transaction decisions, test/parity plan, and runbook keep the candidate not ready.
+This resolves product scope, module-definition completeness, current HTTP contract baselining, and behavior-inventory approval only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing approved seams, ports, Application contracts, transaction decisions, executable test/parity plan, and runbook keep the candidate not ready.
 
 ## Scope of Review
 
@@ -223,7 +223,7 @@ The focused backend scenario at `scripts/test-backend-logic.js:1780-1872` covers
 - password reset and session invalidation;
 - archive blocker, archive, identity deactivation, and login denial.
 
-Tenant-isolation repository tests follow at `:1874` onward, and smoke tests load Teacher views and authorization paths.
+Tenant-isolation repository tests follow at `:1874` onward, and smoke tests load Teacher views and authorization paths. WF-PRE-06 now records the accepted coverage of every operation/category as `covered`, `partial`, `missing`, or `not_applicable`; it does not promote planned test IDs to evidence.
 
 ### Missing evidence
 
@@ -261,4 +261,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, and WF-PRE-05 froze current HTTP compatibility; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
+Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, WF-PRE-05 froze current HTTP compatibility, and WF-PRE-06 approved the behavior inventory; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).

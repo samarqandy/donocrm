@@ -76,7 +76,7 @@ Candidate: Workforce
 
 - [x] The existing Teacher Management scenario passes unchanged.
 - [x] Full approved backend, smoke, hardening, and architecture baselines pass from a clean test environment.
-- [ ] A test matrix covers each of the ten use-case candidates for authorized success and applicable validation, authorization, not-found, conflict, and infrastructure failures.
+- [x] The approved [WF-PRE-06 behavior matrix](workforce-behavior-matrix.md) covers each of the ten use-case candidates for authorized success and applicable validation, authorization, not-found, conflict, tenant, infrastructure, and invariant behavior; missing automation remains explicit.
 - [ ] Two-tenant isolation cases exist for every planned query and mutation.
 - [ ] Repository/port contract tests are specified for every planned adapter.
 - [ ] Legacy-versus-target parity assertions and approved thresholds are documented.
