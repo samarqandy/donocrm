@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "status": "pending-approval",
+  "status": "approved",
   "mode": "observe",
-  "capturedAt": "2026-07-22",
-  "commit": null,
-  "approvedBy": null,
-  "configurationHash": "978751ecfea3578fe521961e79e6676d3f220b0c09d9ecae3e9943f3c2c62d3b",
+  "capturedAt": "2026-07-23",
+  "commit": "3bc3097e2903b4cc917807f9b799ca7628f54617",
+  "approvedBy": "architecture-owner",
+  "configurationHash": "2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d",
   "legacyMetrics": {
     "src/services/appService.js": {"lines": 2457, "methods": 112, "sha256": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2"},
     "src/repositories/appRepository.js": {"lines": 5411, "methods": 163, "sha256": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc"},
@@ -87,7 +87,8 @@
   ],
   "notes": [
     "Candidate fingerprints were refreshed against the 68-finding scanner output on 2026-07-23.",
-    "Configuration hash is captured; approval remains pending until the exact working tree is committed and reviewed.",
-    "Candidate fingerprints remain blocking in enforce mode until status, commit, and approver are recorded."
+    "Configuration hash is captured and bound to implementation commit 3bc3097e2903b4cc917807f9b799ca7628f54617.",
+    "Approved by architecture-owner under the Single-Founder Governance model on 2026-07-23.",
+    "Approved fingerprints remain visible technical debt; any new fingerprint is merge-blocking in enforce mode."
   ]
 }

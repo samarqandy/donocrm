@@ -31,5 +31,5 @@
     }
   },
   "delegate": null,
-  "ciOperationalOwner": null
+  "ciOperationalOwner": "operations-owner"
 }

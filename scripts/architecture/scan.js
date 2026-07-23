@@ -305,6 +305,21 @@ const enforcementBaseline = {
   legacyMetrics: baseline.legacyMetrics || {},
   fingerprints: baseline.fingerprints || [],
 };
+const computedConfigurationHash = hash({
+  owners,
+  modules,
+  tables,
+  exceptions,
+  baseline: enforcementBaseline,
+});
+if (baselineApproved && baseline.configurationHash !== computedConfigurationHash) {
+  add(
+    "AR-021",
+    "architecture/baseline.json",
+    "configurationHash",
+    "Approved baseline configuration hash does not match the executable manifests",
+  );
+}
 const activeExceptions = new Set((exceptions.exceptions || [])
   .filter((item) => item.fingerprint && item.expiresAt && Date.parse(item.expiresAt) > Date.now())
   .map((item) => item.fingerprint));
@@ -332,7 +347,7 @@ const report = {
   // Approval metadata and the stored hash are evidence about this
   // configuration, not inputs to it. Excluding them keeps the hash stable
   // when the candidate is signed and avoids a self-referential hash.
-  configurationHash: hash({ owners, modules, tables, exceptions, baseline: enforcementBaseline }),
+  configurationHash: computedConfigurationHash,
   scannedFiles: sourceByFile.size,
   edges: edges.length,
   sqlAccesses: sqlAccess.length,
