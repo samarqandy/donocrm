@@ -1,4 +1,4 @@
-name: Architecture Observe
+name: Architecture Enforcement
 
 on:
   pull_request:
@@ -10,11 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  architecture-observe:
-    name: architecture-observe-warning-only
+  architecture-enforce:
+    name: architecture-enforce-blocking
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     services:
       postgres:
         image: postgres:16-alpine
@@ -43,10 +42,10 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      - name: Run architecture, contract, and parity checks in OBSERVE mode
+      - name: Enforce approved architecture baseline and semantic parity
         env:
-          ARCHITECTURE_MODE: observe
-        run: npm run architecture:observe
+          ARCHITECTURE_MODE: enforce
+        run: npm run architecture:enforce
 
       - name: Run deterministic SQLite/PostgreSQL contract fixtures
         env:
@@ -59,7 +58,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: architecture-observe-${{ github.sha }}
+          name: architecture-enforcement-${{ github.sha }}
           path: artifacts/architecture/
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 30

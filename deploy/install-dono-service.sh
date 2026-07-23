@@ -31,8 +31,8 @@ if [ ! -x "$NODE_BIN" ]; then
   exit 1
 fi
 
-if ! command -v sqlite3 >/dev/null 2>&1; then
-  echo "sqlite3 is required for consistent automated backups (Ubuntu: apt install sqlite3)" >&2
+if ! "$NODE_BIN" -e "process.exit(typeof require('node:sqlite').backup === 'function' ? 0 : 1)"; then
+  echo "Node.js with node:sqlite backup support is required for consistent automated backups" >&2
   exit 1
 fi
 
@@ -82,6 +82,10 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 chown root:dono "$ENV_FILE"
 chmod 0640 "$ENV_FILE"
+if [ -f "$ENV_DIR/attendance.env" ]; then
+  chown root:dono "$ENV_DIR/attendance.env"
+  chmod 0640 "$ENV_DIR/attendance.env"
+fi
 
 install -m 0644 "$SERVICE_SOURCE" "$SERVICE_TARGET"
 install -m 0644 "$WORKER_SOURCE" "$WORKER_TARGET"
@@ -92,6 +96,7 @@ chmod 0755 "$PROJECT_DIR/scripts/backup.sh" "$PROJECT_DIR/scripts/create-admin.j
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
 systemctl enable "$WORKER_NAME"
+systemctl enable "$ATTENDANCE_WORKER_NAME"
 systemctl enable --now "$BACKUP_TIMER_NAME"
 
 if ! runuser -u dono -- env NODE_ENV=production SQLITE_FILE="$PROJECT_DIR/data/dono.sqlite" \
@@ -103,6 +108,23 @@ fi
 
 systemctl restart "$SERVICE_NAME"
 systemctl restart "$WORKER_NAME"
+systemctl restart "$ATTENDANCE_WORKER_NAME"
+
+if command -v curl >/dev/null 2>&1; then
+  ready=false
+  for _attempt in $(seq 1 30); do
+    if curl --fail --silent --max-time 2 http://127.0.0.1:8081/healthz >/dev/null; then
+      ready=true
+      break
+    fi
+    sleep 1
+  done
+  if [ "$ready" != "true" ]; then
+    echo "Dono service did not become healthy within 30 seconds" >&2
+    journalctl -u "$SERVICE_NAME" -n 80 --no-pager >&2 || true
+    exit 1
+  fi
+fi
 
 systemctl --no-pager --full status "$SERVICE_NAME"
 

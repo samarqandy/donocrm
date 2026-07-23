@@ -5,13 +5,18 @@ DB_PATH="${DB_PATH:-/var/www/dono/data/dono.sqlite}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/dono}"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
 SQLITE_BIN="${SQLITE_BIN:-sqlite3}"
+NODE_BIN="${NODE_BIN:-/usr/bin/node}"
 
-if ! command -v "$SQLITE_BIN" >/dev/null 2>&1; then
-  echo "sqlite3 is required (set SQLITE_BIN if it is installed elsewhere)" >&2
-  exit 1
-fi
 if ! command -v gzip >/dev/null 2>&1; then
   echo "gzip is required" >&2
+  exit 1
+fi
+if command -v "$SQLITE_BIN" >/dev/null 2>&1; then
+  backup_engine="sqlite3"
+elif [ -x "$NODE_BIN" ] && "$NODE_BIN" -e "process.exit(typeof require('node:sqlite').backup === 'function' ? 0 : 1)"; then
+  backup_engine="node"
+else
+  echo "sqlite3 or a Node.js runtime with node:sqlite backup support is required" >&2
   exit 1
 fi
 if [ ! -r "$DB_PATH" ]; then
@@ -41,15 +46,45 @@ temporary="$base.tmp"
 archive="$base.gz"
 
 cleanup() {
-  rm -f "$temporary"
+  rm -f "$temporary" "$temporary-wal" "$temporary-shm"
 }
 trap cleanup EXIT
 
-"$SQLITE_BIN" -readonly "$DB_PATH" ".timeout 10000" ".backup '$temporary'"
-integrity="$($SQLITE_BIN "$temporary" "PRAGMA integrity_check;")"
-if [ "$integrity" != "ok" ]; then
-  echo "Backup integrity check failed: $integrity" >&2
-  exit 1
+if [ "$backup_engine" = "sqlite3" ]; then
+  "$SQLITE_BIN" -readonly "$DB_PATH" ".timeout 10000" ".backup '$temporary'"
+  integrity="$("$SQLITE_BIN" "$temporary" "PRAGMA integrity_check;")"
+  if [ "$integrity" != "ok" ]; then
+    echo "Backup integrity check failed: $integrity" >&2
+    exit 1
+  fi
+else
+  "$NODE_BIN" - "$DB_PATH" "$temporary" <<'NODE'
+const { DatabaseSync, backup } = require("node:sqlite");
+
+async function run() {
+  const source = new DatabaseSync(process.argv[2], { readOnly: true });
+  try {
+    await backup(source, process.argv[3]);
+  } finally {
+    source.close();
+  }
+  const copy = new DatabaseSync(process.argv[3], { readOnly: true });
+  try {
+    const integrity = copy.prepare("PRAGMA integrity_check").all().map((row) => Object.values(row)[0]);
+    const foreignKeys = copy.prepare("PRAGMA foreign_key_check").all();
+    if (integrity.length !== 1 || integrity[0] !== "ok" || foreignKeys.length) {
+      throw new Error(`Backup validation failed: integrity=${integrity.join(",")} foreignKeys=${foreignKeys.length}`);
+    }
+  } finally {
+    copy.close();
+  }
+}
+
+run().catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
+});
+NODE
 fi
 
 gzip -9 -c "$temporary" > "$archive"

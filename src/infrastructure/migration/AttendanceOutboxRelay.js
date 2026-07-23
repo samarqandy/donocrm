@@ -69,7 +69,11 @@ class AttendanceOutboxRelay {
                COALESCE(note, '') AS note
         FROM attendance WHERE tenant_id = $1 AND lesson_id = $2 ORDER BY student_id
       `, [payload.tenantId, payload.lessonId]);
-      const applyState = Number(current.rows[0].source_version || 0) < Number(payload.sourceVersion);
+      // A lessons reference event can be sequenced before the attendance event
+      // from the same SQLite transaction. In that case the lesson version is
+      // already equal while the PostgreSQL attendance snapshot is still stale.
+      // The inbox makes an accepted event idempotent, so equality must apply.
+      const applyState = Number(current.rows[0].source_version || 0) <= Number(payload.sourceVersion);
       if (applyState) {
         await client.query("DELETE FROM attendance WHERE tenant_id = $1 AND lesson_id = $2", [payload.tenantId, payload.lessonId]);
         for (const record of payload.records) {

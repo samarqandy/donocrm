@@ -6,6 +6,8 @@ const { Pool } = require("pg");
 const { schema: sqliteSchema } = require("../../src/db/schema");
 const sqliteOutboxMigration = require("../../src/db/migrations/20260715_zz_attendance_migration_outbox");
 const sqliteInboxMigration = require("../../src/db/migrations/20260715_zzz_attendance_migration_inbox");
+const sqliteReferenceOutboxMigration = require("../../src/db/migrations/20260715_zzzzz_attendance_reference_outbox");
+const sqliteLessonEventReferenceMigration = require("../../src/db/migrations/20260715_zzzzzz_attendance_lesson_event_reference");
 const { CONTRACT_FIXTURE } = require("./repository-contract-fixture-data");
 
 const POSTGRES_MIGRATIONS = path.resolve(__dirname, "../../src/infrastructure/database/postgres/migrations");
@@ -214,6 +216,8 @@ function createSQLiteContractStore(seed = CONTRACT_FIXTURE) {
     db.exec(sqliteSchema);
     sqliteOutboxMigration.up(db);
     sqliteInboxMigration.up(db);
+    sqliteReferenceOutboxMigration.up(db);
+    sqliteLessonEventReferenceMigration.up(db);
     seedSQLite(db, seed);
     return db;
   } catch (error) {
