@@ -23,18 +23,21 @@ function normalizeTarget(target) {
 
 function allowedTarget(target) {
   if (PUBLIC_FILES.has(target)) return true;
+  if (target.startsWith("public/") && [".js", ".css"].includes(path.extname(target))) return true;
   return PUBLIC_ASSETS.has(target);
 }
 
 function staticFile(req, res, pathname) {
-  const target = normalizeTarget(pathname === "/" ? "index.html" : pathname.replace(/^\/+/, ""));
+  const requested = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+  const target = normalizeTarget(requested.startsWith("next/") ? `public/${requested.slice(5)}` : requested);
   if (!allowedTarget(target)) {
     res.writeHead(404);
     res.end("Not found");
     return;
   }
   const filePath = path.resolve(root, target);
-  if (!filePath.startsWith(`${root}${path.sep}`) && filePath !== root) {
+  const allowedRoot = target.startsWith("public/") ? path.resolve(root, "public") : root;
+  if (!filePath.startsWith(`${allowedRoot}${path.sep}`) && filePath !== allowedRoot) {
     res.writeHead(403);
     res.end("Forbidden");
     return;

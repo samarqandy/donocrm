@@ -1,0 +1,27 @@
+name: donocrm-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: donocrm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: donocrm
+      POSTGRES_USER: donocrm
+      POSTGRES_PASSWORD: donocrm_local_canary_2026
+      TZ: Asia/Tashkent
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - donocrm_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U donocrm -d donocrm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  donocrm_postgres_data:

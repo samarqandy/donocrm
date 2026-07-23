@@ -1,20 +1,43 @@
 [Unit]
 Description=Dono CRM Node Server
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
+User=dono
+Group=dono
 WorkingDirectory=/var/www/dono
+UMask=0027
+
 Environment=NODE_ENV=production
 Environment=PORT=8081
 Environment=SQLITE_FILE=/var/www/dono/data/dono.sqlite
-Environment=COOKIE_SECURE=false
+Environment=COOKIE_SECURE=true
+Environment=TRUST_PROXY=true
 Environment=DONO_EMBEDDED_TELEGRAM_WORKER=false
 EnvironmentFile=-/etc/dono/dono.env
+EnvironmentFile=-/etc/dono/attendance.env
+
 ExecStart=/usr/bin/node /var/www/dono/server.js
-Restart=always
+Restart=on-failure
 RestartSec=3
-User=root
+TimeoutStopSec=30
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/www/dono/data
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run DonoCRM SQLite backup every 6 hours
+
+[Timer]
+OnCalendar=*-*-* 00/6:00:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=dono-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -278,6 +278,7 @@ CREATE TABLE IF NOT EXISTS attendance_reasons (
   consume_percent REAL NOT NULL CHECK(consume_percent >= 0 AND consume_percent <= 100),
   is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0, 1)),
   is_system INTEGER NOT NULL DEFAULT 0 CHECK(is_system IN (0, 1)),
+  version INTEGER NOT NULL DEFAULT 1 CHECK(version > 0),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   UNIQUE(tenant_id, code)
@@ -394,6 +395,23 @@ CREATE TABLE IF NOT EXISTS messages (
   last_error_message TEXT,
   telegram_message_id TEXT,
   dedupe_key TEXT
+);
+
+CREATE TABLE IF NOT EXISTS outbox (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  aggregate_type TEXT NOT NULL,
+  aggregate_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  dedupe_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'published', 'failed')),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK(attempts >= 0),
+  available_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  processed_at TEXT,
+  last_error TEXT,
+  UNIQUE(tenant_id, dedupe_key)
 );
 
 CREATE TABLE IF NOT EXISTS telegram_link_tokens (
@@ -753,6 +771,9 @@ CREATE INDEX IF NOT EXISTS idx_group_teacher_assignments_teacher_history ON grou
 CREATE UNIQUE INDEX IF NOT EXISTS idx_group_teacher_assignments_one_active ON group_teacher_assignments(tenant_id, group_id) WHERE status = 'active';
 CREATE INDEX IF NOT EXISTS idx_payments_tenant_created ON payments(tenant_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_messages_tenant_status ON messages(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_outbox_delivery ON outbox(tenant_id, status, available_at, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_ledger_source ON invoices_transactions(tenant_id, source_type, source_id)
+  WHERE source_type = 'payment' AND source_id IS NOT NULL AND source_id != '';
 CREATE INDEX IF NOT EXISTS idx_audit_tenant_created ON audit_logs(tenant_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_branches_one_main ON branches(tenant_id) WHERE is_main = 1;

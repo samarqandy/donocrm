@@ -1,15 +1,16 @@
 const crypto = require("node:crypto");
 const { now } = require("../utils/time");
-const { verifyPassword } = require("../utils/password");
+const { DUMMY_PASSWORD_HASH, verifyPassword } = require("../utils/password");
 
 class AuthService {
   constructor(repository) {
     this.repository = repository;
   }
 
-  login(username, password) {
+  async login(username, password) {
     const user = this.repository.userByUsername(String(username || "").trim());
-    if (!user || !verifyPassword(password || "", user.password)) {
+    const passwordValid = await verifyPassword(password || "", user?.password || DUMMY_PASSWORD_HASH);
+    if (!user || !passwordValid) {
       const error = new Error("Login yoki parol noto'g'ri");
       error.status = 401;
       throw error;

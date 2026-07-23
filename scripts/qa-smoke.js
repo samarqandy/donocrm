@@ -9,6 +9,7 @@ const { DatabaseSync } = require("node:sqlite");
 
 const sqliteFile = path.join(os.tmpdir(), `dono-qa-${process.pid}-${Date.now()}.sqlite`);
 process.env.NODE_ENV = "test";
+process.env.DONO_SEED_DEMO = "true";
 process.env.DONO_TELEGRAM_SKIP_REMOTE_VALIDATION = "true";
 process.env.SQLITE_FILE = sqliteFile;
 process.env.PORT = "0";
@@ -768,10 +769,12 @@ async function main() {
     assert.equal(res.status, 200);
     const paidStudent = res.json.students.find((student) => student.id === qaStudent.id);
     assert.equal(paidStudent.debt, 25000);
-    res = await request(baseUrl, "/api/messages", { cookie: adminCookie });
-    assert.equal(res.status, 200);
-    assert.ok(res.json.messages.some((message) => message.text.includes("To'lov qabul qilindi") && message.studentId === qaStudent.id));
-    pass("payment reduces debt and queues Telegram message");
+    const paymentOutbox = getDb()
+      .prepare("SELECT status, payload_json FROM outbox WHERE tenant_id = ? AND aggregate_type = 'payment' AND aggregate_id = ? LIMIT 1")
+      .get("tenant_main", qaPayment.id);
+    assert.equal(paymentOutbox.status, "pending");
+    assert.equal(JSON.parse(paymentOutbox.payload_json).studentId, qaStudent.id);
+    pass("payment reduces debt and atomically queues Telegram outbox event");
 
     res = await request(baseUrl, `/api/students/${encodeURIComponent(qaStudent.id)}/ledger`, { cookie: adminCookie });
     assert.equal(res.status, 200);

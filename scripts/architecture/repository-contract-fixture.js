@@ -296,13 +296,17 @@ function createAdapters(sqlite, postgres) {
   const { PostgresAttendanceRepository } = require("../../src/modules/attendance/infrastructure/PostgresAttendanceRepository");
   const { SQLiteAttendanceQueryRepository } = require("../../src/modules/attendance/infrastructure/SQLiteAttendanceQueryRepository");
   const { PostgresAttendanceQueryRepository } = require("../../src/modules/attendance/infrastructure/PostgresAttendanceQueryRepository");
+  const sqliteCommand = new SQLiteAttendanceRepository(sqlite);
   return {
     sqlite: {
-      command: new SQLiteAttendanceRepository(sqlite),
+      command: sqliteCommand,
       query: new SQLiteAttendanceQueryRepository(sqlite),
     },
     postgres: {
-      command: new PostgresAttendanceRepository(postgres),
+      command: new PostgresAttendanceRepository(postgres, {
+        financeGuard: sqliteCommand,
+        lessonReferenceReader: sqliteCommand,
+      }),
       query: new PostgresAttendanceQueryRepository(postgres),
     },
   };
@@ -321,7 +325,10 @@ async function createRepositoryContractFixture(options = {}) {
     postgres = new Pool({
       connectionString: databaseUrl,
       max: 4,
-      options: `-c search_path=${isolatedSchema},public`,
+      // The schema is disposable and is dropped after every contract run.
+      // Avoid host/docker fsync latency from turning deterministic fixtures
+      // into multi-minute suites; production connections keep durable commits.
+      options: `-c search_path=${isolatedSchema},public -c synchronous_commit=off`,
     });
     await applyPostgresSchema(postgres);
     sqlite = createSQLiteContractStore(seed);

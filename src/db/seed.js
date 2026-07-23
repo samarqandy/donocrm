@@ -1,8 +1,9 @@
 const { id } = require("../utils/id");
-const { hashPassword } = require("../utils/password");
+const { DEMO_ADMIN_PASSWORD_HASH, DEMO_TEACHER_PASSWORD_HASH } = require("../utils/password");
 const { now, today } = require("../utils/time");
 
-function seed(db) {
+function seedDemo(db) {
+  if (process.env.NODE_ENV === "production" || process.env.DONO_SEED_DEMO !== "true") return;
   const existing = db.prepare("SELECT COUNT(*) AS count FROM tenants").get();
   if (existing.count > 0) return;
 
@@ -18,7 +19,7 @@ function seed(db) {
       "user_admin",
       "tenant_main",
       "admin",
-      hashPassword("admin123"),
+      DEMO_ADMIN_PASSWORD_HASH,
       "Administrator",
       "admin",
     );
@@ -26,7 +27,7 @@ function seed(db) {
       "user_teacher",
       "tenant_main",
       "teacher",
-      hashPassword("teacher123"),
+      DEMO_TEACHER_PASSWORD_HASH,
       "Azizbek",
       "teacher",
     );
@@ -94,4 +95,4 @@ function seed(db) {
   }
 }
 
-module.exports = { seed };
+module.exports = { seedDemo };

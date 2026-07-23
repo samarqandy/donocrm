@@ -10,6 +10,7 @@ const { Readable, Writable } = require("node:stream");
 
 const sqliteFile = path.join(os.tmpdir(), `dono-backend-logic-${process.pid}-${Date.now()}.sqlite`);
 process.env.NODE_ENV = "test";
+process.env.DONO_SEED_DEMO = "true";
 process.env.DONO_TELEGRAM_SKIP_REMOTE_VALIDATION = "true";
 process.env.SQLITE_FILE = sqliteFile;
 process.env.PORT = "0";
@@ -1843,7 +1844,11 @@ test("Teacher Management: profile, access, workload, archive and history are rea
     body: { name: "Faculty History Group", subject: "History", teacherId: withoutAccess.json.id, room: "H1", monthlyFee: 0, startDate: isoPlusDays(-7) },
   });
   assert.equal(group.status, 201);
-  const lesson = await request("/api/lessons", { method: "POST", cookie: adminCookie, body: { groupId: group.json.id, date: "2026-07-11", time: "08:00 - 09:00" } });
+  const lesson = await request("/api/lessons", {
+    method: "POST",
+    cookie: adminCookie,
+    body: { groupId: group.json.id, date: isoPlusDays(-2), time: "08:00 - 09:00" },
+  });
   assert.equal(lesson.status, 201);
   const reassigned = await request(`/api/groups/${encodeURIComponent(group.json.id)}`, {
     method: "PUT",

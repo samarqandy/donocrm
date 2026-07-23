@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "format": "json-compatible-yaml",
+  "status": "active",
+  "defaultOwner": "architecture-owner",
+  "layers": ["domain", "application", "http", "infrastructure"],
+  "compositionRoots": [
+    "server.js",
+    "src/bootstrap/stranglerContainer.js",
+    "src/services/container.js"
+  ],
+  "presentationRoots": [
+    "src/http",
+    "src/modules/*/http",
+    "src/workers"
+  ],
+  "sqlAllowedRoots": [
+    "src/db",
+    "src/repositories",
+    "src/modules/*/infrastructure",
+    "src/infrastructure/database",
+    "src/infrastructure/migration",
+    "scripts/architecture",
+    "scripts/test-*",
+    "scripts/qa-smoke.js",
+    "scripts/attendance-*",
+    "scripts/postgres-schema.js",
+    "scripts/seed-attendance-canary.js"
+  ],
+  "legacyDependencyRoots": [
+    "src/services",
+    "src/repositories",
+    "src/db"
+  ],
+  "sharedKernel": {
+    "root": "src/core",
+    "allowed": [],
+    "baselineOnly": ["src/core/errors/DomainError.js"]
+  },
+  "contexts": {
+    "platform-administration": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "identity-access": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "organization-branches": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "workforce": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "academic-groups": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "scheduling": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "lesson-delivery": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "student-information": {"owner": "architecture-owner", "status": "partial", "sourceRoots": ["src/modules/students"], "publicPaths": ["src/modules/students/application"]},
+    "guardians-enrollment": {"owner": "architecture-owner", "status": "open-boundary", "sourceRoots": []},
+    "attendance": {"owner": "architecture-owner", "status": "migrating", "sourceRoots": ["src/modules/attendance"], "publicPaths": ["src/modules/attendance/application"]},
+    "student-billing-ledger": {"owner": "architecture-owner", "status": "open-boundary", "sourceRoots": []},
+    "lesson-finance-payroll": {"owner": "architecture-owner", "status": "open-boundary", "sourceRoots": []},
+    "communications": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "admissions-crm": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "work-management": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "reporting-export": {"owner": "architecture-owner", "status": "cross-cutting-legacy", "sourceRoots": []},
+    "audit-history": {"owner": "architecture-owner", "status": "cross-cutting-legacy", "sourceRoots": []},
+    "migration-infrastructure": {"owner": "architecture-owner", "status": "technical-migrating", "sourceRoots": ["src/infrastructure/migration", "src/infrastructure/database/postgres"]}
+  }
+}

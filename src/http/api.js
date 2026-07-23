@@ -3,6 +3,8 @@ const { services } = require("../services/container");
 const { getDb } = require("../db/client");
 const { readBody, sendJson } = require("./json");
 const { clearSessionCookie, parseCookies, sessionCookie } = require("./cookies");
+const { clientIp, loginRateLimiter } = require("../security/loginRateLimiter");
+const { stranglerRouter } = require("../bootstrap/stranglerContainer");
 
 const XLSX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -87,8 +89,18 @@ async function api(req, res, pathname) {
 
   try {
     if (method === "POST" && pathname === "/api/login") {
+      const limiterKey = clientIp(req);
+      const limit = loginRateLimiter.consume(limiterKey);
+      res.setHeader("X-RateLimit-Limit", "5");
+      res.setHeader("X-RateLimit-Remaining", String(limit.remaining));
+      if (!limit.allowed) {
+        res.setHeader("Retry-After", String(limit.retryAfterSeconds));
+        req.resume?.();
+        return sendJson(res, 429, { error: "Too many login attempts. Try again later." });
+      }
       const body = await readBody(req);
-      const result = auth.login(body.username, body.password);
+      const result = await auth.login(body.username, body.password);
+      loginRateLimiter.reset(limiterKey);
       res.setHeader("Set-Cookie", sessionCookie(result.sessionId));
       return sendJson(res, 200, { user: result.user });
     }
@@ -126,7 +138,7 @@ async function api(req, res, pathname) {
 	    const platformTenantUserMatch = pathname.match(/^\/api\/platform\/tenants\/([^/]+)\/users$/);
     if (method === "POST" && platformTenantUserMatch) {
       requireSuperAdmin(context);
-	      return sendJson(res, 201, app.createPlatformTenantAdmin(context, decodeURIComponent(platformTenantUserMatch[1]), await readBody(req)));
+	      return sendJson(res, 201, await app.createPlatformTenantAdmin(context, decodeURIComponent(platformTenantUserMatch[1]), await readBody(req)));
 	    }
 
     const platformTenantMatch = pathname.match(/^\/api\/platform\/tenants\/([^/]+)$/);
@@ -152,7 +164,7 @@ async function api(req, res, pathname) {
 	    }
 
     if (method === "GET" && pathname === "/api/bootstrap") {
-      return sendJson(res, 200, app.bootstrap(context));
+      return sendJson(res, 200, await app.bootstrap(context));
     }
 
 	    requireTenantContext(context);
@@ -163,7 +175,7 @@ async function api(req, res, pathname) {
     }
 
     if (method === "POST" && pathname === "/api/settings/password") {
-      return sendJson(res, 200, app.changePassword(context, await readBody(req)));
+      return sendJson(res, 200, await app.changePassword(context, await readBody(req)));
     }
 
     if (method === "GET" && pathname === "/api/permissions/me") {
@@ -196,18 +208,19 @@ async function api(req, res, pathname) {
     }
 
     if (method === "GET" && pathname === "/api/attendance-reasons") {
-      return sendJson(res, 200, { attendanceReasons: app.listAttendanceReasons(context) });
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
     if (method === "POST" && pathname === "/api/attendance-reasons") {
-      requireAdmin(context);
-      return sendJson(res, 201, app.createAttendanceReason(context, await readBody(req)));
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
     const attendanceReasonMatch = pathname.match(/^\/api\/attendance-reasons\/([^/]+)$/);
     if (method === "PATCH" && attendanceReasonMatch) {
-      requireAdmin(context);
-      return sendJson(res, 200, app.updateAttendanceReason(context, decodeURIComponent(attendanceReasonMatch[1]), await readBody(req)));
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
     if (method === "GET" && pathname === "/api/finance/lesson-billing-policies") {
@@ -360,13 +373,13 @@ async function api(req, res, pathname) {
     if (method === "GET" && pathname === "/api/students") {
       const parsed = new URL(req.url, `http://${req.headers.host || "localhost"}`);
       const includeArchived = ["1", "true"].includes(String(parsed.searchParams.get("includeArchived") || "").toLowerCase());
-      return sendJson(res, 200, { students: app.listStudents(context, parsed.searchParams.get("search") || "", includeArchived) });
+      return sendJson(res, 200, { students: await app.listStudents(context, parsed.searchParams.get("search") || "", includeArchived) });
     }
 
     if (method === "GET" && pathname === "/api/groups") {
       const parsed = new URL(req.url, `http://${req.headers.host || "localhost"}`);
       const includeArchived = ["1", "true"].includes(String(parsed.searchParams.get("includeArchived") || "").toLowerCase());
-      return sendJson(res, 200, { groups: app.listGroups(context, includeArchived) });
+      return sendJson(res, 200, { groups: await app.listGroups(context, includeArchived) });
     }
 
     if (method === "GET" && pathname === "/api/teachers") {
@@ -375,13 +388,13 @@ async function api(req, res, pathname) {
 
     if (method === "POST" && pathname === "/api/teachers") {
       requireAdmin(context);
-      return sendJson(res, 201, app.createTeacher(context, await readBody(req)));
+      return sendJson(res, 201, await app.createTeacher(context, await readBody(req)));
     }
 
     const teacherPasswordMatch = pathname.match(/^\/api\/teachers\/([^/]+)\/reset-password$/);
     if (method === "POST" && teacherPasswordMatch) {
       requireAdmin(context);
-      return sendJson(res, 200, app.resetTeacherPassword(context, decodeURIComponent(teacherPasswordMatch[1]), await readBody(req)));
+      return sendJson(res, 200, await app.resetTeacherPassword(context, decodeURIComponent(teacherPasswordMatch[1]), await readBody(req)));
     }
 
     const teacherRestoreMatch = pathname.match(/^\/api\/teachers\/([^/]+)\/restore$/);
@@ -397,7 +410,7 @@ async function api(req, res, pathname) {
     }
     if (method === "PUT" && teacherMatch) {
       requireAdmin(context);
-      return sendJson(res, 200, app.updateTeacher(context, decodeURIComponent(teacherMatch[1]), await readBody(req)));
+      return sendJson(res, 200, await app.updateTeacher(context, decodeURIComponent(teacherMatch[1]), await readBody(req)));
     }
     if (method === "DELETE" && teacherMatch) {
       requireAdmin(context);
@@ -407,7 +420,8 @@ async function api(req, res, pathname) {
 
     const lessonStudentsMatch = pathname.match(/^\/api\/lessons\/([^/]+)\/students$/);
     if (method === "GET" && lessonStudentsMatch) {
-      return sendJson(res, 200, { students: app.listLessonStudents(context, decodeURIComponent(lessonStudentsMatch[1])) });
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
     if (method === "GET" && pathname === "/api/lessons") {
@@ -420,7 +434,7 @@ async function api(req, res, pathname) {
     }
 
     if (method === "GET" && pathname === "/api/attendance-records") {
-      return sendJson(res, 200, { attendanceRecords: app.listAttendanceRecords(context) });
+      return sendJson(res, 200, { attendanceRecords: await app.listAttendanceRecords(context) });
     }
 
     if (method === "GET" && pathname === "/api/payments") {
@@ -440,7 +454,7 @@ async function api(req, res, pathname) {
 
     const studentProfileMatch = pathname.match(/^\/api\/students\/([^/]+)\/profile$/);
     if (method === "GET" && studentProfileMatch) {
-      return sendJson(res, 200, app.getStudentProfile(context, decodeURIComponent(studentProfileMatch[1])));
+      return sendJson(res, 200, await app.getStudentProfile(context, decodeURIComponent(studentProfileMatch[1])));
     }
 
     const studentRestoreMatch = pathname.match(/^\/api\/students\/([^/]+)\/restore$/);
@@ -468,7 +482,7 @@ async function api(req, res, pathname) {
 
     const groupProfileMatch = pathname.match(/^\/api\/groups\/([^/]+)\/profile$/);
     if (method === "GET" && groupProfileMatch) {
-      return sendJson(res, 200, app.getGroupProfile(context, decodeURIComponent(groupProfileMatch[1])));
+      return sendJson(res, 200, await app.getGroupProfile(context, decodeURIComponent(groupProfileMatch[1])));
     }
 
     const groupRestoreMatch = pathname.match(/^\/api\/groups\/([^/]+)\/restore$/);
@@ -567,8 +581,8 @@ async function api(req, res, pathname) {
 
     const lessonReopenMatch = pathname.match(/^\/api\/lessons\/([^/]+)\/reopen$/);
     if (method === "POST" && lessonReopenMatch) {
-      requireAdmin(context);
-      return sendJson(res, 200, app.reopenCompletedLesson(context, decodeURIComponent(lessonReopenMatch[1]), await readBody(req)));
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
     const lessonFinancePreviewMatch = pathname.match(/^\/api\/lessons\/([^/]+)\/finance-preview$/);
@@ -594,12 +608,14 @@ async function api(req, res, pathname) {
 
     const attendanceAlertsMatch = pathname.match(/^\/api\/lessons\/([^/]+)\/send-attendance-alerts$/);
     if (method === "POST" && attendanceAlertsMatch) {
-      await readBody(req);
-      return sendJson(res, 200, app.sendAttendanceAlerts(context, decodeURIComponent(attendanceAlertsMatch[1])));
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
+    // Compatibility for direct API harnesses; the HTTP server dispatches this route first.
     if (method === "POST" && pathname === "/api/attendance") {
-      return sendJson(res, 200, app.saveAttendance(context, await readBody(req)));
+      await stranglerRouter().dispatch(req, res, pathname);
+      return;
     }
 
     if (method === "POST" && pathname === "/api/payments") {

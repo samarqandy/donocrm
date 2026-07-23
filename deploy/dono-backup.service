@@ -1,0 +1,24 @@
+[Unit]
+Description=Consistent DonoCRM SQLite backup
+
+[Service]
+Type=oneshot
+User=dono
+Group=dono
+UMask=0077
+Environment=DB_PATH=/var/www/dono/data/dono.sqlite
+Environment=BACKUP_DIR=/var/backups/dono
+Environment=RETENTION_DAYS=30
+EnvironmentFile=-/etc/dono/dono.env
+ExecStart=/var/www/dono/scripts/backup.sh
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/www/dono/data
+ReadWritePaths=/var/backups/dono
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=

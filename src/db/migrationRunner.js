@@ -10,6 +10,12 @@ const groupManagement = require("./migrations/20260712_zzzzz_group_management");
 const lessonManagement = require("./migrations/20260712_zzzzzz_lesson_management");
 const lessonFinance = require("./migrations/20260712_zzzzzzz_lesson_finance");
 const scheduleSeriesLineage = require("./migrations/20260713_schedule_series_lineage");
+const paymentOutbox = require("./migrations/20260715_payment_outbox");
+const attendanceMigrationOutbox = require("./migrations/20260715_zz_attendance_migration_outbox");
+const attendanceMigrationInbox = require("./migrations/20260715_zzz_attendance_migration_inbox");
+const attendanceReasonVersion = require("./migrations/20260715_zzzz_attendance_reason_version");
+const attendanceReferenceOutbox = require("./migrations/20260715_zzzzz_attendance_reference_outbox");
+const attendanceLessonEventReference = require("./migrations/20260715_zzzzzz_attendance_lesson_event_reference");
 
 const migrations = [
   commercialCore,
@@ -23,6 +29,12 @@ const migrations = [
   lessonManagement,
   lessonFinance,
   scheduleSeriesLineage,
+  paymentOutbox,
+  attendanceMigrationOutbox,
+  attendanceMigrationInbox,
+  attendanceReasonVersion,
+  attendanceReferenceOutbox,
+  attendanceLessonEventReference,
 ].sort((left, right) => left.id.localeCompare(right.id));
 
 function ensureMigrationTable(db) {

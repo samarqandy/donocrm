@@ -1,4 +1,4 @@
-const { hashPassword } = require("../../utils/password");
+const { DEMO_SUPER_PASSWORD_HASH } = require("../../utils/password");
 
 function tableColumns(db, tableName) {
   return db.prepare(`PRAGMA table_info(${tableName})`).all().map((column) => column.name);
@@ -98,12 +98,13 @@ function rebuildSessionsForPlatform(db) {
 }
 
 function seedSuperAdmin(db) {
+  if (process.env.NODE_ENV === "production" || process.env.DONO_SEED_DEMO !== "true") return;
   const existing = db.prepare("SELECT id FROM users WHERE id = 'user_super' OR username = 'superadmin' LIMIT 1").get();
   if (!existing) {
     db.prepare("INSERT INTO users (id, tenant_id, username, password, name, role) VALUES (?, NULL, ?, ?, ?, ?)").run(
       "user_super",
       "superadmin",
-      hashPassword("super123"),
+      DEMO_SUPER_PASSWORD_HASH,
       "Platform Egasi",
       "superadmin",
     );

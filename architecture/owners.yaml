@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "format": "json-compatible-yaml",
+  "status": "active",
+  "effectiveDate": "2026-07-22",
+  "governanceModel": "single-founder",
+  "owners": {
+    "architecture-owner": {
+      "name": "Sukhrob Khaydarov",
+      "roles": ["architecture", "migration-gates", "adrs", "release-readiness"]
+    },
+    "product-authority": {
+      "name": "Sukhrob Khaydarov",
+      "roles": ["product", "contract-stability"]
+    },
+    "data-owner": {
+      "name": "Sukhrob Khaydarov",
+      "roles": ["data", "schema-ownership", "reconciliation"]
+    },
+    "operations-owner": {
+      "name": "Sukhrob Khaydarov",
+      "roles": ["operations", "deployment", "rollback"]
+    },
+    "quality-owner": {
+      "name": "Sukhrob Khaydarov",
+      "roles": ["quality", "contract-tests", "ci-gates"]
+    },
+    "security-owner": {
+      "name": "Sukhrob Khaydarov",
+      "roles": ["security", "tenant-isolation", "credentials"]
+    }
+  },
+  "delegate": null,
+  "ciOperationalOwner": null
+}

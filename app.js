@@ -6141,7 +6141,8 @@ async function openAttendance(lessonId) {
       api(`/api/lessons/${encodeURIComponent(lessonId)}/students`),
       api("/api/attendance-reasons"),
     ]);
-    state.currentLesson = lesson;
+    state.currentLesson = result.lesson ? { ...lesson, ...result.lesson } : lesson;
+    if (result.lesson) syncUpdatedEntity("lesson", state.currentLesson);
     state.attendanceStudents = result.students || [];
     state.attendanceReasons = reasonsResult.attendanceReasons || [];
     state.attendanceDraft = Object.fromEntries(state.attendanceStudents.filter((student) => student.attendanceStatus).map((student) => [student.id, student.attendanceStatus]));

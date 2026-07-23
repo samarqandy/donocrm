@@ -13,16 +13,6 @@ const {
 const { today } = require("../utils/time");
 const { getMe } = require("../integrations/telegramClient");
 
-function attendanceCounts(records) {
-  return records.reduce(
-    (counts, record) => {
-      counts[record.status] = (counts[record.status] || 0) + 1;
-      return counts;
-    },
-    { present: 0, absent: 0, late: 0, excused: 0 },
-  );
-}
-
 function statusForLeadStage(stage) {
   if (stage === "paid") return "converted";
   if (stage !== "new" && stage !== "lost") return "contacted";
@@ -242,8 +232,27 @@ function teacherAccessEnabled(body, fallback = false) {
 }
 
 class AppService {
-  constructor(repository) {
+  constructor(repository, { attendanceQueryRouter = null } = {}) {
     this.repository = repository;
+    this.attendanceQueryRouter = attendanceQueryRouter;
+  }
+
+  attendanceQueries(tenantId) {
+    if (!this.attendanceQueryRouter) throw new Error("Attendance query router is not configured");
+    return this.attendanceQueryRouter.primaryFor(tenantId);
+  }
+
+  async projectStudentAttendance(tenantId, students) {
+    const stats = await this.attendanceQueries(tenantId).studentStats(tenantId, students.map((student) => student.id));
+    return students.map((student) => ({
+      ...student,
+      ...(stats[student.id] || { attendanceTotal: 0, attendancePresent: 0, attendanceRate: 0 }),
+    }));
+  }
+
+  async projectGroupAttendance(tenantId, groups) {
+    const stats = await this.attendanceQueries(tenantId).groupStats(tenantId, groups.map((group) => group.id));
+    return groups.map((group) => ({ ...group, ...(stats[group.id] || { attendanceRate: 0 }) }));
   }
 
   assertFinancialDateOpen(context, date, branchId = "") {
@@ -268,7 +277,7 @@ class AppService {
     return { branchId, accountId, categoryId };
   }
 
-  bootstrap(context) {
+  async bootstrap(context) {
 	    if (context.realRole === "superadmin" && !context.tenantId) {
       return {
         platform: {
@@ -301,10 +310,22 @@ class AppService {
       throw error;
     }
 
-    const dashboardData =
+    let dashboardData =
       context.role === "teacher"
         ? this.repository.teacherDashboard(context.tenantId, context.userId)
         : this.repository.adminDashboard(context.tenantId);
+    if (context.role !== "teacher") {
+      const queryRepository = this.attendanceQueries(context.tenantId);
+      const [counts, debtors] = await Promise.all([
+        queryRepository.counts(context.tenantId),
+        this.projectStudentAttendance(context.tenantId, dashboardData.debtors || []),
+      ]);
+      dashboardData = {
+        ...dashboardData,
+        stats: { ...dashboardData.stats, ...counts },
+        debtors,
+      };
+    }
     const dashboard = {
       tenant,
       ...dashboardData,
@@ -339,8 +360,8 @@ class AppService {
     return row;
   }
 
-  createPlatformTenantAdmin(context, tenantId, body) {
-    const row = this.repository.createPlatformTenantAdmin(required(tenantId, "tenantId"), {
+  async createPlatformTenantAdmin(context, tenantId, body) {
+    const row = await this.repository.createPlatformTenantAdmin(required(tenantId, "tenantId"), {
       name: required(body.name, "name"),
       username: required(body.username, "username"),
       password: required(body.password, "password"),
@@ -399,7 +420,7 @@ class AppService {
     return row;
   }
 
-  listStudents(context, search = "", includeArchived = false) {
+  async listStudents(context, search = "", includeArchived = false) {
     const query = String(search || "").trim();
     const canIncludeArchived = context.role === "admin" && Boolean(includeArchived);
     const students =
@@ -410,8 +431,9 @@ class AppService {
         : query
           ? this.repository.searchStudents(context.tenantId, query, canIncludeArchived)
           : this.repository.students(context.tenantId, canIncludeArchived);
-    if (context.role !== "teacher") return students;
-    return students.map(teacherStudentDto);
+    const projected = await this.projectStudentAttendance(context.tenantId, students);
+    if (context.role !== "teacher") return projected;
+    return projected.map(teacherStudentDto);
   }
 
   updateCenterSettings(context, body) {
@@ -425,8 +447,8 @@ class AppService {
     return { name: tenant.name };
   }
 
-  changePassword(context, body) {
-    const result = this.repository.changeUserPassword(
+  async changePassword(context, body) {
+    const result = await this.repository.changeUserPassword(
       context.userId,
       required(body.currentPassword, "currentPassword"),
       required(body.newPassword, "newPassword"),
@@ -435,15 +457,16 @@ class AppService {
     return result;
   }
 
-  listGroups(context, includeArchived = false) {
+  async listGroups(context, includeArchived = false) {
     const canIncludeArchived = context.role === "admin" && Boolean(includeArchived);
     const groups =
       context.role === "teacher"
         ? this.repository.groupsForTeacher(context.tenantId, context.userId)
         : this.repository.groups(context.tenantId, canIncludeArchived);
+    const projected = await this.projectGroupAttendance(context.tenantId, groups);
     return context.role === "teacher"
-      ? groups.filter((group) => group.teacherId === context.userId && !isArchivedGroup(group)).map(teacherGroupDto)
-      : groups;
+      ? projected.filter((group) => group.teacherId === context.userId && !isArchivedGroup(group)).map(teacherGroupDto)
+      : projected;
   }
 
   listTeachers(context) {
@@ -507,20 +530,20 @@ class AppService {
     };
   }
 
-  createTeacher(context, body) {
-    const row = this.repository.createTeacher(context.tenantId, this.teacherPayload(context, body));
+  async createTeacher(context, body) {
+    const row = await this.repository.createTeacher(context.tenantId, this.teacherPayload(context, body));
     this.repository.audit(context, "created", "teacher", row.id);
     return row;
   }
 
-  updateTeacher(context, teacherId, body) {
+  async updateTeacher(context, teacherId, body) {
     const existing = this.repository.teacher(context.tenantId, required(teacherId, "teacherId"));
     if (!existing) {
       const error = new Error("Teacher not found");
       error.status = 404;
       throw error;
     }
-    const row = this.repository.updateTeacher(context.tenantId, existing.id, this.teacherPayload(context, body, existing));
+    const row = await this.repository.updateTeacher(context.tenantId, existing.id, this.teacherPayload(context, body, existing));
     this.repository.audit(context, "updated", "teacher", row.id);
     return row;
   }
@@ -555,10 +578,10 @@ class AppService {
     return row;
   }
 
-  resetTeacherPassword(context, teacherId, body) {
+  async resetTeacherPassword(context, teacherId, body) {
     const password = required(body.newPassword || body.new_password, "newPassword");
     if (password.length < 8) throw validationError("password must contain at least 8 characters");
-    const result = this.repository.resetTeacherPassword(context.tenantId, required(teacherId, "teacherId"), password);
+    const result = await this.repository.resetTeacherPassword(context.tenantId, required(teacherId, "teacherId"), password);
     if (!result) {
       const error = new Error("Teacher portal access is not configured");
       error.status = 404;
@@ -608,47 +631,6 @@ class AppService {
       branchId: body.branchId || body.branch_id || "",
     });
     this.repository.audit(context, "created", "subscription", row.id);
-    return row;
-  }
-
-  listAttendanceReasons(context) {
-    return this.repository.attendanceReasons(context.tenantId, context.role !== "admin");
-  }
-
-  createAttendanceReason(context, body) {
-    const code = textValue(body.code).toLowerCase();
-    if (!/^[a-z][a-z0-9_]{1,39}$/.test(code)) throw validationError("code is invalid");
-    const row = this.repository.createAttendanceReason(context.tenantId, {
-      code,
-      name: requiredLimitedText(body.name, "name", 120),
-      attendanceStatus: enumValue(body.attendanceStatus || body.attendance_status, ["present", "absent", "late", "excused"], "attendanceStatus"),
-      chargePercent: percentage(required(body.chargePercent ?? body.charge_percent, "chargePercent"), "chargePercent"),
-      consumePercent: percentage(required(body.consumePercent ?? body.consume_percent, "consumePercent"), "consumePercent"),
-      actorUserId: context.userId,
-    });
-    this.repository.audit(context, "created", "attendance_reason", row.id);
-    return row;
-  }
-
-  updateAttendanceReason(context, reasonId, body) {
-    const existing = this.repository.attendanceReason(context.tenantId, required(reasonId, "reasonId"));
-    if (!existing) {
-      const error = new Error("Attendance reason not found");
-      error.status = 404;
-      throw error;
-    }
-    if (existing.isSystem && body.isActive === false) throw validationError("System attendance reason cannot be disabled");
-    const row = this.repository.updateAttendanceReason(context.tenantId, existing.id, {
-      name: body.name === undefined ? existing.name : requiredLimitedText(body.name, "name", 120),
-      chargePercent: body.chargePercent === undefined && body.charge_percent === undefined
-        ? existing.chargePercent
-        : percentage(body.chargePercent ?? body.charge_percent, "chargePercent"),
-      consumePercent: body.consumePercent === undefined && body.consume_percent === undefined
-        ? existing.consumePercent
-        : percentage(body.consumePercent ?? body.consume_percent, "consumePercent"),
-      isActive: body.isActive === undefined && body.is_active === undefined ? existing.isActive : Boolean(body.isActive ?? body.is_active),
-    });
-    this.repository.audit(context, "updated", "attendance_reason", row.id);
     return row;
   }
 
@@ -934,10 +916,11 @@ class AppService {
     return row;
   }
 
-  listAttendanceRecords(context) {
+  async listAttendanceRecords(context) {
+    const queries = this.attendanceQueries(context.tenantId);
     return context.role === "teacher"
-      ? this.repository.attendanceRecordsForTeacher(context.tenantId, context.userId)
-      : this.repository.attendanceRecords(context.tenantId);
+      ? queries.listForTeacher(context.tenantId, context.userId)
+      : queries.list(context.tenantId);
   }
 
   listPayments(context) {
@@ -1009,7 +992,7 @@ class AppService {
     return row;
   }
 
-  getStudentProfile(context, studentId) {
+  async getStudentProfile(context, studentId) {
     const id = required(studentId, "studentId");
     const student = this.repository.student(context.tenantId, id);
     if (!student) {
@@ -1031,7 +1014,20 @@ class AppService {
       error.status = 404;
       throw error;
     }
-    return context.role === "teacher" ? teacherStudentProfileDto(profile) : profile;
+    const queries = this.attendanceQueries(context.tenantId);
+    const [attendance, studentStats] = await Promise.all([
+      queries.studentProfile(context.tenantId, id),
+      queries.studentStats(context.tenantId, [id]),
+    ]);
+    const projected = {
+      ...profile,
+      student: {
+        ...profile.student,
+        ...(studentStats[id] || { attendanceTotal: 0, attendancePresent: 0, attendanceRate: 0 }),
+      },
+      attendance,
+    };
+    return context.role === "teacher" ? teacherStudentProfileDto(projected) : projected;
   }
 
   updateStudent(context, studentId, body) {
@@ -1165,7 +1161,7 @@ class AppService {
     return row;
   }
 
-  getGroupProfile(context, groupId) {
+  async getGroupProfile(context, groupId) {
     const existing = this.repository.group(context.tenantId, required(groupId, "groupId"));
     if (!existing) {
       const error = new Error("Group not found");
@@ -1183,7 +1179,25 @@ class AppService {
       error.status = 404;
       throw error;
     }
-    return context.role === "teacher" ? teacherGroupProfileDto(profile) : profile;
+    const attendance = await this.attendanceQueries(context.tenantId).groupProfile(context.tenantId, existing.id);
+    const attendanceTotal = Number(attendance.summary?.total || 0);
+    const attendancePresent = Number(attendance.summary?.present || 0) + Number(attendance.summary?.late || 0);
+    const projected = {
+      ...profile,
+      group: {
+        ...profile.group,
+        attendanceRate: attendanceTotal ? Math.round((attendancePresent / attendanceTotal) * 100) : 0,
+      },
+      members: {
+        ...profile.members,
+        active: (profile.members?.active || []).map((student) => ({
+          ...student,
+          ...(attendance.memberStats[student.id] || { attendanceTotal: 0, attendancePresent: 0, attendanceRate: 0 }),
+        })),
+      },
+      attendance,
+    };
+    return context.role === "teacher" ? teacherGroupProfileDto(projected) : projected;
   }
 
   listGroupSchedules(context, groupId, includeInactive = true) {
@@ -1941,34 +1955,6 @@ class AppService {
     return row;
   }
 
-  reopenCompletedLesson(context, lessonId, body) {
-    const existing = this.repository.lesson(context.tenantId, required(lessonId, "lessonId"));
-    if (!existing) {
-      const error = new Error("Lesson not found");
-      error.status = 404;
-      throw error;
-    }
-    if (existing.status !== "completed") {
-      const error = new Error("Only a completed lesson can be reopened");
-      error.status = 409;
-      throw error;
-    }
-    if (existing.financialStatus === "posted" || this.repository.activeLessonSettlement(context.tenantId, existing.id)) {
-      const error = new Error("Reverse the active financial settlement before reopening the lesson");
-      error.status = 409;
-      throw error;
-    }
-    const reason = requiredLimitedText(body.reason, "reason", 500);
-    this.assertFinancialDateOpen(context, existing.date, existing.branchId || "");
-    const row = this.repository.reopenCompletedLesson(context.tenantId, existing.id, {
-      reason,
-      actorUserId: context.userId,
-      actorRole: context.role,
-    });
-    this.repository.audit(context, "reopened", "lesson_completion", existing.id);
-    return row;
-  }
-
   weeklySchedule(context, date) {
     let range;
     try {
@@ -1986,139 +1972,6 @@ class AppService {
       teacherId,
       isoWeekKey(range.startDate),
     );
-  }
-
-  saveAttendance(context, body) {
-    const lessonId = required(body.lessonId, "lessonId");
-    const lesson = this.repository.lesson(context.tenantId, lessonId);
-    if (!lesson) {
-      const error = new Error("Lesson not found");
-      error.status = 404;
-      throw error;
-    }
-    if (context.role === "teacher" && lesson.teacherId !== context.userId) {
-      const error = new Error("Only assigned teacher can save attendance");
-      error.status = 403;
-      throw error;
-    }
-    if (lesson.status === "cancelled") {
-      const error = new Error("Cancelled lesson cannot be completed");
-      error.status = 409;
-      throw error;
-    }
-    if (lesson.date > today()) {
-      const error = new Error("Future lesson cannot be completed");
-      error.status = 409;
-      throw error;
-    }
-    const students =
-      typeof this.repository.studentsForLesson === "function"
-        ? this.repository.studentsForLesson(context.tenantId, lessonId)
-        : this.repository.studentsByGroup(context.tenantId, lesson.groupId);
-    const allowedStudentIds = new Set(students.map((student) => student.id));
-    if (!Array.isArray(body.records)) throw validationError("records must be an array");
-    const currentRecords = this.repository.attendanceForLesson(context.tenantId, lessonId);
-    const currentRecordsByStudent = new Map(currentRecords.map((record) => [record.studentId, record]));
-    const reasons = this.repository.attendanceReasons(context.tenantId, false);
-    const reasonsById = new Map(reasons.map((reason) => [reason.id, reason]));
-    const defaultReasonCode = {
-      present: "present",
-      absent: "absent_unexcused",
-      late: "late",
-      excused: "excused",
-    };
-    const records = body.records.map((record) => ({
-      studentId: required(record.studentId, "studentId"),
-      status: enumValue(record.status, ["present", "absent", "late", "excused"], "status"),
-      reasonId: textValue(record.reasonId || record.reason_id),
-      note: limitedText(record.note, "note", 500),
-    })).map((record) => {
-      const reason = record.reasonId
-        ? reasonsById.get(record.reasonId)
-        : reasons.find((candidate) => candidate.code === defaultReasonCode[record.status]);
-      const currentRecord = currentRecordsByStudent.get(record.studentId);
-      const preservesHistoricalReason = lesson.status === "completed"
-        && currentRecord?.reasonId === reason?.id
-        && currentRecord?.status === record.status;
-      if (!reason || (!reason.isActive && !preservesHistoricalReason)) throw validationError("attendance reason is invalid or inactive");
-      if (reason.attendanceStatus !== record.status) throw validationError("attendance reason does not match status");
-      return {
-        ...record,
-        reasonId: reason.id,
-        reasonCode: preservesHistoricalReason ? currentRecord.reasonCode : reason.code,
-        reasonName: preservesHistoricalReason ? currentRecord.reasonName : reason.name,
-        chargePercent: preservesHistoricalReason ? currentRecord.chargePercent : reason.chargePercent,
-        consumePercent: preservesHistoricalReason ? currentRecord.consumePercent : reason.consumePercent,
-      };
-    });
-
-    const submittedIds = new Set(records.map((record) => record.studentId));
-    if (submittedIds.size !== records.length) throw validationError("records contains duplicate studentId values");
-    if (!allowedStudentIds.size) {
-      const error = new Error("Lesson roster is empty; cancel the lesson or add participants before completion");
-      error.status = 409;
-      throw error;
-    }
-    if (submittedIds.size !== allowedStudentIds.size || [...allowedStudentIds].some((studentId) => !submittedIds.has(studentId))) {
-      throw validationError("records must contain every student in the lesson roster exactly once");
-    }
-
-    records.forEach((record) => {
-      if (!allowedStudentIds.has(record.studentId)) {
-        const error = new Error("Student does not belong to this lesson group");
-        error.status = 422;
-        throw error;
-      }
-    });
-
-    const correctionReason = limitedText(body.correctionReason ?? body.correction_reason, "correctionReason", 500);
-    const lessonDetails = {
-      topic: limitedText(body.topic, "topic", 500, lesson.topic || ""),
-      homework: limitedText(body.homework, "homework", 2000, lesson.homework || ""),
-      note: limitedText(body.lessonNote ?? body.lesson_note, "lessonNote", 2000, lesson.note || ""),
-    };
-    const normalizedCurrent = currentRecords
-      .map((record) => ({ studentId: record.studentId, status: record.status, reasonId: record.reasonId, note: record.note || "" }))
-      .sort((left, right) => left.studentId.localeCompare(right.studentId));
-    const normalizedNext = records
-      .map((record) => ({ studentId: record.studentId, status: record.status, reasonId: record.reasonId, note: record.note || "" }))
-      .sort((left, right) => left.studentId.localeCompare(right.studentId));
-    const attendanceUnchanged = JSON.stringify(normalizedCurrent) === JSON.stringify(normalizedNext);
-    const lessonDetailsUnchanged = lessonDetails.topic === (lesson.topic || "")
-      && lessonDetails.homework === (lesson.homework || "")
-      && lessonDetails.note === (lesson.note || "");
-    const unchanged = attendanceUnchanged && lessonDetailsUnchanged;
-    if (lesson.status === "completed" && unchanged) {
-      return { ok: true, reused: true, lesson, dashboard: this.bootstrap(context).dashboard };
-    }
-    if (lesson.status === "completed") {
-      if (context.role !== "admin") {
-        const error = new Error("Only an admin can correct completed attendance");
-        error.status = 403;
-        throw error;
-      }
-      if (!correctionReason) throw validationError("correctionReason is required for completed attendance");
-      if (lesson.financialStatus === "posted") {
-        const error = new Error("Reverse the active financial settlement before correcting attendance");
-        error.status = 409;
-        throw error;
-      }
-    }
-    const closedPeriod = this.repository.closedFinancePeriod(context.tenantId, lesson.branchId || "", lesson.date);
-    if (closedPeriod) {
-      const error = new Error(`Finance period is closed: ${closedPeriod.label}`);
-      error.status = 409;
-      throw error;
-    }
-
-    const updatedLesson = this.repository.replaceAttendance(context.tenantId, lessonId, records, {
-      actorUserId: context.userId,
-      actorRole: context.role,
-      reason: correctionReason,
-      ...lessonDetails,
-    });
-    this.repository.audit(context, lesson.status === "completed" ? "corrected" : "completed", "attendance", lessonId);
-    return { ok: true, lesson: updatedLesson, dashboard: this.bootstrap(context).dashboard };
   }
 
   lessonFinancialPreview(context, lessonId) {
@@ -2246,13 +2099,6 @@ class AppService {
     return result;
   }
 
-  sendAttendanceAlerts(context, lessonId) {
-    const teacherId = context.role === "teacher" ? context.userId : null;
-    const result = this.repository.sendAttendanceAlerts(context.tenantId, required(lessonId, "lessonId"), teacherId);
-    this.repository.audit(context, "queued", "attendance_alerts", lessonId);
-    return result;
-  }
-
   createPayment(context, body) {
     const studentId = required(body.studentId, "studentId");
     const student = this.repository.student(context.tenantId, studentId);
@@ -2263,22 +2109,19 @@ class AppService {
     }
     const financeRefs = this.validateFinanceReferences(context, body);
     this.assertFinancialDateOpen(context, today(), financeRefs.branchId);
-    const row = this.repository.createPayment(context.tenantId, student, {
-      amount: positiveAmount(body.amount),
+    const amount = positiveAmount(body.amount);
+    return this.repository.createPayment(context, student, {
+      amount,
       type: enumValue(body.type || "cash", ["cash", "card", "transfer"], "type"),
       idempotencyKey: idempotencyKey(body),
       ...financeRefs,
-    });
-    if (!row.reused) {
-      this.repository.createMessage(context.tenantId, {
+      notification: {
         channel: "telegram",
         studentId: student.id,
         to: student.name,
-        text: `To'lov qabul qilindi: ${row.amount.toLocaleString("ru-RU")} so'm.`,
-      });
-      this.repository.audit(context, "created", "payment", row.id);
-    }
-    return row;
+        text: `To'lov qabul qilindi: ${amount.toLocaleString("ru-RU")} so'm.`,
+      },
+    });
   }
 
   updatePayment(context, paymentId, body) {

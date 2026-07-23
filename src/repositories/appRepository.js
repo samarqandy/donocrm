@@ -3,6 +3,7 @@ const { dateForWeekday, isoWeekKey, isoWeekday, parseLessonTime } = require("../
 const { now, today } = require("../utils/time");
 const { secret } = require("../config/app");
 const { TelegramQueueRepository } = require("./domains/telegramQueueRepository");
+const { SQLiteAttendanceRepository } = require("../modules/attendance/infrastructure/SQLiteAttendanceRepository");
 const { hashPassword, verifyPassword } = require("../utils/password");
 const { encryptSecret } = require("../utils/secrets");
 const { normalizePhone } = require("../utils/phone");
@@ -215,12 +216,7 @@ function groupMetricsSelect() {
     (SELECT COUNT(*) FROM lessons lesson
      WHERE lesson.tenant_id = g.tenant_id AND lesson.group_id = g.id
        AND lesson.status = 'cancelled') AS cancelled_lessons,
-    COALESCE((
-      SELECT ROUND(100.0 * SUM(CASE WHEN attendance.status IN ('present', 'late') THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0))
-      FROM attendance attendance
-      JOIN lessons lesson ON lesson.id = attendance.lesson_id AND lesson.tenant_id = attendance.tenant_id
-      WHERE attendance.tenant_id = g.tenant_id AND lesson.group_id = g.id
-    ), 0) AS attendance_rate,
+    0 AS attendance_rate,
     COALESCE((SELECT MIN(lesson.date) FROM lessons lesson
       WHERE lesson.tenant_id = g.tenant_id AND lesson.group_id = g.id
         AND lesson.date >= '${currentDate}' AND lesson.status IN ('waiting', 'planned')), '') AS next_lesson_date
@@ -248,7 +244,7 @@ function camelLesson(row) {
       ? null
       : Number(row.base_schedule_version),
     lessonType: row.lesson_type || "group",
-    status: row.status,
+    status: row.status === "waiting" ? "planned" : row.status,
     attendanceData: row.attendance_data,
     attendanceVersion: Number(row.attendance_version || 0),
     financialStatus: row.financial_status || "unposted",
@@ -578,22 +574,6 @@ function camelSubscription(row) {
   };
 }
 
-function camelAttendanceReason(row) {
-  return {
-    id: row.id,
-    tenantId: row.tenant_id,
-    code: row.code,
-    name: row.name,
-    attendanceStatus: row.attendance_status,
-    chargePercent: Number(row.charge_percent || 0),
-    consumePercent: Number(row.consume_percent || 0),
-    isActive: Boolean(row.is_active),
-    isSystem: Boolean(row.is_system),
-    createdAt: row.created_at || "",
-    updatedAt: row.updated_at || "",
-  };
-}
-
 function camelLessonBillingPolicy(row) {
   return {
     id: row.id,
@@ -807,6 +787,7 @@ class AppRepository {
   constructor(db) {
     this.db = db;
     this.telegramQueue = new TelegramQueueRepository(db);
+    this.attendanceRepository = new SQLiteAttendanceRepository(db);
   }
 
   tenant(tenantId) {
@@ -1016,7 +997,7 @@ class AppRepository {
     ].forEach(([code, name, kind]) => categoryStmt.run(`${tenantId}_${code}`, tenantId, name, kind, timestamp));
   }
 
-  createPlatformTenantAdmin(tenantId, payload) {
+  async createPlatformTenantAdmin(tenantId, payload) {
     if (!this.platformTenant(tenantId)) {
       const error = new Error("Tenant not found");
       error.status = 404;
@@ -1030,11 +1011,12 @@ class AppRepository {
       error.status = 422;
       throw error;
     }
+    const passwordHash = payload.passwordHash || await hashPassword(password);
     const row = {
       id: id(),
       tenant_id: tenantId,
       username,
-      password: hashPassword(password),
+      password: passwordHash,
       name,
       role: "admin",
     };
@@ -1100,9 +1082,9 @@ class AppRepository {
     return this.tenant(tenantId);
   }
 
-  changeUserPassword(userId, currentPassword, newPassword) {
+  async changeUserPassword(userId, currentPassword, newPassword) {
     const user = this.db.prepare("SELECT id, password FROM users WHERE id = ? LIMIT 1").get(userId);
-    if (!user || !verifyPassword(currentPassword, user.password)) {
+    if (!user || !(await verifyPassword(currentPassword, user.password))) {
       const error = new Error("Joriy parol noto'g'ri");
       error.status = 401;
       throw error;
@@ -1112,7 +1094,8 @@ class AppRepository {
       error.status = 422;
       throw error;
     }
-    this.db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashPassword(newPassword), userId);
+    const passwordHash = await hashPassword(newPassword);
+    this.db.prepare("UPDATE users SET password = ? WHERE id = ?").run(passwordHash, userId);
     return { success: true };
   }
 
@@ -1131,9 +1114,7 @@ class AppRepository {
                   FROM invoices_transactions it
                   WHERE it.student_id = s.id AND it.tenant_id = s.tenant_id
                     AND COALESCE(it.status, 'active') = 'active'
-                ), s.balance, 0) AS ledger_balance,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id) AS attendance_total,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id AND a.status IN ('present', 'late')) AS attendance_present
+                ), s.balance, 0) AS ledger_balance
 	         FROM students s
 	         JOIN groups g ON g.id = s.group_id AND g.tenant_id = ?
 	         LEFT JOIN student_guardians sg ON sg.tenant_id = s.tenant_id AND sg.student_id = s.id AND sg.is_primary = 1
@@ -1182,9 +1163,7 @@ class AppRepository {
                   FROM invoices_transactions it
                   WHERE it.student_id = s.id AND it.tenant_id = s.tenant_id
                     AND COALESCE(it.status, 'active') = 'active'
-                ), s.balance, 0) AS ledger_balance,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id) AS attendance_total,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id AND a.status IN ('present', 'late')) AS attendance_present
+                ), s.balance, 0) AS ledger_balance
          FROM students s
          LEFT JOIN groups g ON g.id = s.group_id AND g.tenant_id = s.tenant_id
          LEFT JOIN student_guardians sg ON sg.tenant_id = s.tenant_id AND sg.student_id = s.id AND sg.is_primary = 1
@@ -1821,12 +1800,7 @@ class AppRepository {
                   FROM invoices_transactions tx
                   WHERE tx.tenant_id = student.tenant_id AND tx.student_id = student.id
                     AND COALESCE(tx.status, 'active') = 'active'
-                ), student.balance, 0) AS ledger_balance,
-                (SELECT COUNT(*) FROM attendance record
-                 WHERE record.tenant_id = student.tenant_id AND record.student_id = student.id) AS attendance_total,
-                (SELECT COUNT(*) FROM attendance record
-                 WHERE record.tenant_id = student.tenant_id AND record.student_id = student.id
-                   AND record.status IN ('present', 'late')) AS attendance_present
+                ), student.balance, 0) AS ledger_balance
          FROM student_group_enrollments enrollment
          JOIN students student
            ON student.id = enrollment.student_id AND student.tenant_id = enrollment.tenant_id
@@ -1928,50 +1902,6 @@ class AppRepository {
       .all(tenantId, groupId)
       .map(camelLesson);
 
-    const attendanceRecords = this.db
-      .prepare(
-        `SELECT record.*, student.name AS student_name, student.parent_name,
-                lesson.group_id, lesson.time AS lesson_time, lesson.date AS lesson_date,
-                group_row.name AS group_name, group_row.subject,
-                COALESCE(lesson.teacher_id, group_row.teacher_id) AS teacher_id
-         FROM attendance record
-         JOIN lessons lesson
-           ON lesson.id = record.lesson_id AND lesson.tenant_id = record.tenant_id
-         JOIN groups group_row
-           ON group_row.id = lesson.group_id AND group_row.tenant_id = lesson.tenant_id
-         JOIN students student
-           ON student.id = record.student_id AND student.tenant_id = record.tenant_id
-         WHERE record.tenant_id = ? AND lesson.group_id = ?
-         ORDER BY lesson.date DESC, lesson.time DESC, record.created_at DESC
-         LIMIT 100`,
-      )
-      .all(tenantId, groupId)
-      .map(camelAttendance);
-    const attendanceSummaryRow = this.db
-      .prepare(
-        `SELECT COUNT(*) AS total,
-                SUM(CASE WHEN record.status = 'present' THEN 1 ELSE 0 END) AS present,
-                SUM(CASE WHEN record.status = 'absent' THEN 1 ELSE 0 END) AS absent,
-                SUM(CASE WHEN record.status = 'late' THEN 1 ELSE 0 END) AS late,
-                SUM(CASE WHEN record.status = 'excused' THEN 1 ELSE 0 END) AS excused
-         FROM attendance record
-         JOIN lessons lesson
-           ON lesson.id = record.lesson_id AND lesson.tenant_id = record.tenant_id
-         WHERE record.tenant_id = ? AND lesson.group_id = ?`,
-      )
-      .get(tenantId, groupId);
-    const attendanceSummary = {
-      total: Number(attendanceSummaryRow?.total || 0),
-      present: Number(attendanceSummaryRow?.present || 0),
-      absent: Number(attendanceSummaryRow?.absent || 0),
-      late: Number(attendanceSummaryRow?.late || 0),
-      excused: Number(attendanceSummaryRow?.excused || 0),
-      rate: 0,
-    };
-    attendanceSummary.rate = attendanceSummary.total
-      ? Math.round(((attendanceSummary.present + attendanceSummary.late) / attendanceSummary.total) * 100)
-      : 0;
-
     const financeTotals = this.db
       .prepare(
         `SELECT
@@ -2002,7 +1932,6 @@ class AppRepository {
       schedules: this.groupSchedules(tenantId, groupId, true),
       teacherAssignments,
       lessons: { summary: lessonSummary, upcoming: upcomingLessons, recent: recentLessons },
-      attendance: { summary: attendanceSummary, records: attendanceRecords },
       finance: {
         monthlyPotential: activeMembers.length * Number(group.monthlyFee || 0),
         charged: Number(financeTotals?.charged || 0),
@@ -2066,10 +1995,11 @@ class AppRepository {
     return { teacher, groups, workingHours: this.teacherWorkingHours(tenantId, teacherId), upcomingLessons };
   }
 
-  createTeacher(tenantId, payload) {
+  async createTeacher(tenantId, payload) {
     const teacherId = id();
     const createdAt = now();
     const branchId = payload.branchId || this.mainBranch(tenantId)?.id || null;
+    const passwordHash = payload.accessEnabled ? await hashPassword(payload.password) : null;
     this.db.exec("BEGIN");
     try {
       this.db.prepare(
@@ -2078,7 +2008,7 @@ class AppRepository {
       ).run(teacherId, tenantId, branchId, payload.name, payload.phone || "", payload.email || "", payload.specialization || "", payload.employmentType, payload.hiredAt || null, payload.maxWeeklyMinutes, payload.note || "", createdAt);
       if (payload.accessEnabled) {
         this.db.prepare("INSERT INTO users (id, tenant_id, username, password, name, role, status) VALUES (?, ?, ?, ?, ?, 'teacher', 'active')")
-          .run(teacherId, tenantId, payload.username, hashPassword(payload.password), payload.name);
+          .run(teacherId, tenantId, payload.username, passwordHash, payload.name);
         this.db.prepare("INSERT OR IGNORE INTO user_roles (user_id, role_id, tenant_id, created_at) VALUES (?, ?, ?, ?)")
           .run(teacherId, `${tenantId}_role_teacher`, tenantId, createdAt);
         if (branchId) {
@@ -2099,10 +2029,11 @@ class AppRepository {
     return this.teacher(tenantId, teacherId);
   }
 
-  updateTeacher(tenantId, teacherId, payload) {
+  async updateTeacher(tenantId, teacherId, payload) {
     const existing = this.teacher(tenantId, teacherId);
     if (!existing) return null;
     const branchId = payload.branchId || existing.branchId || this.mainBranch(tenantId)?.id || null;
+    const passwordHash = payload.password ? await hashPassword(payload.password) : null;
     this.db.exec("BEGIN");
     try {
       this.db.prepare(
@@ -2112,13 +2043,13 @@ class AppRepository {
       const user = this.db.prepare("SELECT id FROM users WHERE tenant_id = ? AND id = ? AND role = 'teacher'").get(tenantId, teacherId);
       if (payload.accessEnabled && !user) {
         this.db.prepare("INSERT INTO users (id, tenant_id, username, password, name, role, status) VALUES (?, ?, ?, ?, ?, 'teacher', 'active')")
-          .run(teacherId, tenantId, payload.username, hashPassword(payload.password), payload.name);
+          .run(teacherId, tenantId, payload.username, passwordHash, payload.name);
         this.db.prepare("INSERT OR IGNORE INTO user_roles (user_id, role_id, tenant_id, created_at) VALUES (?, ?, ?, ?)")
           .run(teacherId, `${tenantId}_role_teacher`, tenantId, now());
       } else if (user) {
         this.db.prepare("UPDATE users SET username = ?, name = ?, status = ? WHERE tenant_id = ? AND id = ?")
           .run(payload.username || existing.username, payload.name, payload.accessEnabled ? "active" : "inactive", tenantId, teacherId);
-        if (payload.password) this.db.prepare("UPDATE users SET password = ? WHERE tenant_id = ? AND id = ?").run(hashPassword(payload.password), tenantId, teacherId);
+        if (passwordHash) this.db.prepare("UPDATE users SET password = ? WHERE tenant_id = ? AND id = ?").run(passwordHash, tenantId, teacherId);
         if (!payload.accessEnabled) this.db.prepare("DELETE FROM sessions WHERE user_id = ?").run(teacherId);
       }
       if (branchId && payload.accessEnabled) {
@@ -2157,8 +2088,9 @@ class AppRepository {
     return this.teacher(tenantId, teacherId);
   }
 
-  resetTeacherPassword(tenantId, teacherId, password) {
-    const result = this.db.prepare("UPDATE users SET password = ? WHERE tenant_id = ? AND id = ? AND role = 'teacher'").run(hashPassword(password), tenantId, teacherId);
+  async resetTeacherPassword(tenantId, teacherId, password) {
+    const passwordHash = await hashPassword(password);
+    const result = this.db.prepare("UPDATE users SET password = ? WHERE tenant_id = ? AND id = ? AND role = 'teacher'").run(passwordHash, tenantId, teacherId);
     if (!result.changes) return null;
     this.db.prepare("DELETE FROM sessions WHERE user_id = ?").run(teacherId);
     return { success: true };
@@ -2476,7 +2408,6 @@ class AppRepository {
   }
 
   adminDashboard(tenantId) {
-    const attendance = this.attendanceCounts(tenantId);
     const stats = {
       students: this.db.prepare("SELECT COUNT(*) AS count FROM students WHERE tenant_id = ? AND status != 'left'").get(tenantId).count,
       groups: this.db.prepare("SELECT COUNT(*) AS count FROM groups WHERE tenant_id = ?").get(tenantId).count,
@@ -2492,10 +2423,10 @@ class AppRepository {
           )
           .get(tenantId, today()).total || 0,
       ),
-      present: attendance.present,
-      absent: attendance.absent,
-      late: attendance.late,
-      excused: attendance.excused,
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
       queuedMessages: this.db.prepare("SELECT COUNT(*) AS count FROM messages WHERE tenant_id = ? AND status = 'queued'").get(tenantId).count,
       debtTotal: Number(this.db.prepare("SELECT COALESCE(SUM(debt), 0) AS total FROM students WHERE tenant_id = ? AND status != 'left'").get(tenantId).total || 0),
     };
@@ -2520,9 +2451,7 @@ class AppRepository {
                   FROM invoices_transactions it
                   WHERE it.student_id = s.id AND it.tenant_id = s.tenant_id
                     AND COALESCE(it.status, 'active') = 'active'
-                ), s.balance, 0) AS ledger_balance,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id) AS attendance_total,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id AND a.status IN ('present', 'late')) AS attendance_present
+                ), s.balance, 0) AS ledger_balance
          FROM students s
          LEFT JOIN groups g ON g.id = s.group_id AND g.tenant_id = s.tenant_id
          LEFT JOIN student_guardians sg ON sg.tenant_id = s.tenant_id AND sg.student_id = s.id AND sg.is_primary = 1
@@ -2571,47 +2500,6 @@ class AppRepository {
       debtors: [],
       messages: [],
     };
-  }
-
-  attendanceCounts(tenantId) {
-    const rows = this.db.prepare("SELECT status, COUNT(*) AS count FROM attendance WHERE tenant_id = ? GROUP BY status").all(tenantId);
-    const counts = { present: 0, absent: 0, late: 0, excused: 0 };
-    rows.forEach((row) => {
-      counts[row.status] = row.count;
-    });
-    return counts;
-  }
-
-  attendanceRecords(tenantId) {
-    return this.db
-	      .prepare(
-	        `SELECT a.*, s.name AS student_name, s.parent_name, l.group_id, l.time AS lesson_time, l.date AS lesson_date,
-	                g.name AS group_name, g.subject, COALESCE(l.teacher_id, g.teacher_id) AS teacher_id
-	         FROM attendance a
-	         JOIN students s ON s.id = a.student_id AND s.tenant_id = ?
-	         JOIN lessons l ON l.id = a.lesson_id AND l.tenant_id = ?
-	         JOIN groups g ON g.id = l.group_id AND g.tenant_id = ?
-	         WHERE a.tenant_id = ?
-	         ORDER BY a.created_at DESC`,
-	      )
-	      .all(tenantId, tenantId, tenantId, tenantId)
-	      .map(camelAttendance);
-  }
-
-  attendanceRecordsForTeacher(tenantId, teacherId) {
-    return this.db
-      .prepare(
-        `SELECT a.*, s.name AS student_name, s.parent_name, l.group_id, l.time AS lesson_time, l.date AS lesson_date,
-                g.name AS group_name, g.subject, COALESCE(l.teacher_id, g.teacher_id) AS teacher_id
-         FROM attendance a
-         JOIN students s ON s.id = a.student_id AND s.tenant_id = a.tenant_id
-         JOIN lessons l ON l.id = a.lesson_id AND l.tenant_id = a.tenant_id
-         JOIN groups g ON g.id = l.group_id AND g.tenant_id = l.tenant_id
-         WHERE a.tenant_id = ? AND COALESCE(l.teacher_id, g.teacher_id) = ?
-         ORDER BY a.created_at DESC`,
-      )
-      .all(tenantId, teacherId)
-      .map(camelAttendance);
   }
 
   getStudentBalance(tenantId, studentId) {
@@ -3419,7 +3307,7 @@ class AppRepository {
       tenantId,
       ...payload,
       date: payload.date || today(),
-      status: payload.status || "planned",
+      status: payload.status === "planned" ? "waiting" : payload.status || "waiting",
     };
     const timestamp = now();
     this.db.exec("BEGIN");
@@ -4351,71 +4239,6 @@ class AppRepository {
     return this.lesson(tenantId, lessonId);
   }
 
-  reopenCompletedLesson(tenantId, lessonId, payload) {
-    const beforeLesson = this.lesson(tenantId, lessonId);
-    if (!beforeLesson) return null;
-    const beforeRecords = this.attendanceForLesson(tenantId, lessonId).map((record) => ({
-      studentId: record.studentId,
-      status: record.status,
-      reasonId: record.reasonId,
-      reasonCode: record.reasonCode,
-      chargePercent: record.chargePercent,
-      note: record.note || "",
-    }));
-    const timestamp = now();
-    this.db.exec("BEGIN IMMEDIATE");
-    try {
-      const lockedLesson = this.lesson(tenantId, lessonId);
-      if (lockedLesson.status !== "completed") {
-        const error = new Error("Only a completed lesson can be reopened");
-        error.status = 409;
-        throw error;
-      }
-      if (this.activeLessonSettlement(tenantId, lessonId)) {
-        const error = new Error("Reverse the active financial settlement before reopening the lesson");
-        error.status = 409;
-        throw error;
-      }
-      const closedPeriod = this.closedFinancePeriod(tenantId, lockedLesson.branchId || "", lockedLesson.date);
-      if (closedPeriod) {
-        const error = new Error(`Finance period is closed: ${closedPeriod.label}`);
-        error.status = 409;
-        throw error;
-      }
-      this.db.prepare("DELETE FROM attendance WHERE tenant_id = ? AND lesson_id = ?").run(tenantId, lessonId);
-      const update = this.db
-        .prepare(
-          `UPDATE lessons
-           SET status = 'planned',
-               financial_status = CASE WHEN financial_status = 'reversed' THEN 'reversed' ELSE 'unposted' END,
-               completed_by = NULL, completed_at = NULL,
-               updated_by = ?, updated_at = ?, version = version + 1
-           WHERE tenant_id = ? AND id = ? AND status = 'completed'`,
-        )
-        .run(payload.actorUserId || "system", timestamp, tenantId, lessonId);
-      if (Number(update.changes || 0) !== 1) {
-        const error = new Error("Lesson changed while it was being reopened");
-        error.status = 409;
-        throw error;
-      }
-      const afterLesson = this.lesson(tenantId, lessonId);
-      this.insertLessonEvent(
-        tenantId,
-        lessonId,
-        { userId: payload.actorUserId, role: payload.actorRole },
-        "completion_reversed",
-        payload.reason,
-        { ...lessonStateSnapshot(beforeLesson), attendance: beforeRecords },
-        lessonStateSnapshot(afterLesson),
-      );
-      this.db.exec("COMMIT");
-    } catch (error) {
-      this.db.exec("ROLLBACK");
-      throw error;
-    }
-    return this.lesson(tenantId, lessonId);
-  }
-
   studentsByGroup(tenantId, groupId) {
     return this.db
       .prepare(
@@ -4439,285 +4262,125 @@ class AppRepository {
   }
 
   studentsForLesson(tenantId, lessonId) {
-    return this.db
-      .prepare(
-        `SELECT s.*, g.name AS group_name, sg.relationship AS parent_relationship, guardian.email AS parent_email,
-                COALESCE(NULLIF(s.telegram_chat_id, ''), guardian.telegram_chat_id, '') AS effective_telegram_chat_id,
-                existing_attendance.status AS attendance_status,
-                existing_attendance.reason_id AS attendance_reason_id,
-                existing_attendance.reason_code AS attendance_reason_code,
-                existing_attendance.reason_name AS attendance_reason_name,
-                existing_attendance.note AS attendance_note,
-                COALESCE((
-                  SELECT SUM(CASE WHEN it.effect = 'credit' THEN it.amount WHEN it.effect = 'debit' THEN -it.amount WHEN it.type IN ('payment', 'discount') THEN it.amount ELSE -it.amount END)
-                  FROM invoices_transactions it
-                  WHERE it.student_id = s.id AND it.tenant_id = s.tenant_id
-                    AND COALESCE(it.status, 'active') = 'active'
-                ), s.balance, 0) AS ledger_balance,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id) AS attendance_total,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id AND a.status IN ('present', 'late')) AS attendance_present
-         FROM lessons l
-         JOIN groups g ON g.id = l.group_id AND g.tenant_id = l.tenant_id
-         JOIN students s ON s.tenant_id = l.tenant_id
-         LEFT JOIN student_guardians sg ON sg.tenant_id = s.tenant_id AND sg.student_id = s.id AND sg.is_primary = 1
-         LEFT JOIN guardians guardian ON guardian.id = sg.guardian_id AND guardian.tenant_id = sg.tenant_id
-         LEFT JOIN attendance existing_attendance ON existing_attendance.tenant_id = l.tenant_id
-           AND existing_attendance.lesson_id = l.id AND existing_attendance.student_id = s.id
-         WHERE l.tenant_id = ? AND l.id = ?
-           AND (
-             existing_attendance.id IS NOT NULL
-             OR EXISTS (
-               SELECT 1
-               FROM student_group_enrollments enrollment
-               WHERE enrollment.tenant_id = l.tenant_id
-                 AND enrollment.student_id = s.id
-                 AND enrollment.group_id = l.group_id
-                 AND enrollment.start_date <= l.date
-                 AND (enrollment.end_date IS NULL OR enrollment.end_date = '' OR l.date < enrollment.end_date)
-             )
-           )
-         ORDER BY s.name`,
-      )
-      .all(tenantId, lessonId)
-      .map(camelStudent);
+    return this.attendanceRepository.findLessonRoster(tenantId, lessonId);
   }
 
   attendanceForLesson(tenantId, lessonId) {
-    return this.db
-      .prepare(
-        `SELECT attendance.*, student.name AS student_name
-         FROM attendance
-         JOIN students student
-           ON student.id = attendance.student_id AND student.tenant_id = attendance.tenant_id
-         WHERE attendance.tenant_id = ? AND attendance.lesson_id = ?
-         ORDER BY attendance.student_id`,
-      )
-      .all(tenantId, lessonId)
-      .map(camelAttendance);
+    return this.attendanceRepository.findByLesson(tenantId, lessonId);
   }
 
-  replaceAttendance(tenantId, lessonId, records, payload = {}) {
-    const beforeLesson = this.lesson(tenantId, lessonId);
-    if (!beforeLesson) return null;
-    const beforeRecords = this.db
-      .prepare(
-        `SELECT student_id AS studentId, status, reason_id AS reasonId,
-                COALESCE(reason_code, '') AS reasonCode, COALESCE(reason_name, '') AS reasonName,
-                COALESCE(charge_percent, 0) AS chargePercent,
-                COALESCE(consume_percent, 0) AS consumePercent,
-                COALESCE(note, '') AS note
-         FROM attendance WHERE tenant_id = ? AND lesson_id = ? ORDER BY student_id`,
-      )
-      .all(tenantId, lessonId);
-    const snapshot = [...records]
-      .map((record) => ({
-        studentId: record.studentId,
-        status: record.status,
-        reasonId: record.reasonId,
-        reasonCode: record.reasonCode,
-        reasonName: record.reasonName,
-        chargePercent: Number(record.chargePercent || 0),
-        consumePercent: Number(record.consumePercent || 0),
-        note: record.note || "",
-      }))
-      .sort((left, right) => left.studentId.localeCompare(right.studentId));
-    const revisionNo = Number(beforeLesson.attendanceVersion || 0) + 1;
-    const timestamp = now();
+  insertOutbox(tenantId, payload) {
+    if (payload.eventType === "telegram.message" && (!payload.payload?.text || !payload.payload?.to)) {
+      const error = new Error("Invalid Telegram outbox payload");
+      error.status = 500;
+      throw error;
+    }
+    const row = {
+      id: id(),
+      tenantId,
+      aggregateType: String(payload.aggregateType || ""),
+      aggregateId: String(payload.aggregateId || ""),
+      eventType: String(payload.eventType || ""),
+      payloadJson: JSON.stringify(payload.payload || {}),
+      dedupeKey: String(payload.dedupeKey || ""),
+      status: "pending",
+      attempts: 0,
+      availableAt: payload.availableAt || now(),
+      createdAt: now(),
+    };
+    if (!row.aggregateType || !row.aggregateId || !row.eventType || !row.dedupeKey) {
+      const error = new Error("Invalid outbox event");
+      error.status = 500;
+      throw error;
+    }
+    const result = this.db.prepare(
+      `INSERT OR IGNORE INTO outbox
+       (id, tenant_id, aggregate_type, aggregate_id, event_type, payload_json, dedupe_key,
+        status, attempts, available_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)`,
+    ).run(
+      row.id,
+      tenantId,
+      row.aggregateType,
+      row.aggregateId,
+      row.eventType,
+      row.payloadJson,
+      row.dedupeKey,
+      row.availableAt,
+      row.createdAt,
+    );
+    if (!result.changes) {
+      const existing = this.db.prepare("SELECT * FROM outbox WHERE tenant_id = ? AND dedupe_key = ? LIMIT 1").get(tenantId, row.dedupeKey);
+      return { ...existing, reused: true };
+    }
+    return { ...row, reused: false };
+  }
+
+  dispatchOutbox(tenantId, limit = 100) {
+    const batchSize = Math.max(1, Math.min(Number(limit) || 100, 500));
     this.db.exec("BEGIN IMMEDIATE");
     try {
-      if (this.activeLessonSettlement(tenantId, lessonId)) {
-        const error = new Error("Reverse the active financial settlement before correcting attendance");
-        error.status = 409;
-        throw error;
-      }
-      const closedPeriod = this.closedFinancePeriod(tenantId, beforeLesson.branchId || "", beforeLesson.date);
-      if (closedPeriod) {
-        const error = new Error(`Finance period is closed: ${closedPeriod.label}`);
-        error.status = 409;
-        throw error;
-      }
-      this.db.prepare("DELETE FROM attendance WHERE tenant_id = ? AND lesson_id = ?").run(tenantId, lessonId);
-      const stmt = this.db.prepare(
-        `INSERT INTO attendance
-         (id, tenant_id, lesson_id, student_id, status, reason_id, reason_code, reason_name,
-          charge_percent, consume_percent, note, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      const rows = this.db.prepare(
+        `SELECT * FROM outbox
+         WHERE tenant_id = ? AND status = 'pending' AND available_at <= ?
+         ORDER BY created_at, id LIMIT ?`,
+      ).all(tenantId, now(), batchSize);
+      const insertMessage = this.db.prepare(
+        `INSERT OR IGNORE INTO messages
+         (id, tenant_id, student_id, recipient, channel, text, status, attempts, created_at, dedupe_key)
+         VALUES (?, ?, ?, ?, 'telegram', ?, 'queued', 0, ?, ?)`,
       );
-      snapshot.forEach((record) => stmt.run(
-        id(),
-        tenantId,
-        lessonId,
-        record.studentId,
-        record.status,
-        record.reasonId,
-        record.reasonCode,
-        record.reasonName,
-        record.chargePercent,
-        record.consumePercent,
-        record.note,
-        timestamp,
-      ));
-      this.db
-        .prepare(
-          `INSERT INTO lesson_attendance_revisions
-           (id, tenant_id, lesson_id, revision_no, actor_user_id, actor_role, reason, snapshot_json, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          id(),
-          tenantId,
-          lessonId,
-          revisionNo,
-          payload.actorUserId || "system",
-          payload.actorRole || "system",
-          payload.reason || "",
-          JSON.stringify(snapshot),
-          timestamp,
-        );
-      this.db
-        .prepare(
-          `UPDATE lessons
-           SET status = 'completed', attendance_version = ?, financial_status = 'pending',
-               financial_posted_at = NULL, financial_posted_by = NULL,
-               financial_reversed_at = NULL, financial_reversed_by = NULL, financial_reversal_reason = NULL,
-               topic = ?, homework = ?, note = ?,
-               completed_by = COALESCE(NULLIF(completed_by, ''), ?),
-               completed_at = COALESCE(NULLIF(completed_at, ''), ?),
-               updated_by = ?, updated_at = ?, version = version + 1
-           WHERE tenant_id = ? AND id = ?`,
-        )
-        .run(
-          revisionNo,
-          payload.topic || "",
-          payload.homework || "",
-          payload.note || "",
-          payload.actorUserId || "system",
-          timestamp,
-          payload.actorUserId || "system",
-          timestamp,
-          tenantId,
-          lessonId,
-        );
-      const afterLesson = this.lesson(tenantId, lessonId);
-      this.insertLessonEvent(
-        tenantId,
-        lessonId,
-        { userId: payload.actorUserId, role: payload.actorRole },
-        beforeLesson.status === "completed" ? "attendance_corrected" : "completed",
-        payload.reason || "",
-        { ...lessonStateSnapshot(beforeLesson), attendance: beforeRecords },
-        { ...lessonStateSnapshot(afterLesson), attendance: snapshot },
+      const published = this.db.prepare(
+        "UPDATE outbox SET status = 'published', attempts = attempts + 1, processed_at = ?, last_error = NULL WHERE tenant_id = ? AND id = ?",
       );
-      this.db.exec("COMMIT");
-    } catch (error) {
-      this.db.exec("ROLLBACK");
-      throw error;
-    }
-    return this.lesson(tenantId, lessonId);
-  }
-
-  sendAttendanceAlerts(tenantId, lessonId, teacherId = null) {
-    const lesson = this.db
-      .prepare(
-        `SELECT l.id, l.time, l.date, l.status, l.attendance_version,
-                g.name AS group_name, g.subject,
-                COALESCE(l.teacher_id, s.teacher_id, g.teacher_id) AS teacher_id,
-                t.name AS teacher_name, COALESCE(NULLIF(l.start_time, ''), s.start_time) AS start_time
-         FROM lessons l
-         JOIN groups g ON g.id = l.group_id AND g.tenant_id = l.tenant_id
-         LEFT JOIN schedules s ON s.id = l.schedule_id AND s.tenant_id = l.tenant_id
-         LEFT JOIN teachers t ON t.id = COALESCE(l.teacher_id, s.teacher_id, g.teacher_id) AND t.tenant_id = g.tenant_id
-         WHERE l.tenant_id = ? AND l.id = ?
-         LIMIT 1`,
-      )
-      .get(tenantId, lessonId);
-    if (!lesson) {
-      const error = new Error("Lesson not found");
-      error.status = 404;
-      throw error;
-    }
-    if (teacherId && lesson.teacher_id !== teacherId) {
-      const error = new Error("Only assigned teacher can send attendance alerts");
-      error.status = 403;
-      throw error;
-    }
-    if (lesson.status !== "completed") {
-      const error = new Error("Attendance alerts require a completed lesson");
-      error.status = 409;
-      throw error;
-    }
-
-    const records = this.db
-      .prepare(
-        `SELECT a.status, s.id AS student_id, s.name AS student_name,
-                CASE
-                  WHEN sg.id IS NOT NULL AND COALESCE(sg.receives_notifications, 1) != 1 THEN NULL
-                  ELSE COALESCE(NULLIF(guardian.telegram_chat_id, ''), NULLIF(s.telegram_chat_id, ''))
-                END AS telegram_chat_id
-         FROM attendance a
-         JOIN students s ON s.id = a.student_id AND s.tenant_id = a.tenant_id
-         LEFT JOIN student_guardians sg ON sg.tenant_id = s.tenant_id AND sg.student_id = s.id AND sg.is_primary = 1
-         LEFT JOIN guardians guardian ON guardian.id = sg.guardian_id AND guardian.tenant_id = sg.tenant_id
-         WHERE a.tenant_id = ? AND a.lesson_id = ? AND a.status IN ('absent', 'late')
-         ORDER BY s.name`,
-      )
-      .all(tenantId, lessonId);
-    const insertMessage = this.db.prepare(
-      `INSERT OR IGNORE INTO messages
-       (id, tenant_id, student_id, recipient, channel, text, status, attempts, created_at, dedupe_key)
-       VALUES (?, ?, ?, ?, 'telegram', ?, 'queued', 0, ?, ?)`,
-    );
-    const timestamp = now();
-    const subject = lesson.subject || lesson.group_name || "dars";
-    const teacherName = lesson.teacher_name || "o'qituvchi";
-    const startTime = lesson.start_time || String(lesson.time || "").split(/\s*[-–]\s*/)[0] || "";
-    let sentCount = 0;
-    let skippedCount = 0;
-    let alreadyQueuedCount = 0;
-
-    this.db.exec("BEGIN");
-    try {
-      records.forEach((record) => {
-        if (!record.telegram_chat_id) {
-          skippedCount += 1;
-          return;
+      const failed = this.db.prepare(
+        "UPDATE outbox SET status = 'failed', attempts = attempts + 1, processed_at = ?, last_error = ? WHERE tenant_id = ? AND id = ?",
+      );
+      let dispatched = 0;
+      for (const row of rows) {
+        try {
+          const event = JSON.parse(row.payload_json);
+          if (row.event_type !== "telegram.message" || !event.text || !event.to) throw new Error("Unsupported outbox payload");
+          insertMessage.run(id(), tenantId, event.studentId || null, event.to, event.text, now(), row.dedupe_key);
+          published.run(now(), tenantId, row.id);
+          dispatched += 1;
+        } catch (error) {
+          failed.run(now(), String(error.message || "Outbox dispatch failed").slice(0, 500), tenantId, row.id);
         }
-        const stateText = record.status === "late" ? "kechikdi" : "kelmadi";
-        const dateText = lesson.date === today() ? "bugun" : `${lesson.date} kungi`;
-        const text = `Assalomu alaykum! 🎓 ${subject} guruhidan xabar. O'qituvchi: ${teacherName}. ${record.student_name} ${dateText} soat ${startTime} dagi darsga ${stateText}. Sababini bilish uchun guruhga yozavering.`;
-        const dedupeKey = `attendance:${lesson.id}:${Number(lesson.attendance_version || 0)}:${record.student_id}:${record.status}`;
-        const result = insertMessage.run(id(), tenantId, record.student_id, record.student_name, text, timestamp, dedupeKey);
-        if (Number(result.changes || 0)) sentCount += 1;
-        else alreadyQueuedCount += 1;
-      });
+      }
       this.db.exec("COMMIT");
+      return dispatched;
     } catch (error) {
       this.db.exec("ROLLBACK");
       throw error;
     }
-
-    return {
-      success: true,
-      sent_count: sentCount,
-      skipped_count: skippedCount,
-      already_queued_count: alreadyQueuedCount,
-    };
   }
 
-  createPayment(tenantId, student, payload) {
-    this.db.exec("BEGIN");
+  createPayment(context, student, payload) {
+    const tenantId = context.tenantId;
+    this.db.exec("BEGIN IMMEDIATE");
     try {
       const row = this.insertPayment(tenantId, student, payload);
       if (!row.reused) {
-	        this.insertTransaction(tenantId, student.id, {
-	          type: "payment",
-	          amount: payload.amount,
-	          description: `To'lov: ${payload.type}; payment:${row.id}`,
-	          idempotencyKey: payload.idempotencyKey,
-	          branchId: payload.branchId,
-	          accountId: payload.accountId,
-	          categoryId: payload.categoryId,
-	        });
+        this.insertTransaction(tenantId, student.id, {
+          type: "payment",
+          amount: payload.amount,
+          description: `To'lov: ${payload.type}; payment:${row.id}`,
+          idempotencyKey: payload.idempotencyKey,
+          branchId: payload.branchId,
+          accountId: payload.accountId,
+          categoryId: payload.categoryId,
+          sourceType: "payment",
+          sourceId: row.id,
+        });
+        this.insertOutbox(tenantId, {
+          aggregateType: "payment",
+          aggregateId: row.id,
+          eventType: "telegram.message",
+          dedupeKey: `payment:${row.id}:received`,
+          payload: payload.notification,
+        });
+        this.audit(context, "created", "payment", row.id);
       }
       row.balance = this.syncStudentBalance(tenantId, student.id);
       this.db.exec("COMMIT");
@@ -4782,6 +4445,15 @@ class AppRepository {
           )
           .run(timestamp, actorId || "", reason || `Payment voided: ${paymentId}`, tenantId, ledgerTransaction.id);
       }
+      this.db.prepare(
+        `UPDATE outbox SET status = 'failed', processed_at = ?, last_error = 'Payment voided before notification dispatch'
+         WHERE tenant_id = ? AND aggregate_type = 'payment' AND aggregate_id = ? AND status = 'pending'`,
+      ).run(timestamp, tenantId, paymentId);
+      this.db.prepare(
+        `UPDATE messages SET status = 'failed', sent_at = ?, last_error_code = 'PAYMENT_VOIDED',
+         last_error_message = 'Payment was voided before notification delivery'
+         WHERE tenant_id = ? AND dedupe_key = ? AND status = 'queued'`,
+      ).run(timestamp, tenantId, `payment:${paymentId}:received`);
       const balance = this.syncStudentBalance(tenantId, existing.studentId);
       this.db.exec("COMMIT");
       return { ...existing, status: "voided", voidedAt: timestamp, voidedBy: actorId || "", voidReason: reason || "Payment voided", balance };
@@ -4817,6 +4489,7 @@ class AppRepository {
   }
 
   async processMessages(tenantId) {
+    this.dispatchOutbox(tenantId);
     return this.telegramQueue.processMessages(tenantId);
   }
 
@@ -4962,63 +4635,6 @@ class AppRepository {
       )
       .all(tenantId)
       .map(camelSubscription);
-  }
-
-  attendanceReasons(tenantId, activeOnly = true) {
-    const whereActive = activeOnly ? "AND is_active = 1" : "";
-    return this.db
-      .prepare(
-        `SELECT * FROM attendance_reasons
-         WHERE tenant_id = ? ${whereActive}
-         ORDER BY is_system DESC, attendance_status, name`,
-      )
-      .all(tenantId)
-      .map(camelAttendanceReason);
-  }
-
-  attendanceReason(tenantId, reasonId) {
-    const row = this.db.prepare("SELECT * FROM attendance_reasons WHERE tenant_id = ? AND id = ?").get(tenantId, reasonId);
-    return row ? camelAttendanceReason(row) : null;
-  }
-
-  createAttendanceReason(tenantId, payload) {
-    const rowId = id();
-    const timestamp = now();
-    try {
-      this.db
-        .prepare(
-          `INSERT INTO attendance_reasons
-           (id, tenant_id, code, name, attendance_status, charge_percent, consume_percent,
-            is_active, is_system, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)`,
-        )
-        .run(
-          rowId,
-          tenantId,
-          payload.code,
-          payload.name,
-          payload.attendanceStatus,
-          payload.chargePercent,
-          payload.consumePercent,
-          timestamp,
-          timestamp,
-        );
-    } catch (error) {
-      if (String(error.code || "").startsWith("SQLITE_CONSTRAINT")) error.status = 409;
-      throw error;
-    }
-    return this.attendanceReason(tenantId, rowId);
-  }
-
-  updateAttendanceReason(tenantId, reasonId, payload) {
-    this.db
-      .prepare(
-        `UPDATE attendance_reasons
-         SET name = ?, charge_percent = ?, consume_percent = ?, is_active = ?, updated_at = ?
-         WHERE tenant_id = ? AND id = ?`,
-      )
-      .run(payload.name, payload.chargePercent, payload.consumePercent, payload.isActive ? 1 : 0, now(), tenantId, reasonId);
-    return this.attendanceReason(tenantId, reasonId);
   }
 
   lessonBillingPolicies(tenantId) {
@@ -5672,9 +5288,7 @@ class AppRepository {
                   FROM invoices_transactions it
                   WHERE it.student_id = s.id AND it.tenant_id = s.tenant_id
                     AND COALESCE(it.status, 'active') = 'active'
-                ), s.balance, 0) AS ledger_balance,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id) AS attendance_total,
-                (SELECT COUNT(*) FROM attendance a WHERE a.tenant_id = s.tenant_id AND a.student_id = s.id AND a.status IN ('present', 'late')) AS attendance_present
+                ), s.balance, 0) AS ledger_balance
          FROM students s
          LEFT JOIN groups g ON g.id = s.group_id AND g.tenant_id = s.tenant_id
          LEFT JOIN student_guardians sg ON sg.tenant_id = s.tenant_id AND sg.student_id = s.id AND sg.is_primary = 1
@@ -5713,44 +5327,6 @@ class AppRepository {
       )
       .all(tenantId, studentId)
       .map(camelEnrollment);
-
-    const attendanceRow = this.db
-      .prepare(
-        `SELECT COUNT(*) AS total,
-                SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) AS present,
-                SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) AS absent,
-                SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) AS late,
-                SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) AS excused
-         FROM attendance
-         WHERE tenant_id = ? AND student_id = ?`,
-      )
-      .get(tenantId, studentId);
-    const attendanceSummary = {
-      total: Number(attendanceRow?.total || 0),
-      present: Number(attendanceRow?.present || 0),
-      absent: Number(attendanceRow?.absent || 0),
-      late: Number(attendanceRow?.late || 0),
-      excused: Number(attendanceRow?.excused || 0),
-      rate: 0,
-    };
-    attendanceSummary.rate = attendanceSummary.total
-      ? Math.round(((attendanceSummary.present + attendanceSummary.late) / attendanceSummary.total) * 100)
-      : 0;
-
-    const attendanceRecords = this.db
-      .prepare(
-        `SELECT a.*, s.name AS student_name, s.parent_name, l.group_id, l.time AS lesson_time, l.date AS lesson_date,
-                g.name AS group_name, g.subject, COALESCE(l.teacher_id, g.teacher_id) AS teacher_id
-         FROM attendance a
-         JOIN students s ON s.id = a.student_id AND s.tenant_id = a.tenant_id
-         JOIN lessons l ON l.id = a.lesson_id AND l.tenant_id = a.tenant_id
-         JOIN groups g ON g.id = l.group_id AND g.tenant_id = l.tenant_id
-         WHERE a.tenant_id = ? AND a.student_id = ?
-         ORDER BY l.date DESC, l.time DESC, a.created_at DESC
-         LIMIT 100`,
-      )
-      .all(tenantId, studentId)
-      .map(camelAttendance);
 
     const subscriptions = this.db
       .prepare(
@@ -5810,7 +5386,6 @@ class AppRepository {
       },
       guardians,
       enrollments,
-      attendance: { summary: attendanceSummary, records: attendanceRecords },
       subscriptions,
       upcomingLessons,
       recentPayments,

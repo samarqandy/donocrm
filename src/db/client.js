@@ -1,25 +1,39 @@
 const fs = require("node:fs");
 const { DatabaseSync } = require("node:sqlite");
-const { dataDir, sqliteFile } = require("../config/app");
+const { dataDir, nodeEnv, sqliteFile } = require("../config/app");
 const { schema } = require("./schema");
-const { seed } = require("./seed");
+const { seedDemo } = require("./seed");
 const { runVersionedMigrations } = require("./migrationRunner");
-const { hashPassword, isPasswordHash } = require("../utils/password");
+const { DEMO_ADMIN_PASSWORD_HASH, DEMO_TEACHER_PASSWORD_HASH, isPasswordHash } = require("../utils/password");
 const { now, today } = require("../utils/time");
 
 let db;
 
-function getDb() {
+function initializeDB({ allowEmptyProduction = false } = {}) {
   if (db) return db;
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
   const candidate = new DatabaseSync(sqliteFile);
   try {
     candidate.exec(schema);
+    const previousReferenceMirror = attendanceReferenceMirrorEnabled(candidate);
+    configureAttendanceReferenceMirror(candidate, false);
     migrate(candidate);
-    seed(candidate);
+    if (nodeEnv !== "production" && process.env.DONO_SEED_DEMO === "true") {
+      seedDemo(candidate);
+    }
     migrate(candidate);
     runVersionedMigrations(candidate);
     backfillWalletLedger(candidate);
+    const configuredReferenceMirror = process.env.DONO_ATTENDANCE_MIRROR_ENABLED === undefined
+      ? Boolean(previousReferenceMirror)
+      : process.env.DONO_ATTENDANCE_MIRROR_ENABLED === "true";
+    configureAttendanceReferenceMirror(candidate, configuredReferenceMirror);
+    if (nodeEnv === "production" && !allowEmptyProduction) {
+      const adminCount = Number(candidate.prepare("SELECT COUNT(*) AS count FROM users WHERE role IN ('admin', 'superadmin')").get().count || 0);
+      if (adminCount === 0) {
+        throw new Error("No admin exists. Run: npm run create-admin");
+      }
+    }
     db = candidate;
     return db;
   } catch (error) {
@@ -31,6 +45,33 @@ function getDb() {
     } catch (_closeError) {}
     throw error;
   }
+}
+
+function attendanceReferenceMirrorEnabled(candidate) {
+  const exists = candidate.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'migration_runtime_flags'",
+  ).get();
+  if (!exists) return null;
+  const row = candidate.prepare(
+    "SELECT enabled FROM migration_runtime_flags WHERE key = 'attendance_reference_mirror'",
+  ).get();
+  return row ? Boolean(row.enabled) : null;
+}
+
+function configureAttendanceReferenceMirror(candidate, enabled) {
+  const exists = candidate.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'migration_runtime_flags'",
+  ).get();
+  if (!exists) return;
+  candidate.prepare(`
+    INSERT INTO migration_runtime_flags(key, enabled, updated_at)
+    VALUES ('attendance_reference_mirror', ?, ?)
+    ON CONFLICT(key) DO UPDATE SET enabled = excluded.enabled, updated_at = excluded.updated_at
+  `).run(enabled ? 1 : 0, now());
+}
+
+function getDb() {
+  return initializeDB();
 }
 
 function tableColumns(db, tableName) {
@@ -167,15 +208,32 @@ function migrate(db) {
   }
   if (!userColumns.includes("password")) {
     db.exec("ALTER TABLE users ADD COLUMN password TEXT");
-    db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashPassword("admin123"), "user_admin");
-    db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashPassword("teacher123"), "user_teacher");
+    if (nodeEnv !== "production" && process.env.DONO_SEED_DEMO === "true") {
+      db.prepare("UPDATE users SET password = ? WHERE id = ?").run(DEMO_ADMIN_PASSWORD_HASH, "user_admin");
+      db.prepare("UPDATE users SET password = ? WHERE id = ?").run(DEMO_TEACHER_PASSWORD_HASH, "user_teacher");
+    } else if (db.prepare("SELECT COUNT(*) count FROM users WHERE password IS NULL OR password = ''").get().count > 0) {
+      throw new Error("Legacy users have no secure password. Create or reset an administrator before startup.");
+    }
   }
-  db.prepare("SELECT id, password FROM users")
-    .all()
-    .filter((user) => user.password && !isPasswordHash(user.password))
-    .forEach((user) => {
-      db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashPassword(user.password), user.id);
-    });
+  const plaintextUsers = db.prepare("SELECT id, password FROM users").all().filter((user) => user.password && !isPasswordHash(user.password));
+  if (plaintextUsers.length) {
+    if (nodeEnv !== "production" && process.env.DONO_SEED_DEMO === "true") {
+      plaintextUsers.forEach((user) => {
+        if (user.id === "user_admin" && user.password === "admin123") {
+          db.prepare("UPDATE users SET password = ? WHERE id = ?").run(DEMO_ADMIN_PASSWORD_HASH, user.id);
+        } else if (user.id === "user_teacher" && user.password === "teacher123") {
+          db.prepare("UPDATE users SET password = ? WHERE id = ?").run(DEMO_TEACHER_PASSWORD_HASH, user.id);
+        } else {
+          throw new Error(`Legacy plaintext password detected for user ${user.id}. Reset it before startup.`);
+        }
+      });
+    } else {
+      throw new Error("Legacy plaintext passwords detected. Reset them before startup.");
+    }
+  }
+  if (nodeEnv === "production" && db.prepare("SELECT COUNT(*) count FROM users WHERE password IS NULL OR password = ''").get().count > 0) {
+    throw new Error("Legacy users have no secure password. Create or reset an administrator before startup.");
+  }
 
   const studentColumns = tableColumns(db, "students");
   addColumn(db, "students", studentColumns, "balance REAL NOT NULL DEFAULT 0");
@@ -319,7 +377,11 @@ function backfillWalletLedger(db) {
     `INSERT INTO invoices_transactions (tenant_id, student_id, type, amount, description, invoice_date, created_at)
      VALUES (?, ?, 'charge', ?, ?, ?, ?)`,
   );
-  db.exec("BEGIN");
+  // Multiple DonoCRM processes (HTTP, relay, workers) initialize this same
+  // SQLite file. Claim the writer slot before reading the ledger so a second
+  // initializer waits on busy_timeout instead of failing during a deferred
+  // read-to-write lock upgrade.
+  db.exec("BEGIN IMMEDIATE");
   try {
     students.forEach((student) => {
       const existing = ledgerCount.get(student.id).count;
@@ -345,4 +407,4 @@ function backfillWalletLedger(db) {
   }
 }
 
-module.exports = { getDb };
+module.exports = { getDb, initializeDB };

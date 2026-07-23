@@ -19,10 +19,16 @@ http://192.168.1.249:8081
 
 ## Login
 
-Boshlang'ich foydalanuvchilar:
+Demo foydalanuvchilar faqat `NODE_ENV` production bo'lmaganda va `DONO_SEED_DEMO=true` bo'lganda yaratiladi:
 
 - Admin: `admin` / `admin123`
 - O'qituvchi: `teacher` / `teacher123`
+
+Production bazasi bo'sh bo'lsa server ishga tushmaydi. Birinchi administratorni qo'lda yarating:
+
+```bash
+NODE_ENV=production npm run create-admin
+```
 
 Login qilingandan keyin server `HttpOnly` session cookie yaratadi. APIlar session bo'lmasa `401 Unauthorized` qaytaradi.
 

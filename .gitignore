@@ -21,3 +21,9 @@ node_modules/
 dist/
 build/
 coverage/
+
+# Generated architecture/contract/parity evidence
+artifacts/architecture/
+
+# UI canary screenshots can contain tenant/student data and stay local.
+screenshots/

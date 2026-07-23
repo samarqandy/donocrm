@@ -1,0 +1,65 @@
+name: Architecture Observe
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-observe:
+    name: architecture-observe-warning-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: donocrm_contract
+          POSTGRES_USER: donocrm_contract
+          POSTGRES_PASSWORD: contract_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U donocrm_contract -d donocrm_contract"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run architecture, contract, and parity checks in OBSERVE mode
+        env:
+          ARCHITECTURE_MODE: observe
+        run: npm run architecture:observe
+
+      - name: Run deterministic SQLite/PostgreSQL contract fixtures
+        env:
+          TZ: Asia/Tashkent
+          ARCHITECTURE_TEST_DATABASE_URL: postgresql://donocrm_contract:contract_only@127.0.0.1:5432/donocrm_contract
+          ARCHITECTURE_CONTRACT_ALLOW_DATABASE: "true"
+        run: npm run architecture:contract:fixture
+
+      - name: Publish architecture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-observe-${{ github.sha }}
+          path: artifacts/architecture/
+          if-no-files-found: warn
+          retention-days: 14
