@@ -1,6 +1,6 @@
 # Workforce Migration Preparation Backlog
 
-Status: Ordered architecture backlog; no implementation authorized
+Status: Preparation complete; ordered extraction implementation authorized by WF-PRE-16
 Candidate: Workforce
 Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 
@@ -23,17 +23,18 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | WF-PRE-13 | Completed | 2026-07-24 | [Approved executable test/parity plan](workforce-test-parity-plan.md) fixes 10 suites, eight fixtures, 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 consistency variants, 11 parity rows, seven rollback cases, zero implemented target suites/routes, and zero exceptions |
 | WF-PRE-14 | Completed | 2026-07-24 | [Approved migration/rollback runbook](workforce-migration-runbook.md) fixes 10 route increments, four legacy holds, six cohort stages, five promotion gates, count-one critical stops, five-minute RTO, zero-write-loss RPO, eight operator commands/rollback steps, zero implemented commands/rehearsals/cohort/routes, and zero exceptions |
 | WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
+| WF-PRE-16 | Completed | 2026-07-24 | [Passed Workforce Module Readiness decision](workforce-module-readiness-decision.md): 55/55 criteria disposed, ordered extraction implementation authorized, runtime activation fail-closed |
 
-WF-PRE-16 remains incomplete. No extraction item is authorized by this record.
+WF-PRE-16 passed on 2026-07-24. Ordered extraction implementation is authorized beginning with WF-EXT-01; runtime activation remains blocked by WF-ACT-01 through WF-ACT-04.
 
 ## Ordering Rules
 
 - Priority order is mandatory within each section unless an approved dependency change is recorded.
 - “Before migration” items are gate prerequisites and cannot be deferred into implementation.
-- “During extraction” items describe future controlled migration work; they are not authorized by this document.
+- “During extraction” items are authorized controlled migration work and remain subject to their exact per-increment evidence and activation gates.
 - “Later” items are explicitly outside the first Workforce extraction unless new evidence changes scope.
 - Every item requires a named owner before work begins.
-- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision is now the only remaining preparation gate and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
+- WF-PRE-04 passes module-definition completeness. WF-PRE-16 separately records the final Module Readiness decision and authorizes the ordered extraction backlog without authorizing runtime activation.
 
 ## Must Complete Before Migration
 
@@ -42,7 +43,7 @@ WF-PRE-16 remains incomplete. No extraction item is authorized by this record.
 | 1 | WF-PRE-01 | **Completed 2026-07-22 — Assign accountable owners** | Architecture Owner, Workforce Module Owner, Product Authority, Identity/Organization owners, Data, Operations, Quality, and Security approvers are named in governance | [Architecture Governance](architecture-governance.md) |
 | 2 | WF-PRE-02 | **Completed 2026-07-23 — Approve Legacy Freeze baseline** | Repository commit, Phase 1A fingerprints, classifications, approvers, and exception register are recorded | [Legacy Freeze Manifest](legacy-freeze-manifest.md); [formal gate closure](formal-operational-gate-closure-2026-07-23.md) |
 | 3 | WF-PRE-03 | **Completed 2026-07-23 — Approve Workforce product scope** | Product Authority confirms Teacher profile, lifecycle, working hours, and portal coordination are in scope and lists explicit non-goals | [Workforce Product Scope Decision](workforce-product-scope.md); no new requirements permitted |
-| 4 | WF-PRE-04 | **Completed 2026-07-23 — Complete the Workforce module definition** | Every section of [module-template.md](module-template.md) is completed, evidence-linked, owned, and explicitly identifies later readiness blockers; final Module Readiness remains WF-PRE-16 | [Workforce Module Definition](workforce-module-definition.md); readiness review is not a substitute |
+| 4 | WF-PRE-04 | **Completed 2026-07-23 — Complete the Workforce module definition** | Every section of [module-template.md](module-template.md) is completed, evidence-linked, owned, and explicitly identifies later readiness blockers; final Module Readiness remains a separate WF-PRE-16 decision | [Workforce Module Definition](workforce-module-definition.md); readiness review is not a substitute |
 | 5 | WF-PRE-05 | **Completed 2026-07-23 — Freeze current contracts** | All ten current Teacher/working-hours HTTP operations, DTO fields, status/error behavior, authorization, and OpenAPI definitions are inventoried | [Workforce Contract Freeze](workforce-contract-freeze.md); [machine baseline](../../architecture/workforce-contract-baseline.json) |
 | 6 | WF-PRE-06 | **Completed 2026-07-24 — Approve the behavior matrix** | Ten current use-case candidates and all success/failure/invariant categories are mapped to stable tests or explicit N/A decisions, including tenant and role cases | [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md); [machine matrix](../../architecture/workforce-behavior-matrix.json) |
 | 7 | WF-PRE-07 | **Completed 2026-07-24 — Decide bounded-context seams** | Ownership, direction, synchronous communication, failure boundaries, forbidden shortcuts, risk treatment, and outer coordination are approved for Identity, Branch, Group/Lesson blockers, profile composition, and Audit | [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md); [machine seam model](../../architecture/workforce-context-seams.json) |
@@ -54,11 +55,11 @@ WF-PRE-16 remains incomplete. No extraction item is authorized by this record.
 | 13 | WF-PRE-13 | **Completed 2026-07-24 — Approve executable test and parity plan** | Ten suites and eight deterministic fixtures give all 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 consistency variants, two governed deltas, and seven rollback scenarios exact files, commands, results, owners, thresholds, evidence, and activation gates without claiming missing implementation | [Workforce Executable Test and Parity Plan](workforce-test-parity-plan.md); [machine plan](../../architecture/workforce-test-parity-plan.json) |
 | 14 | WF-PRE-14 | **Completed 2026-07-24 — Approve migration and rollback runbook** | Ten eligible variants have ordered increments; four holds stay legacy; exact selector/cohorts, entry/promotion/stop thresholds, one-authority fallback, reconciliation, five-minute RTO, zero-loss RPO, observation, retirement, commands, owners, and evidence are fixed without enabling a route | [Workforce Migration and Rollback Runbook](workforce-migration-runbook.md); [machine runbook](../../architecture/workforce-migration-runbook.json) |
 | 15 | WF-PRE-15 | **Completed 2026-07-23 — Activate architecture no-growth evidence** | Blocking deterministic failures for new module/legacy violations are active; current baseline remains visible | Required check `architecture-enforce-blocking`; run `30027584361` |
-| 16 | WF-PRE-16 | Pass Phase Exit Criteria | Every item in [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md) has linked evidence and required approval | Final prerequisite |
+| 16 | WF-PRE-16 | **Completed 2026-07-24 — Pass Phase Exit Criteria** | All 55 items have linked dispositions: 54 Passed, one approved entry-time N/A retained as an activation blocker, zero Failed/unchecked | [Final Module Readiness decision](workforce-module-readiness-decision.md) |
 
 ## Can Migrate During Extraction
 
-These are future migration items, ordered for an approved phase. They do not authorize code changes now.
+These are the authorized migration implementation items. They must proceed in order, beginning with WF-EXT-01. Completion of preparation does not bypass an increment's test, review, route, cohort, or activation conditions.
 
 | Order | ID | Backlog item | Required constraint |
 |---:|---|---|---|

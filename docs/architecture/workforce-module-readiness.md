@@ -1,6 +1,6 @@
 # Workforce Module Readiness Review
 
-Status: Candidate selected; not ready for migration
+Status: Superseded by passed WF-PRE-16 readiness decision
 Assessment date: 2026-07-22
 Candidate source: [migration-candidate-evaluation.md](migration-candidate-evaluation.md)
 
@@ -8,7 +8,7 @@ Candidate source: [migration-candidate-evaluation.md](migration-candidate-evalua
 
 WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06 through WF-PRE-14 passed on 2026-07-24. The approved decisions now cover product scope, complete module definition, frozen HTTP behavior, behavior IDs, context seams, exact table access, public Application contracts, focused ports, consistency/route admission, event/Audit delivery, executable test/parity specifications, and the [Workforce Migration and Rollback Runbook](workforce-migration-runbook.md). The runbook fixes ten increments, four legacy holds, six cohort stages, numeric stop/promotion limits, five-minute rollback RTO, zero accepted-write loss, reconciliation, observation, and retirement without claiming implementation or activation.
 
-This resolves every ordered preparation decision before WF-PRE-16. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Final evidence review still keeps the candidate not ready; planned suites, operator commands, rollback rehearsal, exact production cohort, and target routes remain unimplemented/empty.
+This resolved every ordered preparation decision before WF-PRE-16. The original readiness score below is retained as the 2026-07-22 historical measurement. On 2026-07-24, [WF-PRE-16](workforce-module-readiness-decision.md) reran the complete evidence gate and passed Workforce for ordered extraction implementation. Planned suites, operator commands, rollback rehearsal, production cohort, and target routes remain unimplemented/empty and therefore continue to block runtime activation.
 
 ## Scope of Review
 
@@ -255,4 +255,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 through WF-PRE-14 have resolved every ordered design/planning decision. The next and only remaining preparation gate is WF-PRE-16, which must evaluate the still-unchecked evidence in [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md); zero target routes are enabled.
+Workforce is the approved first post-Attendance candidate and is **ready for ordered extraction implementation** under [WF-PRE-16](workforce-module-readiness-decision.md). It is not ready for runtime activation: zero target suites, operator commands, rollback rehearsals, production tenants, and target routes are enabled. The next ordered task is WF-EXT-01.

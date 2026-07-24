@@ -44,6 +44,7 @@ Architecture documentation does not override business requirements. The primary 
 | [`migration-backlog.md`](migration-backlog.md) | Ordered preparation, future extraction, and deferred Workforce migration backlog. |
 | [`phase-1b-exit-criteria.md`](phase-1b-exit-criteria.md) | Objective mandatory criteria for authorizing the first Workforce migration. |
 | [`phase-1b-gate-review.md`](phase-1b-gate-review.md) | Phase 1B summary, blockers, and final gate decision. |
+| [`workforce-module-readiness-decision.md`](workforce-module-readiness-decision.md) | WF-PRE-16 final preparation decision and exact extraction/activation authorization boundary. |
 | [`remediation-verification-2026-07-23.md`](remediation-verification-2026-07-23.md) | Post-review regression, repository parity, and enforcement-baseline remediation evidence. |
 | [`formal-operational-gate-closure-2026-07-23.md`](formal-operational-gate-closure-2026-07-23.md) | Attendance backup/restore, route-switch, RTO/RPO, observability, blocking CI, and final formal-operational gate decision. |
 | [`adrs/`](adrs/) | Immutable history of significant architectural decisions. |
