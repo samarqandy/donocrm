@@ -48,7 +48,8 @@ Candidate: Workforce
 - [x] `TeacherReferenceApplicationV1` documents the exact five-field Teacher reference/status contract and allow-listed downstream consumers.
 - [x] The approved [WF-PRE-10 focused port catalog](workforce-focused-ports.md) defines exact Teacher persistence, Working Hour, Identity, Organization, blocker/projection, Audit, clock, and ID capabilities across 18 cohesive ports.
 - [x] Five machine-verified broad-port guards, two owned direct-table allowlists, zero foreign direct access, and zero temporary exceptions prevent reproduction of the multi-context `AppRepository`.
-- [ ] Every upstream/downstream dependency has owner, direction, mode, and consistency behavior.
+- [x] The approved [WF-PRE-12 event/Audit decision](workforce-event-requirements.md) gives all 19 upstream/downstream/internal dependencies an owner, direction, synchronous mode, consistency behavior, and explicit no-event disposition.
+- [x] All 11 provider ports, seven PRE-07 seams, and seven `WF-REF-01` service callers resolve exactly; published events, consumed events, approved event versions, and temporary event exceptions are all zero.
 - [x] The approved [WF-PRE-07 seam decision](workforce-bounded-context-seams.md) forbids target foreign-table access and routes every current cross-context workflow through provider public contracts and an outer non-authoritative coordinator.
 
 **Pass measure:** every dependency in the readiness review resolves to one approved public contract/event or an exact temporary exception.

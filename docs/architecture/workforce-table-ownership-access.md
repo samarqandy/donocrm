@@ -162,7 +162,7 @@ These are exact current facts. They do not approve the same weaknesses for targe
 | WF-ACCESS-RISK-02 | Broad `teachers()` projection couples mutations/reads to five foreign contexts | WF-SEAM-06 plus approved WF-PRE-09 Application DTOs and focused WF-PRE-10 reads |
 | WF-ACCESS-RISK-03 | Session deletes lack tenant predicate | Identity contract and WF-PRE-13 tenant/fan-out tests |
 | WF-ACCESS-RISK-04 | Working Hour Branch is unvalidated and has no FK | WF-PRE-09 target contract approved; WF-PRE-13 compatibility-remediation tests remain |
-| WF-ACCESS-RISK-05 | Audit writes foreign table after business persistence | WF-PRE-11 outcome/retry semantics complete; WF-PRE-12 delivery decision remains |
+| WF-ACCESS-RISK-05 | Audit writes foreign table after business persistence | WF-PRE-12 approves synchronous required acceptance through the Audit-owned port; post-commit failure is `committed_unacknowledged` and direct foreign SQL remains forbidden |
 
 The risks block extraction where applicable; they do not change the ownership result.
 
@@ -211,4 +211,4 @@ This verifies decision completeness. It does not authorize target code, schema c
 
 Every direct and schema-only table dependency is exact, owner-approved, operation-mapped, deny-by-default, and assigned to either a focused Workforce port or a foreign provider contract. No foreign direct target access and no temporary exception are approved.
 
-WF-PRE-09 through WF-PRE-11 subsequently approved public Application contracts, focused ports, and the [transaction/consistency model](workforce-transaction-consistency.md). The next ordered prerequisite is WF-PRE-12: decide event and Audit delivery requirements.
+WF-PRE-09 through WF-PRE-12 subsequently approved public Application contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.

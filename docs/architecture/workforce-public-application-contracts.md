@@ -155,8 +155,8 @@ Neither decision silently changes the current HTTP/runtime contract. A target ro
 This decision does not approve:
 
 - exact focused persistence/provider ports and adapter boundaries — subsequently approved by [WF-PRE-10](workforce-focused-ports.md);
-- cross-provider transaction, ordering, compensation, retry, and reconciliation — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md); durable Audit delivery remains WF-PRE-12;
-- integration events — WF-PRE-12;
+- cross-provider transaction, ordering, compensation, retry, and reconciliation — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md);
+- integration-event and Audit delivery disposition — subsequently approved by [WF-PRE-12](workforce-event-requirements.md) with synchronous mandatory Audit acceptance and zero event versions;
 - executable contract/parity/tenant/privacy/remediation tests — WF-PRE-13;
 - migration cohort, rollout, rollback, observation, or retirement — WF-PRE-14.
 
@@ -170,4 +170,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 **WF-PRE-09: PASSED**
 
-The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10/11 subsequently approved [focused ports](workforce-focused-ports.md) and [consistency](workforce-transaction-consistency.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-12.
+The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 through WF-PRE-12 subsequently approved [focused ports](workforce-focused-ports.md), [consistency](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-13.

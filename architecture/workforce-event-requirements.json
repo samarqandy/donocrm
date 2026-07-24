@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-12",
+  "status": "approved",
+  "catalogId": "workforce-event-requirements-2026-07-24.1",
+  "catalogVersion": "1.0.0",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "864ea637a9e5579590a62211c32c2f2902f2897d",
+  "sourceFingerprints": {
+    "architecture/workforce-consistency-model.json": "1a87f79c014f4dd12f8a664b02416207c4b3835aa06a40ac8fe724a6ebbd75cb",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-context-seams.json": "b4c6754e09a3cb4cda19522f2fe3d13270e5f9fdfb480259743f0e312a17d5ae",
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "docs/architecture/module-dependencies.md": "8f509d9a2d92109d8aa10ba2a79f9cce1a33a46a00807de2b54d93053bc60337",
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2",
+    "src/repositories/appRepository.js": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc"
+  },
+  "eventPolicy": {
+    "decisionRule": "Approve an integration event only when an identified consumer needs an independently processed committed fact and synchronous Application/query contracts cannot satisfy the evidenced requirement.",
+    "currentEvidence": "No Workforce domain event, integration event, publisher, subscriber, event schema, event version, outbox, inbox, delivery worker, or independently asynchronous downstream consumer exists in the frozen implementation.",
+    "firstExtraction": "All evidenced Workforce dependencies use approved synchronous context, query, or command contracts. No Workforce integration event is approved for first extraction.",
+    "versioning": "Versions are assigned only to approved event contracts. Because the approved published and consumed event catalogs are empty, there is no event name, payload, owner, subscriber, retention, ordering, or version to implement.",
+    "delivery": "No event delivery guarantee is claimed. An event bus, outbox, inbox, dead-letter queue, replay worker, or use of migration_outbox as a business-event channel is not approved.",
+    "migrationEvents": "Attendance migration replication events remain separate infrastructure and are not Workforce business integration-event precedent.",
+    "futureChange": "A future event requires a new governed contract decision with producer, committed fact, consumer, schema version, tenant key, ordering, idempotency, privacy, delivery, observability, retention, replay, and compatibility evidence.",
+    "routeEffect": "WF-PRE-12 authorizes no runtime route, adapter, publisher, subscriber, schema, worker, or target write. Later WF-PRE-13, WF-PRE-14, and WF-PRE-16 gates remain mandatory."
+  },
+  "publishedEvents": [],
+  "consumedEvents": [],
+  "approvedEventVersions": [],
+  "dependencyDecisions": [
+    {
+      "id": "WF-EVENT-DEP-01",
+      "relationship": "upstream",
+      "providerContext": "platform-administration-tenancy",
+      "consumerContext": "workforce",
+      "capability": "Verified actor and tenant execution context",
+      "mode": "synchronous_context",
+      "contractRef": "WorkforceActorContextV1/WorkforceServiceContextV1",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "Authorization and tenant isolation must be available before each operation; an eventual fact cannot establish request authority.",
+      "evidence": ["WF-PRE-09 verified contexts", "workforce-module-definition.md: allowed dependency"]
+    },
+    {
+      "id": "WF-EVENT-DEP-02",
+      "relationship": "upstream",
+      "providerContext": "identity-access",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Teacher portal lifecycle",
+      "mode": "synchronous_command",
+      "contractRef": "TeacherPortalLifecycleCommandPortV1",
+      "portIds": ["WF-PORT-PROV-01"],
+      "seamIds": ["WF-SEAM-01"],
+      "eventDecision": "no_event",
+      "reason": "The compatibility command needs an immediate provider outcome; unsafe cross-context variants remain legacy-held rather than becoming an asynchronous workflow.",
+      "evidence": ["WF-PRE-07 WF-SEAM-01", "WF-PRE-11 WF-CONS-03B/WF-CONS-04B/WF-CONS-05B"]
+    },
+    {
+      "id": "WF-EVENT-DEP-03",
+      "relationship": "upstream",
+      "providerContext": "identity-access",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Credential reset and all-session invalidation",
+      "mode": "synchronous_command",
+      "contractRef": "TeacherCredentialResetCommandPortV1",
+      "portIds": ["WF-PORT-PROV-02"],
+      "seamIds": ["WF-SEAM-02"],
+      "eventDecision": "no_event",
+      "reason": "Credential replacement and session invalidation are one Identity-owned atomic command whose result is required before HTTP acknowledgement.",
+      "evidence": ["WF-PRE-07 WF-SEAM-02", "WF-PRE-11 ID-ATOMIC-02"]
+    },
+    {
+      "id": "WF-EVENT-DEP-04",
+      "relationship": "upstream",
+      "providerContext": "identity-access",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Teacher portal-access projection",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherPortalAccessProjectionPortV1",
+      "portIds": ["WF-PORT-PROV-03"],
+      "seamIds": ["WF-SEAM-06"],
+      "eventDecision": "no_event",
+      "reason": "The frozen directory/profile response needs current request-time Identity projection and no cache/read-model freshness contract exists.",
+      "evidence": ["WF-PRE-07 WF-SEAM-06", "WF-PRE-10 WF-PORT-PROV-03"]
+    },
+    {
+      "id": "WF-EVENT-DEP-05",
+      "relationship": "upstream",
+      "providerContext": "organization-branches",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Active Branch validation and default resolution",
+      "mode": "synchronous_query",
+      "contractRef": "BranchReferenceResolverPortV1",
+      "portIds": ["WF-PORT-PROV-04"],
+      "seamIds": ["WF-SEAM-03"],
+      "eventDecision": "no_event",
+      "reason": "Mutation preconditions require a request-time authoritative Branch decision; an eventual Branch fact cannot safely replace it.",
+      "evidence": ["WF-PRE-07 WF-SEAM-03", "WF-PRE-10 WF-PORT-PROV-04"]
+    },
+    {
+      "id": "WF-EVENT-DEP-06",
+      "relationship": "upstream",
+      "providerContext": "academic-groups",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Active Group archive blocker",
+      "mode": "synchronous_query",
+      "contractRef": "ActiveGroupArchiveBlockerPortV1",
+      "portIds": ["WF-PORT-PROV-05"],
+      "seamIds": ["WF-SEAM-04"],
+      "eventDecision": "no_event",
+      "reason": "Archive needs a fail-closed provider decision; an event-fed local view would not close the known TOCTOU invariant.",
+      "evidence": ["WF-PRE-07 WF-SEAM-04", "WF-PRE-11 archive blocker legacy hold"]
+    },
+    {
+      "id": "WF-EVENT-DEP-07",
+      "relationship": "upstream",
+      "providerContext": "academic-groups",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Teacher Group compatibility projection",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherGroupProjectionPortV1",
+      "portIds": ["WF-PORT-PROV-06"],
+      "seamIds": ["WF-SEAM-06"],
+      "eventDecision": "no_event",
+      "reason": "Request-time composition preserves the frozen profile without introducing an unevidenced replicated read model.",
+      "evidence": ["WF-PRE-07 WF-SEAM-06", "WF-PRE-10 WF-PORT-PROV-06"]
+    },
+    {
+      "id": "WF-EVENT-DEP-08",
+      "relationship": "upstream",
+      "providerContext": "scheduling",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Teacher workload and Group schedule projections",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherScheduleProjectionPortV1",
+      "portIds": ["WF-PORT-PROV-07"],
+      "seamIds": ["WF-SEAM-06"],
+      "eventDecision": "no_event",
+      "reason": "No asynchronously maintained Workforce projection or approved staleness window exists.",
+      "evidence": ["WF-PRE-07 WF-SEAM-06", "WF-PRE-10 WF-PORT-PROV-07"]
+    },
+    {
+      "id": "WF-EVENT-DEP-09",
+      "relationship": "upstream",
+      "providerContext": "lesson-delivery",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Upcoming Lesson archive blocker",
+      "mode": "synchronous_query",
+      "contractRef": "UpcomingLessonArchiveBlockerPortV1",
+      "portIds": ["WF-PORT-PROV-08"],
+      "seamIds": ["WF-SEAM-05"],
+      "eventDecision": "no_event",
+      "reason": "Archive requires a fail-closed current Lesson lifecycle decision; stale event state cannot authorize archive.",
+      "evidence": ["WF-PRE-07 WF-SEAM-05", "WF-PRE-11 archive blocker legacy hold"]
+    },
+    {
+      "id": "WF-EVENT-DEP-10",
+      "relationship": "upstream",
+      "providerContext": "lesson-delivery",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Teacher Lesson compatibility projection",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherLessonProjectionPortV1",
+      "portIds": ["WF-PORT-PROV-09"],
+      "seamIds": ["WF-SEAM-06"],
+      "eventDecision": "no_event",
+      "reason": "The compatibility profile needs provider-owned current meanings and no event-fed read model is evidenced.",
+      "evidence": ["WF-PRE-07 WF-SEAM-06", "WF-PRE-10 WF-PORT-PROV-09"]
+    },
+    {
+      "id": "WF-EVENT-DEP-11",
+      "relationship": "upstream",
+      "providerContext": "student-information",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Teacher and Group active-student counts",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherStudentCountProjectionPortV1",
+      "portIds": ["WF-PORT-PROV-10"],
+      "seamIds": ["WF-SEAM-06"],
+      "eventDecision": "no_event",
+      "reason": "The exact keyed projection can satisfy the frozen response without inventing replicated ownership or freshness semantics.",
+      "evidence": ["WF-PRE-07 WF-SEAM-06", "WF-PRE-10 WF-PORT-PROV-10"]
+    },
+    {
+      "id": "WF-EVENT-DEP-12",
+      "relationship": "upstream",
+      "providerContext": "audit-history",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Mandatory Workforce audit intent acceptance",
+      "mode": "synchronous_command",
+      "contractRef": "WorkforceAuditAppenderPortV1",
+      "portIds": ["WF-PORT-PROV-11"],
+      "seamIds": ["WF-SEAM-07"],
+      "eventDecision": "no_event",
+      "reason": "No transactionally durable Workforce outbox exists. A best-effort published event would weaken mandatory Audit; synchronous provider acceptance preserves an exact observable failure boundary.",
+      "evidence": ["WF-PRE-07 WF-SEAM-07", "WF-PRE-11 AUD-ATOMIC-01", "AppService audit calls:535,547,565,577,590,797,808"]
+    },
+    {
+      "id": "WF-EVENT-DEP-13",
+      "relationship": "downstream",
+      "providerContext": "workforce",
+      "consumerContext": "academic-groups",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "The approved five-field query provides authoritative reference validation; no independent asynchronous Group reaction is evidenced.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist"]
+    },
+    {
+      "id": "WF-EVENT-DEP-14",
+      "relationship": "downstream",
+      "providerContext": "workforce",
+      "consumerContext": "scheduling",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "Scheduling owns assignment eligibility and can query the minimal current reference; no committed-fact subscriber exists.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist"]
+    },
+    {
+      "id": "WF-EVENT-DEP-15",
+      "relationship": "downstream",
+      "providerContext": "workforce",
+      "consumerContext": "lesson-delivery",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "Lesson Delivery owns lesson eligibility and can query the minimal current reference; no asynchronous lifecycle reaction is evidenced.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist"]
+    },
+    {
+      "id": "WF-EVENT-DEP-16",
+      "relationship": "downstream",
+      "providerContext": "workforce",
+      "consumerContext": "attendance",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "Attendance needs reference validation only; existing Attendance migration replication events do not establish a Workforce business-event consumer.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist", "module-dependencies.md migration-event separation"]
+    },
+    {
+      "id": "WF-EVENT-DEP-17",
+      "relationship": "downstream",
+      "providerContext": "workforce",
+      "consumerContext": "lesson-finance-payroll",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "Finance owns rate/accrual meanings and only needs the stable Teacher reference; no event-driven payroll requirement is approved.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist"]
+    },
+    {
+      "id": "WF-EVENT-DEP-18",
+      "relationship": "downstream",
+      "providerContext": "workforce",
+      "consumerContext": "reporting-export",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "No approved Workforce reporting projection, freshness target, or asynchronous consumer exists; the minimal query is the only first-extraction contract.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist"]
+    },
+    {
+      "id": "WF-EVENT-DEP-19",
+      "relationship": "internal_consumer",
+      "providerContext": "workforce",
+      "consumerContext": "workforce-compatibility-coordinator",
+      "capability": "Tenant-scoped Teacher reference and status",
+      "mode": "synchronous_query",
+      "contractRef": "TeacherReferenceApplicationV1.getTeacherReference",
+      "portIds": [],
+      "seamIds": [],
+      "eventDecision": "no_event",
+      "reason": "The coordinator needs the current reference inside request-response workflows and is not an independent asynchronous consumer.",
+      "evidence": ["WF-PRE-09 WF-REF-01 allowlist"]
+    }
+  ],
+  "auditDeliveryDecision": {
+    "seamId": "WF-SEAM-07",
+    "portId": "WF-PORT-PROV-11",
+    "mode": "synchronous_required_acceptance",
+    "eventReplacement": false,
+    "publisher": null,
+    "eventName": null,
+    "eventVersion": null,
+    "ordering": "After the authoritative provider-local business commit and before HTTP success acknowledgement.",
+    "acceptance": "Accepted only when Audit & History returns success for one immutable minimum WorkforceAuditIntentV1 under the verified tenant, actor, entity reference, action, and correlation context.",
+    "businessTransaction": "Audit acceptance is not part of the Workforce or Identity transaction and cannot roll back a committed business mutation.",
+    "explicitFailure": "If Audit explicitly rejects or fails after the business commit, return the approved technical failure and classify the workflow committed_unacknowledged.",
+    "ambiguousFailure": "If timeout, disconnect, or process loss makes Audit acceptance uncertain after the business commit, return technical failure and classify the workflow committed_unacknowledged with unknown Audit-delivery substate.",
+    "retry": "Never retry the business command or Audit append automatically. correlationId is evidence, not a deduplication key.",
+    "reconciliation": "Quarantine the original command. WF-PRE-14 must define provider-owned evidence lookup, duplicate-safe missing-intent append procedure, owner, alert threshold, and escalation; no direct audit_logs SQL is allowed.",
+    "privacy": "Credentials, password material, sessions, access grants, provider entities, and foreign mutable rows are forbidden in the intent.",
+    "reliabilityLimit": "Synchronous acceptance preserves current acknowledgement semantics but is not an atomic durable handoff. This limitation is explicit and must be exercised by WF-PRE-13 failure/unknown-outcome tests.",
+    "writeAdmissionEffect": "The six PRE-11 single-authority variants have their WF-PRE-12 decision condition resolved but remain disabled pending WF-PRE-13, WF-PRE-14, and WF-PRE-16. The four legacy-hold variants remain held for their independent consistency blockers.",
+    "targetMutationRoutesEnabled": 0
+  },
+  "consistencySupersession": {
+    "sourceDecision": "WF-PRE-11",
+    "resolvedRiskId": "WF-CONS-RISK-02",
+    "resolvedVariantIds": [
+      "WF-CONS-03A",
+      "WF-CONS-04A",
+      "WF-CONS-06",
+      "WF-CONS-07",
+      "WF-CONS-09",
+      "WF-CONS-10"
+    ],
+    "newDisposition": "target_write_pending_later_gates",
+    "remainingReleaseGates": ["WF-PRE-13", "WF-PRE-14", "WF-PRE-16"],
+    "legacyHoldVariantIds": ["WF-CONS-03B", "WF-CONS-04B", "WF-CONS-05A", "WF-CONS-05B"],
+    "note": "PRE-11 remains immutable gate evidence. This PRE-12 decision resolves its Audit-choice placeholder without enabling a route or weakening any legacy hold."
+  },
+  "eventRisks": [
+    {
+      "id": "WF-EVENT-RISK-01",
+      "severity": "high",
+      "issue": "Inventing Teacher lifecycle events without an asynchronous consumer would create unsupported schema, delivery, retention, and compatibility obligations.",
+      "treatment": "Published/consumed/version catalogs remain empty; synchronous contracts cover all evidenced dependencies."
+    },
+    {
+      "id": "WF-EVENT-RISK-02",
+      "severity": "high",
+      "issue": "A business commit can succeed before synchronous Audit acceptance fails or becomes uncertain.",
+      "treatment": "Return failure, classify committed_unacknowledged, forbid automatic retry, require PRE-13 fault tests and PRE-14 reconciliation."
+    },
+    {
+      "id": "WF-EVENT-RISK-03",
+      "severity": "high",
+      "issue": "Reusing migration_outbox would conflate Attendance store replication with durable business integration events and violate ownership.",
+      "treatment": "Explicitly forbid migration_outbox and any new outbox/inbox/event worker in first extraction."
+    },
+    {
+      "id": "WF-EVENT-RISK-04",
+      "severity": "high",
+      "issue": "Replacing current provider queries with event-fed projections would introduce unapproved staleness and duplicated authority.",
+      "treatment": "All current provider dependencies remain synchronous; future read models require freshness, rebuild, privacy, and ownership evidence."
+    }
+  ],
+  "guards": [
+    {
+      "id": "WF-EVENT-GUARD-01",
+      "rule": "Every PRE-10 provider port has exactly one synchronous dependency disposition."
+    },
+    {
+      "id": "WF-EVENT-GUARD-02",
+      "rule": "Every WF-REF-01 service caller has an exact synchronous Teacher-reference disposition."
+    },
+    {
+      "id": "WF-EVENT-GUARD-03",
+      "rule": "Published events, consumed events, and approved event versions are empty."
+    },
+    {
+      "id": "WF-EVENT-GUARD-04",
+      "rule": "Audit remains synchronous mandatory acceptance through WF-PORT-PROV-11 and is not replaced by a best-effort event."
+    },
+    {
+      "id": "WF-EVENT-GUARD-05",
+      "rule": "Audit failure after a known business commit is committed_unacknowledged and cannot auto-retry."
+    },
+    {
+      "id": "WF-EVENT-GUARD-06",
+      "rule": "No event bus, outbox, inbox, DLQ, replay worker, schema, route, or migration_outbox business-event use is approved."
+    },
+    {
+      "id": "WF-EVENT-GUARD-07",
+      "rule": "WF-PRE-12 enables zero target mutation routes and preserves all PRE-11 legacy holds."
+    }
+  ],
+  "temporaryEventExceptions": [],
+  "deferredDecisions": {
+    "WF-PRE-13": "Executable tests for every synchronous contract, Audit success/failure/timeout/duplicate ambiguity, tenant isolation, parity, and governed deltas",
+    "WF-PRE-14": "Exact route increments, Audit reconciliation query/procedure, owner/escalation, thresholds, fallback, observation, and rollback",
+    "WF-PRE-16": "Final Module Readiness and migration authorization",
+    "future-event-revision": "Any new consumer-driven event contract and its versioned schema/delivery model"
+  },
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Organization & Branches Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Academic Groups Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Scheduling Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Delivery Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Student Information Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Attendance Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Finance & Payroll Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Reporting & Export Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Audit & History Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Operations Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

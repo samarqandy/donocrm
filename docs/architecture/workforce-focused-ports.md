@@ -194,8 +194,8 @@ There are zero temporary port exceptions.
 
 WF-PRE-10 does not approve:
 
-- local/cross-provider transaction boundaries, ordering, compensation, retry, reconciliation, and Unit-of-Work disposition — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md); durable Audit delivery remains WF-PRE-12;
-- events, versions, publisher/subscriber, or delivery — WF-PRE-12;
+- local/cross-provider transaction boundaries, ordering, compensation, retry, reconciliation, and Unit-of-Work disposition — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md);
+- events, versions, publisher/subscriber, and Audit delivery — subsequently approved by [WF-PRE-12](workforce-event-requirements.md) with zero event contracts and synchronous mandatory Audit acceptance;
 - executable tests for every adapter/method, two-tenant isolation, parity, privacy/Branch deltas, and failure injection — WF-PRE-13;
 - adapter activation, route cohort, thresholds, rollback, observation, or retirement — WF-PRE-14.
 
@@ -209,4 +209,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 The exact focused port catalog covers all 11 PRE-09 Application contracts, both Workforce-owned tables, every foreign direct-access replacement, all seven PRE-07 seams, and nine future adapter groups without reproducing `AppRepository`. Module Readiness remains Failed and no extraction is authorized.
 
-WF-PRE-11 subsequently approved the [transaction and consistency model](workforce-transaction-consistency.md). The next ordered prerequisite is WF-PRE-12: decide event and Audit delivery requirements.
+WF-PRE-11 and WF-PRE-12 subsequently approved the [transaction and consistency model](workforce-transaction-consistency.md) and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.

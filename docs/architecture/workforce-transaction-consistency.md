@@ -51,7 +51,7 @@ The current legacy implementation gains accidental cross-context atomicity by wr
 - a distributed transaction, which is prohibited; or
 - a durable workflow/reservation/idempotency protocol, which does not exist and would require a separately approved contract and persistence model.
 
-WF-PRE-11 therefore does not pretend that a best-effort sequence is equivalent. Cross-context variants remain on the frozen legacy path. Single-authority variants have exact target local atomicity, but their target routes remain disabled until the Audit delivery/acceptance decision in WF-PRE-12 and the later test/runbook gates pass.
+WF-PRE-11 therefore does not pretend that a best-effort sequence is equivalent. Cross-context variants remain on the frozen legacy path. At this gate, single-authority variants had exact target local atomicity but remained disabled pending WF-PRE-12. WF-PRE-12 subsequently retained synchronous mandatory Audit acceptance; those variants now wait on WF-PRE-13, WF-PRE-14, and WF-PRE-16, with no route enabled.
 
 ## Consistency Outcome States
 
@@ -85,7 +85,7 @@ These transactions remain visible legacy behavior. They do not authorize a targe
 | WF-ATOMIC-02 | Workforce | Working Hour insert/delete in `teacher_working_hours` | Competing overlap recheck and insert are protected in the same local transaction |
 | ID-ATOMIC-01 | Identity & Access | Portal provision/change/disable in Identity-owned tables | Lifecycle outcome and required session invalidation commit or roll back together |
 | ID-ATOMIC-02 | Identity & Access | Credential replacement plus session invalidation | New credential and deletion of every session for the tenant-scoped Teacher User commit or roll back together |
-| AUD-ATOMIC-01 | Audit & History | One immutable Audit intent | Acceptance follows the exact WF-PRE-12 delivery decision |
+| AUD-ATOMIC-01 | Audit & History | One immutable Audit intent | WF-PRE-12 subsequently approves synchronous required acceptance through `WorkforceAuditAppenderPortV1` |
 
 Branch resolution, Group/Lesson blocker checks, and projection reads are precondition snapshots, not transaction participants.
 
@@ -102,7 +102,7 @@ The following are structurally target-admissible because they perform no mutatio
 
 Provider failure fails the complete query. Partial directories/profiles are forbidden. Actual routing still requires WF-PRE-13, WF-PRE-14, and final WF-PRE-16 authorization.
 
-### Single-authority write variants
+### Single-authority write variants at the PRE-11 gate
 
 Six variants have one authoritative business writer but remain blocked on the Audit delivery decision:
 
@@ -115,7 +115,7 @@ Six variants have one authoritative business writer but remain blocked on the Au
 | Create Working Hour | WF-ATOMIC-02 |
 | Delete Working Hour | WF-ATOMIC-02 |
 
-A business commit followed by failed acknowledgement is `committed_unacknowledged`, not rollback. WF-PRE-12 must decide whether Audit uses reliable durable acceptance or synchronous append semantics. WF-PRE-13 must then test every failure state.
+A business commit followed by failed acknowledgement is `committed_unacknowledged`, not rollback. WF-PRE-12 subsequently chooses synchronous required acceptance, explicitly documents that it is not an atomic durable handoff, and forbids automatic replay. WF-PRE-13 must test every failure state.
 
 ### Legacy-hold variants
 
@@ -206,13 +206,16 @@ Those actions lack reservation/version/concurrency contracts and could overwrite
 
 Audit is a mandatory acknowledgement condition, but Audit is not part of a Workforce or Identity local transaction.
 
-WF-PRE-12 must decide whether WF-SEAM-07 remains synchronous or is superseded by a reliable committed fact/durable acceptance mechanism. Until that decision and its tests:
+WF-PRE-12 subsequently keeps WF-SEAM-07 synchronous through `WorkforceAuditAppenderPortV1`; no event, version, outbox, or publisher is approved. Audit success is required before HTTP success acknowledgement. Explicit or ambiguous Audit failure after the business commit is `committed_unacknowledged`, returns technical failure, and cannot automatically replay.
 
-- target write-admissible variants: zero;
-- target mutation routes enabled: zero;
-- frozen legacy remains authoritative.
+After WF-PRE-12:
 
-This avoids silently accepting unaudited committed business changes.
+- the six single-authority variants have their Audit-choice condition resolved;
+- they remain pending WF-PRE-13, WF-PRE-14, and WF-PRE-16;
+- target mutation routes enabled remain zero;
+- all four independent legacy holds remain unchanged.
+
+This avoids silently accepting unaudited committed business changes while making the non-atomic handoff limitation explicit.
 
 ## Reconciliation
 
@@ -250,7 +253,7 @@ Temporary target exceptions: zero.
 
 ## Explicit Deferrals
 
-- Audit delivery and all other event decisions — WF-PRE-12.
+- Audit delivery and all other event decisions — subsequently completed by [WF-PRE-12](workforce-event-requirements.md).
 - Atomicity, timeout, rollback, unknown-outcome, tenant, blocker-race, Audit, and parity tests — WF-PRE-13.
 - Route variants, cohort, stop/rollback thresholds, and reconciliation runbook — WF-PRE-14.
 - Final migration authorization — WF-PRE-16.
@@ -263,6 +266,6 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 **WF-PRE-11: PASSED**
 
-Authority, atomicity, ordering, failure, retry, compensation, session invalidation, unknown-outcome, reconciliation, and route-admission behavior are exact for all 14 variants. Passing this decision does not mean every write is target-safe: zero target write routes are enabled, six wait for the Audit decision, and four remain explicit legacy holds.
+Authority, atomicity, ordering, failure, retry, compensation, session invalidation, unknown-outcome, reconciliation, and route-admission behavior are exact for all 14 variants. At this decision point, zero target write routes were enabled, six waited for the Audit decision, and four remained explicit legacy holds. WF-PRE-12 subsequently resolved the Audit choice without enabling a route.
 
-Module Readiness remains Failed. The next ordered prerequisite is WF-PRE-12: decide integration-event and Audit delivery requirements.
+Module Readiness remains Failed. WF-PRE-12 subsequently approved [integration-event and Audit delivery requirements](workforce-event-requirements.md); the next ordered prerequisite is WF-PRE-13.
