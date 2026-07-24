@@ -57,8 +57,8 @@ Candidate: Workforce
 
 - [x] `teachers` and `teacher_working_hours` are approved as Workforce-owned authoritative data.
 - [x] The approved [WF-PRE-08 access manifest](workforce-table-ownership-access.md) assigns every current foreign read/write an exact owner, operation/verb closure, provider-contract treatment, legacy transition, and zero unexplained target exceptions.
-- [ ] Teacher/Identity create, update, access-disable, archive, password-reset, and session-invalidation consistency is approved.
-- [ ] Current and target authority is explicit for every tenant and operation.
+- [x] The approved [WF-PRE-11 consistency model](workforce-transaction-consistency.md) defines Teacher/Identity create, update/access, archive, password-reset, all-session invalidation, Audit, failure, retry, compensation, and reconciliation behavior without claiming distributed atomicity.
+- [x] Current and target authority, atomic unit, route admission, and legacy-hold disposition are explicit for all 14 tenant-scoped operation variants.
 - [x] Database schema and authority changes are explicit first-extraction non-goals.
 
 **Pass measure:** zero unowned tables and zero ambiguous authoritative writers in planned scope.

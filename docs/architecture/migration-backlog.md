@@ -18,9 +18,10 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | WF-PRE-08 | Completed | 2026-07-24 | [Approved table ownership/access manifest](workforce-table-ownership-access.md) maps 10/10 operations to 12 direct tables, two schema-only dependencies, exact owners/verbs/provider treatments, five risks, and zero target exceptions |
 | WF-PRE-09 | Completed | 2026-07-24 | [Approved public Application contracts](workforce-public-application-contracts.md) define two versioned surfaces, 10/10 compatibility use cases, canonical DTOs, 28 semantic errors, verified contexts, idempotency, two governed target deltas, and one minimal downstream Teacher reference query |
 | WF-PRE-10 | Completed | 2026-07-24 | [Approved focused port catalog](workforce-focused-ports.md) defines 18 cohesive ports, 11/11 Application closures, nine adapter groups, two owned direct tables, zero foreign direct access, five broad-port guards, and zero exceptions |
+| WF-PRE-11 | Completed | 2026-07-24 | [Approved transaction/consistency model](workforce-transaction-consistency.md) defines 14/14 variants, five provider-local atomic units, four read-admissible variants, zero write routes enabled, six Audit-blocked variants, four legacy holds, five risks, seven guards, and zero exceptions |
 | WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
 
-WF-PRE-11 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
+WF-PRE-12 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
 
 ## Ordering Rules
 
@@ -29,7 +30,7 @@ WF-PRE-11 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item 
 - “During extraction” items describe future controlled migration work; they are not authorized by this document.
 - “Later” items are explicitly outside the first Workforce extraction unless new evidence changes scope.
 - Every item requires a named owner before work begins.
-- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision depends on the then-remaining preparation gates, currently WF-PRE-11 through WF-PRE-14, and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
+- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision depends on the then-remaining preparation gates, currently WF-PRE-12 through WF-PRE-14, and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
 
 ## Must Complete Before Migration
 
@@ -45,7 +46,7 @@ WF-PRE-11 through WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item 
 | 8 | WF-PRE-08 | **Completed 2026-07-24 — Approve table ownership/access manifest** | `teachers` and `teacher_working_hours` are the only owned direct tables; every foreign read/write maps to a provider contract, schema-only dependencies are explicit, and no temporary target exception is approved | [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md); [machine manifest](../../architecture/workforce-table-access-manifest.json) |
 | 9 | WF-PRE-09 | **Completed 2026-07-24 — Define public Application contracts** | Two versioned Application surfaces define 10/10 compatibility operations, canonical DTOs, closed errors, verified authorization contexts, no-key idempotency expectations, privacy projections, and one exact downstream Teacher reference/status query without changing runtime HTTP behavior | [Workforce Public Application Contracts](workforce-public-application-contracts.md); [machine contract set](../../architecture/workforce-application-contracts.json) |
 | 10 | WF-PRE-10 | **Completed 2026-07-24 — Define focused ports** | 18 exact ports separate Teacher/Working Hour persistence, owned base reads, Identity, Branch, semantic blockers, keyed projections, Audit, clock, and ID capabilities; every public operation has an exact closure and no foreign direct access or broad repository is approved | [Workforce Focused Port Decision](workforce-focused-ports.md); [machine catalog](../../architecture/workforce-focused-ports.json) |
-| 11 | WF-PRE-11 | Approve transaction/consistency model | Create, update access, archive, reset password, and session invalidation have defined authority, atomicity, failure, retry, and compensation behavior | Current SQLite operations span Workforce and Identity transactions |
+| 11 | WF-PRE-11 | **Completed 2026-07-24 — Approve transaction/consistency model** | All 14 variants have exact authority, local atomicity, ordering, failure/unknown-outcome, retry, compensation, Audit, reconciliation, and route admission; unsafe cross-context variants remain legacy-held and no target write route is enabled | [Workforce Transaction and Consistency Decision](workforce-transaction-consistency.md); [machine model](../../architecture/workforce-consistency-model.json) |
 | 12 | WF-PRE-12 | Decide event requirements | For every downstream consumer, record synchronous query/facade, published fact, or no event with evidence; approve event versions only where needed | No current Workforce events exist |
 | 13 | WF-PRE-13 | Approve test and parity plan | Domain/use-case/repository/HTTP/tenant/parity/rollback tests have fixtures, commands, expected results, and owners | Existing tests are end-to-end/legacy, not port contracts |
 | 14 | WF-PRE-14 | Approve migration and rollback runbook | Route/use-case increments, authority, parity, cohort, stop triggers, fallback, reconciliation, observation window, and retirement conditions are documented | No Workforce runbook exists |
