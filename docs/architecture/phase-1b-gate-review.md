@@ -16,7 +16,7 @@ Phase 1B has established:
 - an ordered preparation/extraction/later backlog;
 - measurable migration entry criteria.
 
-Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline), WF-PRE-03 (approved Workforce product scope and explicit non-goals), WF-PRE-04 (complete Workforce module definition), WF-PRE-05 (ten-operation contract freeze), and WF-PRE-15 (blocking architecture no-growth CI). WF-PRE-06 through WF-PRE-11 subsequently approved behavior, seams, table ownership/access, public Application contracts, focused ports, and exact transaction/consistency disposition on 2026-07-24. These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
+Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline), WF-PRE-03 (approved Workforce product scope and explicit non-goals), WF-PRE-04 (complete Workforce module definition), WF-PRE-05 (ten-operation contract freeze), and WF-PRE-15 (blocking architecture no-growth CI). WF-PRE-06 through WF-PRE-12 subsequently approved behavior, seams, table ownership/access, public Application contracts, focused ports, exact transaction/consistency disposition, and event/Audit delivery requirements on 2026-07-24. These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
 
 No runtime behavior, API, schema, business logic, module, use case, or existing functionality was changed.
 
@@ -46,7 +46,7 @@ Gaps:
 - no public Application facade/internal contracts;
 - current Teacher mutations write Identity tables in the same transaction;
 - current projections join Groups, Students, Schedules, Lessons, and Users;
-- no event decision, parity suite, or Workforce migration runbook;
+- no executable parity suite or Workforce migration runbook;
 - architecture no-growth checks are not active in CI.
 
 ## Gate Decision
@@ -61,7 +61,7 @@ The register preserves every blocker from the original gate review and marks sub
 
 1. **Resolved 2026-07-22 by WF-PRE-01:** Architecture, Workforce, Product, Identity, Organization, Data, Operations, Quality, and Security authority is assigned to Sukhrob Khaydarov under Single-Founder Governance.
 2. **Resolved 2026-07-23 by WF-PRE-02:** the Legacy Freeze has an approved baseline commit, signed 68-fingerprint inventory, configuration hash, and empty active exception register.
-3. **Partially resolved 2026-07-23 by WF-PRE-04:** every mandatory module-definition section is complete and owner-approved. After the subsequent WF-PRE-06 through WF-PRE-11 closures, Module Readiness remains Failed until WF-PRE-12 through WF-PRE-14 and WF-PRE-16 pass.
+3. **Partially resolved 2026-07-23 by WF-PRE-04:** every mandatory module-definition section is complete and owner-approved. After the subsequent WF-PRE-06 through WF-PRE-12 closures, Module Readiness remains Failed until WF-PRE-13, WF-PRE-14, and WF-PRE-16 pass.
 4. **Resolved 2026-07-23 by WF-PRE-03:** Product Authority approved Teacher profile/lifecycle, working hours, portal-access coordination, all ten current operations, compatibility commitments, and explicit first-extraction non-goals.
 5. **Resolved for first-extraction admission 2026-07-24 by WF-PRE-07/09/10/11:** Identity/Workforce authority, contracts, ports, local atomic units, ordering, failure, retry, compensation, and reconciliation are exact; unsafe cross-context variants remain legacy-held and zero target writes are enabled.
 6. **Partially resolved 2026-07-24 by WF-PRE-07/08/09/10:** Branch, Group/Lesson blocker, profile composition, exact table treatment, Application contracts, and focused provider ports are approved; Working Hour Branch/privacy executable tests remain WF-PRE-13 blockers.
@@ -75,6 +75,6 @@ The register preserves every blocker from the original gate review and marks sub
 
 ## Required Next Decision
 
-WF-PRE-01 through WF-PRE-11 and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-12, deciding integration-event and Audit delivery requirements. WF-PRE-12 through WF-PRE-14 and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
+WF-PRE-01 through WF-PRE-12 and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-13, approving the executable test and parity plan. WF-PRE-13, WF-PRE-14, and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
 
 This gate does not authorize first-module migration.

@@ -95,7 +95,7 @@ Equal legacy identifiers do not merge ownership. A Teacher ID may currently equa
 | WF-SEAM-06 | Directory/profile composition | Six provider read contracts | Synchronous composed query | Required-provider failure fails whole query; no partial/stale/raw result |
 | WF-SEAM-07 | Audit append | Audit & History | Synchronous command for first extraction | Mandatory append failure prevents success acknowledgement |
 
-Synchronous mode is the approved first-extraction contract direction because current HTTP operations require an immediate outcome and no Workforce integration event exists. WF-PRE-12 may supersede a seam only with an explicitly versioned committed fact and reliable delivery decision.
+Synchronous mode is the approved first-extraction contract direction because current HTTP operations require an immediate outcome and no Workforce integration event exists. WF-PRE-12 subsequently reviewed all dependencies and retained every seam synchronously with zero approved event versions.
 
 ## Identity Seam
 
@@ -178,7 +178,7 @@ Audit & History owns the append operation and audit record. The coordinator subm
 
 For first-extraction contract design the append is synchronous and mandatory: failure prevents success acknowledgement. It is not written inside a Workforce transaction.
 
-Current audit calls occur after business persistence, so an append failure can leave committed state with a failed response. WF-PRE-11 classifies this as `committed_unacknowledged`, forbids automatic replay, and leaves exact Audit delivery/acceptance under WF-PRE-12.
+Current audit calls occur after business persistence, so an append failure can leave committed state with a failed response. WF-PRE-11 classifies this as `committed_unacknowledged` and forbids automatic replay. WF-PRE-12 retains synchronous required acceptance through `WorkforceAuditAppenderPortV1`, explicitly accepts the non-atomic handoff limitation, and requires fault tests/reconciliation under WF-PRE-13/14.
 
 ## Operation Disposition
 
@@ -208,7 +208,7 @@ The target design may not:
 - use the compatibility coordinator as an authoritative store;
 - return partial composed profiles on provider failure;
 - create a synchronous logical cycle between Workforce and its consumers;
-- invent an event before WF-PRE-12.
+- invent an event without a new consumer-evidenced, versioned delivery decision.
 
 No temporary target exception is approved. Frozen legacy SQL remains visible debt only. WF-PRE-08 must record any exact migration-adapter table exception before implementation.
 
@@ -219,7 +219,7 @@ No temporary target exception is approved. Frozen legacy SQL remains visible deb
 | WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08 direct-access prohibition and WF-PRE-09 target contract complete; WF-PRE-13 executable compatibility/remediation remains |
 | WF-CONTRACT-RISK-01: Teacher self-profile can expose `monthlyFee` | High | Security-approved target omission and parity evidence |
 | WF-SEAM-RISK-02: Teacher/Identity share a legacy transaction | High | WF-PRE-11 keeps unsafe variants legacy-held; no target distributed transaction |
-| WF-SEAM-RISK-03: audit can fail after state commits | High | WF-PRE-11 outcome/retry semantics complete; WF-PRE-12 delivery remains |
+| WF-SEAM-RISK-03: audit can fail after state commits | High | WF-PRE-12 approves synchronous required acceptance; failure remains `committed_unacknowledged`, never auto-retried, and requires WF-PRE-13/14 test/reconciliation evidence |
 
 These risks do not invalidate the seam ownership decision. They block extraction until their assigned gates pass.
 
@@ -231,7 +231,7 @@ WF-PRE-07 did not pre-empt the ordered decisions below; WF-PRE-08 through WF-PRE
 - WF-PRE-09 exact public commands, queries, DTOs, errors, and Teacher-reference contract — completed;
 - WF-PRE-10 exact focused ports/adapters — completed;
 - WF-PRE-11 transaction ordering, atomicity, compensation, retry, idempotency, and reconciliation — completed;
-- WF-PRE-12 event need/version/delivery;
+- WF-PRE-12 event need/version/delivery — completed with zero events and synchronous mandatory Audit acceptance;
 - WF-PRE-13 contract/parity/tenant/failure tests;
 - WF-PRE-14 migration routing and rollback.
 
@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-WF-PRE-08 through WF-PRE-11 subsequently approved table access, public Application contracts, focused ports, and the [transaction/consistency model](workforce-transaction-consistency.md). The next ordered prerequisite is WF-PRE-12: decide event and Audit delivery requirements.
+WF-PRE-08 through WF-PRE-12 subsequently approved table access, public Application contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.

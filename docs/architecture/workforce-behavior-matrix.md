@@ -166,6 +166,7 @@ WF-PRE-06 does not itself resolve:
 
 - WF-PRE-07 bounded-context seams, subsequently approved in the [seam decision](workforce-bounded-context-seams.md);
 - WF-PRE-11 target transaction/consistency behavior — subsequently completed;
+- WF-PRE-12 synchronous dependency, no-event, and Audit delivery behavior — subsequently completed;
 - WF-PRE-13 fixtures, repository/port contracts, legacy-target parity, thresholds, rollback cases, or execution ownership;
 - WF-PRE-14 migration/canary/rollback procedure;
 - WF-PRE-16 final Module Readiness.
@@ -178,4 +179,4 @@ The full Testing Readiness section is still failed because 48 operation rows and
 
 Ten out of ten operations contain explicit success/failure/invariant rows, all 69 applicable operation rows have stable test IDs, every non-applicable category has a reason, tenant/role/privacy cases are explicit, and current evidence gaps are measurable rather than implied away.
 
-WF-PRE-07 through WF-PRE-11 subsequently approved seams, table access, public contracts, focused ports, and the [transaction/consistency model](workforce-transaction-consistency.md). The next ordered prerequisite is WF-PRE-12: decide event and Audit delivery requirements.
+WF-PRE-07 through WF-PRE-12 subsequently approved seams, table access, public contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.

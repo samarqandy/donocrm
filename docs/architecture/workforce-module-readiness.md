@@ -6,9 +6,9 @@ Candidate source: [migration-candidate-evaluation.md](migration-candidate-evalua
 
 ## Post-Review Decision Update
 
-WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06 through WF-PRE-11 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation. The [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md) assigns provider authority, outer orchestration, synchronous communication, failure boundaries, and forbidden shortcuts. The [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md) binds 10/10 operations to exact tables/verbs, owners, provider treatments, risks, and zero target exceptions. The [Workforce Public Application Contracts](workforce-public-application-contracts.md) approve two versioned surfaces, exact canonical DTO/error/auth/idempotency rules for 10/10 compatibility operations, and one minimal downstream Teacher reference/status query. The [Workforce Focused Port Decision](workforce-focused-ports.md) approves 18 cohesive ports, 11/11 operation closures, nine adapter groups, and zero foreign direct access or exceptions. The [Workforce Transaction and Consistency Decision](workforce-transaction-consistency.md) fixes 14 variant dispositions, five provider-local atomic units, Audit/write admission, unknown outcomes, retry, compensation, and reconciliation without distributed transactions.
+WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06 through WF-PRE-12 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation. The [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md) assigns provider authority, outer orchestration, synchronous communication, failure boundaries, and forbidden shortcuts. The [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md) binds 10/10 operations to exact tables/verbs, owners, provider treatments, risks, and zero target exceptions. The [Workforce Public Application Contracts](workforce-public-application-contracts.md) approve two versioned surfaces, exact canonical DTO/error/auth/idempotency rules for 10/10 compatibility operations, and one minimal downstream Teacher reference/status query. The [Workforce Focused Port Decision](workforce-focused-ports.md) approves 18 cohesive ports, 11/11 operation closures, nine adapter groups, and zero foreign direct access or exceptions. The [Workforce Transaction and Consistency Decision](workforce-transaction-consistency.md) fixes 14 variant dispositions, five provider-local atomic units, Audit/write admission, unknown outcomes, retry, compensation, and reconciliation without distributed transactions. The [Workforce Integration-Event and Audit Delivery Decision](workforce-event-requirements.md) gives 19/19 dependencies synchronous/no-event dispositions and approves synchronous mandatory Audit acceptance without inventing event infrastructure.
 
-This resolves product scope, module-definition completeness, current HTTP contract baselining, behavior-inventory approval, bounded-context seam direction, exact table access, public Application contracts, focused ports, and transaction/consistency disposition only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. The event/Audit delivery decision, executable test/parity plan, and runbook keep the candidate not ready; zero target write routes are currently enabled.
+This resolves product scope, module-definition completeness, current HTTP contract baselining, behavior-inventory approval, bounded-context seam direction, exact table access, public Application contracts, focused ports, transaction/consistency, and event/Audit delivery disposition only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. The executable test/parity plan and runbook keep the candidate not ready; zero target write routes are currently enabled.
 
 ## Scope of Review
 
@@ -118,7 +118,7 @@ WF-PRE-05 exact evidence: [human-readable decision](workforce-contract-freeze.md
 - `TeacherReferenceApplicationV1.getTeacherReference` is the sole approved first-extraction downstream query and returns exactly five fields.
 - Role-specific Teacher/profile DTOs, closed semantic errors, verified contexts, and no-key idempotency expectations are exact under WF-PRE-09.
 - Focused Identity/Organization/Group/Scheduling/Lesson/Student/Audit provider port signatures are approved by WF-PRE-10; adapters and executable contracts do not yet exist.
-- No versioned integration event is approved; WF-PRE-12 remains open.
+- WF-PRE-12 approves zero published events, zero consumed events, and zero event versions after resolving every current dependency to a synchronous contract.
 
 Existing HTTP request/response behavior must remain unchanged during any future migration.
 
@@ -149,9 +149,9 @@ Telegram, SMS, email, payment, and storage providers are not Workforce dependenc
 
 ## Events
 
-No Workforce domain or integration event implementation exists. Current mutations write shared audit records through `AppService` calls (`:535`, `:547`, `:565`, `:577`, `:590`, `:797`, `:808`).
+No Workforce domain or integration event implementation exists. WF-PRE-12 approves that as the first-extraction target: all 19 evidenced dependencies remain synchronous, while current mutations' shared audit calls (`AppService:535`, `:547`, `:565`, `:577`, `:590`, `:797`, `:808`) are replaced only by synchronous required acceptance through the approved Audit port.
 
-Before extraction, the module definition must decide whether any current synchronous consumer requires a public query only or whether stable committed facts are needed. Event names/payloads must not be invented before consumer evidence and ownership are approved.
+No event name or payload may be added without a new consumer-evidenced, versioned delivery decision. WF-PRE-12 specifically prohibits an event bus, business outbox/inbox, replay worker, or `migration_outbox` reuse for Workforce business facts.
 
 ## Dependencies
 
@@ -245,7 +245,7 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 | Public contracts | 6 | HTTP/OpenAPI exist; no Application/internal contracts |
 | Database ownership | 4 | Two owned tables are clear; foreign writes/joins remain |
 | External integrations | 7 | No third party; Identity/password infrastructure still leaks |
-| Events | 0 | No event contracts or decision |
+| Events | 0 | Original 2026-07-22 measurement retained; WF-PRE-12 later completed the no-event/Audit decision |
 | Dependencies | 4 | Providers/consumers known; contracts absent |
 | Risk controls | 4 | Risks observable; transaction/compensation decisions missing |
 | Rollback feasibility | 6 | Legacy fallback possible; Identity reconciliation unresolved |
@@ -255,4 +255,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 through WF-PRE-11 have resolved scope, definition, compatibility, behavior, seams, access, public contracts, ports, and consistency disposition; the remaining preparation starts with WF-PRE-12 and is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
+Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 through WF-PRE-12 have resolved scope, definition, compatibility, behavior, seams, access, public contracts, ports, consistency, and event/Audit delivery disposition; the remaining preparation starts with WF-PRE-13 and is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
