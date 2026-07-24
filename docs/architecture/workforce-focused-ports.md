@@ -209,4 +209,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 The exact focused port catalog covers all 11 PRE-09 Application contracts, both Workforce-owned tables, every foreign direct-access replacement, all seven PRE-07 seams, and nine future adapter groups without reproducing `AppRepository`. Module Readiness remains Failed and no extraction is authorized.
 
-WF-PRE-11 through WF-PRE-13 subsequently approved the [transaction and consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14.
+WF-PRE-11 through WF-PRE-14 subsequently approved consistency, event/Audit delivery, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). The next ordered prerequisite is WF-PRE-16.

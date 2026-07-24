@@ -268,4 +268,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 Authority, atomicity, ordering, failure, retry, compensation, session invalidation, unknown-outcome, reconciliation, and route-admission behavior are exact for all 14 variants. At this decision point, zero target write routes were enabled, six waited for the Audit decision, and four remained explicit legacy holds. WF-PRE-12 subsequently resolved the Audit choice without enabling a route.
 
-Module Readiness remains Failed. WF-PRE-12 and WF-PRE-13 subsequently approved [integration-event/Audit delivery requirements](workforce-event-requirements.md) and the [executable test/parity plan](workforce-test-parity-plan.md); the next ordered prerequisite is WF-PRE-14.
+Module Readiness remains Failed. WF-PRE-12 through WF-PRE-14 subsequently approved [integration-event/Audit delivery](workforce-event-requirements.md), [test/parity](workforce-test-parity-plan.md), and the [migration/rollback runbook](workforce-migration-runbook.md); the next ordered prerequisite is WF-PRE-16.

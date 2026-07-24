@@ -72,7 +72,7 @@ The capability exists in the current Teacher HTTP routes, `AppService` Teacher/w
 - **Upstream contexts:** Platform Administration & Tenancy for tenant context; Identity & Access for portal outcomes; Organization & Branches for Branch validity/default; Academic Groups and Lesson Delivery for archive blockers/profile facts; Scheduling and Student Information for workload/count projections; Audit & History for audit recording.
 - **Downstream contexts:** Academic Groups, Scheduling, Lesson Delivery, Attendance, Lesson Finance & Payroll, and Reporting consume Teacher references or approved projections.
 - **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at provider boundaries; the approved `TeacherReferenceV1` published language; an outer compatibility Application coordinator for cross-context lifecycle/profile composition.
-- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) fixes context authority/direction, [WF-PRE-08](workforce-table-ownership-access.md) fixes exact table access/transition, [WF-PRE-09](workforce-public-application-contracts.md) fixes public Application signatures/DTOs/errors, [WF-PRE-10](workforce-focused-ports.md) fixes focused port/adapter boundaries, [WF-PRE-11](workforce-transaction-consistency.md) fixes authority/atomicity/route admission, [WF-PRE-12](workforce-event-requirements.md) fixes synchronous dependency and no-event/Audit delivery disposition, and [WF-PRE-13](workforce-test-parity-plan.md) fixes executable test/parity specifications. Migration routing remains WF-PRE-14.
+- **Boundary uncertainties:** WF-PRE-07 through WF-PRE-13 fix seams, access, contracts, ports, consistency, events/Audit, and tests. [WF-PRE-14](workforce-migration-runbook.md) subsequently fixes route increments, authority, cohorts, thresholds, rollback, reconciliation, observation, and retirement. Only final WF-PRE-16 readiness authorization remains.
 
 No target code module currently exists. The bounded context is implemented across legacy technical layers and cross-context SQL. The future directory will implement this bounded context; the directory itself will not define or expand it.
 
@@ -275,7 +275,7 @@ HTTP routes do not define ownership. ADR-008 remains Proposed, so no `/api/v1` r
 | Integration | Teacher/Identity transaction and SQLite behavior | Teacher Management scenario in `scripts/test-backend-logic.js` | Passing legacy characterization |
 | HTTP contract | Ten routes, DTO privacy, validation/errors | Teacher Management and RBAC scenarios; OpenAPI | Partial; exact matrix/comparison missing |
 | Tenant isolation | Two-tenant reads and cross-ID attempts for every operation | General repository JOIN scenario follows Teacher test | Partial; per-operation matrix missing |
-| Migration | Route parity, shadow comparison, authority, rollback/reconciliation | PRE-13 parity/rollback test specification approved; no migration harness/runbook | Runbook and rehearsal remain WF-PRE-14 |
+| Migration | Route parity, shadow comparison, authority, rollback/reconciliation | PRE-13 test specification and PRE-14 runbook approved; no harness/commands/rehearsal | Implementation/rehearsal remain activation conditions; final readiness is WF-PRE-16 |
 | End-to-end | Profile, access, workload, hours, archive, history | `scripts/test-backend-logic.js` Teacher Management scenario | Passing: `npm run test:backend` expects 20/20 |
 | Architecture | No legacy growth or forbidden module edges | `npm run architecture:enforce` and required CI check | Passing baseline; Workforce-specific checks missing |
 
@@ -293,7 +293,7 @@ Current objective commands are `npm run test:backend` and `npm run architecture:
 | Canary scope | None |
 | Rollback trigger and path | Not approved; legacy remains sole active path |
 | Legacy removal criterion | Approved cutover, observation, zero-use, reconciliation, rollback-window closure, and Legacy Retirement Gate |
-| Blocking decisions | WF-PRE-14 and final WF-PRE-16 |
+| Blocking decisions | Final WF-PRE-16 |
 
 Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not authorized by this definition.
 
@@ -310,7 +310,7 @@ Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not author
 | Approve consistency model | 14 variants, five local atomic units, zero write-enabled, six Audit-blocked, four legacy-held | [WF-PRE-11](workforce-transaction-consistency.md) | Architecture/Data/Security | Completed |
 | Decide event requirements | 19/19 dependencies synchronous; zero event versions; mandatory synchronous Audit acceptance | [WF-PRE-12](workforce-event-requirements.md) | Architecture/consumers/Audit/Operations | Completed |
 | Approve test/parity plan | 10 suites, eight fixtures, 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 variants, 11 parity rows, seven rollback cases | [WF-PRE-13](workforce-test-parity-plan.md) | Quality/Module/Data/Security/Operations | Completed; implementation remains per extraction activation gate |
-| Approve migration/rollback runbook | No cohort, threshold, routing, reconciliation, or drill exists | WF-PRE-14 | Operations/Data/Architecture | Open |
+| Approve migration/rollback runbook | 10 increments, four holds, six cohorts, numeric stops, five-minute RTO, zero-loss RPO, reconciliation, observation, retirement | [WF-PRE-14](workforce-migration-runbook.md) | Operations/Data/Architecture/Security | Completed; commands/rehearsal remain unimplemented |
 | Pass final exit criteria | Migration must remain unauthorized until every mandatory criterion passes | WF-PRE-16 | Architecture and specialist roles | Open |
 
 Future work is preparation, not a feature or extraction commitment.
@@ -320,7 +320,7 @@ Future work is preparation, not a feature or extraction commitment.
 | Gate | Decision | Approver | Date | Evidence/actions |
 |---|---|---|---|---|
 | Module Definition Completeness | Passed | Sukhrob Khaydarov, Architecture Owner and Workforce Module Owner | 2026-07-23 | Every mandatory template section is present; current/target/open states and owners are explicit |
-| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-14 and WF-PRE-16 remain blocking |
+| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | Final WF-PRE-16 decision remains blocking |
 | Migration Cutover | Pending | Architecture, Data, Operations, Security, and Module Owner roles | 2026-07-23 | No target path, parity, cohort, thresholds, or rollback drill |
 | Legacy Retirement | Pending | Architecture, Data, and Module Owner roles | 2026-07-23 | No migration or zero-use/observation evidence |
 
@@ -328,4 +328,4 @@ Future work is preparation, not a feature or extraction commitment.
 
 **WF-PRE-04: PASSED — module definition completeness only.**
 
-The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 through WF-PRE-13 subsequently approved transport freeze, behavior inventory, seams, table access, public contracts, focused ports, consistency, event/Audit delivery, and executable test/parity specification. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-14.
+The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 through WF-PRE-14 subsequently approved transport freeze, behavior inventory, seams, table access, public contracts, focused ports, consistency, event/Audit delivery, executable tests/parity, and migration/rollback runbook specifications. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-16.

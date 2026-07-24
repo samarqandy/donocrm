@@ -211,4 +211,4 @@ This verifies decision completeness. It does not authorize target code, schema c
 
 Every direct and schema-only table dependency is exact, owner-approved, operation-mapped, deny-by-default, and assigned to either a focused Workforce port or a foreign provider contract. No foreign direct target access and no temporary exception are approved.
 
-WF-PRE-09 through WF-PRE-13 subsequently approved public Application contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14.
+WF-PRE-09 through WF-PRE-14 subsequently approved public contracts, focused ports, consistency, event/Audit, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). The next ordered prerequisite is WF-PRE-16.

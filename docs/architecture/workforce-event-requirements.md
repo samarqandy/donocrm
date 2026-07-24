@@ -247,4 +247,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 All 19/19 dependencies have an exact synchronous/no-event disposition. There are zero published events, zero consumed events, zero approved event versions, synchronous mandatory Audit acceptance, zero temporary exceptions, and zero target mutation routes enabled.
 
-Module Readiness remains Failed. WF-PRE-13 subsequently approved the [executable test and parity plan](workforce-test-parity-plan.md); the next ordered prerequisite is WF-PRE-14.
+Module Readiness remains Failed. WF-PRE-13 and WF-PRE-14 subsequently approved the [test/parity plan](workforce-test-parity-plan.md) and [migration/rollback runbook](workforce-migration-runbook.md); the next ordered prerequisite is WF-PRE-16.

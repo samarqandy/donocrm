@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-WF-PRE-08 through WF-PRE-13 subsequently approved table access, public Application contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14.
+WF-PRE-08 through WF-PRE-14 subsequently approved table access, public contracts, focused ports, consistency, event/Audit, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). The next ordered prerequisite is WF-PRE-16.
