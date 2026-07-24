@@ -46,8 +46,8 @@ Candidate: Workforce
 
 - [x] The approved [WF-PRE-09 public Application contracts](workforce-public-application-contracts.md) define 10/10 commands/queries, canonical input/output DTOs, closed semantic errors, verified authorization context, and explicit no-key retry/idempotency expectations.
 - [x] `TeacherReferenceApplicationV1` documents the exact five-field Teacher reference/status contract and allow-listed downstream consumers.
-- [ ] Focused ports are defined for Teacher persistence, Working Hours, Identity, Organization, blockers/projections, and Audit as applicable.
-- [ ] No proposed port reproduces the multi-context `AppRepository` surface.
+- [x] The approved [WF-PRE-10 focused port catalog](workforce-focused-ports.md) defines exact Teacher persistence, Working Hour, Identity, Organization, blocker/projection, Audit, clock, and ID capabilities across 18 cohesive ports.
+- [x] Five machine-verified broad-port guards, two owned direct-table allowlists, zero foreign direct access, and zero temporary exceptions prevent reproduction of the multi-context `AppRepository`.
 - [ ] Every upstream/downstream dependency has owner, direction, mode, and consistency behavior.
 - [x] The approved [WF-PRE-07 seam decision](workforce-bounded-context-seams.md) forbids target foreign-table access and routes every current cross-context workflow through provider public contracts and an outer non-authoritative coordinator.
 

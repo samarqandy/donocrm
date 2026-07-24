@@ -1,0 +1,756 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-10",
+  "status": "approved",
+  "portCatalogId": "workforce-focused-ports-2026-07-24.1",
+  "portCatalogVersion": "1.0.0",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "e087683e4fbbafb61a484aed845f5980a8ec41ae",
+  "sourceFingerprints": {
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-context-seams.json": "b4c6754e09a3cb4cda19522f2fe3d13270e5f9fdfb480259743f0e312a17d5ae",
+    "architecture/workforce-table-access-manifest.json": "b5ee0a38035c7f4b7a02b0724829e17b6e3d4044ee42c7d35a848bcb4fd5d298",
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2",
+    "src/repositories/appRepository.js": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc",
+    "docs/architecture/module-dependencies.md": "8f509d9a2d92109d8aa10ba2a79f9cce1a33a46a00807de2b54d93053bc60337"
+  },
+  "policy": {
+    "portOwnership": "A use-case consumer owns each outbound port interface. Provider public contracts remain provider-owned; anti-corruption adapters translate between the two.",
+    "cohesion": "One port represents one aggregate persistence boundary, one owned read model, one provider capability, or one deterministic system capability.",
+    "dependencyDirection": "Workforce Domain depends only on owned repository abstractions. The outer compatibility Application coordinator depends on focused outbound ports. Infrastructure adapters implement inward-facing ports.",
+    "foreignAccess": "No Workforce adapter may directly read or write a foreign table. Provider adapters call the provider public Application boundary and return immutable snapshots or semantic decisions.",
+    "batching": "Projection ports accept explicit unique teacherIds/groupIds batches. They do not expose generic filters, SQL, mutable provider entities, or lazy collections.",
+    "batchCompleteness": "Every keyed count/access projection returns exactly one row for each requested ID, including explicit zero/not-granted values. Missing or duplicate keys are contract failures.",
+    "failure": "Provider unknown/unavailable outcomes fail closed. No port returns partial success disguised as a complete snapshot.",
+    "transactionBoundary": "No port spans authoritative writes in more than one bounded context. Cross-provider ordering, compensation, retry, reconciliation, and Unit of Work semantics remain WF-PRE-11.",
+    "eventBoundary": "All ports are synchronous first-extraction contracts. No event publisher/subscriber port is approved before WF-PRE-12.",
+    "runtimeStability": "This catalog creates no adapter or source module and changes no HTTP, persistence, schema, or runtime behavior."
+  },
+  "contexts": {
+    "WorkforcePersistenceContextV1": {
+      "fields": ["tenantId", "correlationId"],
+      "fieldTypes": {
+        "tenantId": "non-empty string",
+        "correlationId": "non-empty string"
+      },
+      "rules": [
+        "Constructed only from a verified Application context",
+        "No actor, role, permission, session, credential, HTTP, or provider record is carried"
+      ]
+    },
+    "WorkforcePortCallContextV1": {
+      "fields": ["tenantId", "caller", "correlationId"],
+      "fieldTypes": {
+        "tenantId": "non-empty string",
+        "caller": "workforce-compatibility-coordinator",
+        "correlationId": "non-empty string"
+      },
+      "rules": [
+        "The adapter authenticates the service caller to the provider",
+        "No human session or credential is forwarded as service identity"
+      ]
+    }
+  },
+  "dataContracts": {
+    "TeacherAggregateSnapshotV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "name", "phone", "email", "specialization",
+        "employmentType", "status", "hiredAt", "maxWeeklyMinutes", "note", "createdAt"
+      ],
+      "rules": [
+        "Contains Workforce-owned facts only",
+        "Portal access, workload, Group, Student, Lesson, and Audit facts are excluded"
+      ]
+    },
+    "NewTeacherRecordV1": {
+      "fields": [
+        "id", "branchId", "name", "phone", "email", "specialization",
+        "employmentType", "status", "hiredAt", "maxWeeklyMinutes", "note", "createdAt"
+      ],
+      "constants": {"status": "active"}
+    },
+    "TeacherProfileReplacementV1": {
+      "fields": [
+        "teacherId", "branchId", "name", "phone", "email", "specialization",
+        "employmentType", "hiredAt", "maxWeeklyMinutes", "note"
+      ]
+    },
+    "TeacherStatusChangeV1": {
+      "fields": ["teacherId", "status"],
+      "fieldTypes": {"status": "active|inactive"}
+    },
+    "TeacherBaseProjectionV1": {
+      "base": "TeacherAggregateSnapshotV1",
+      "orderingOnlyFields": [],
+      "rules": ["No foreign projection field is present"]
+    },
+    "TeacherWorkingHourSnapshotV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "teacherId", "weekday", "startTime", "endTime", "createdAt"
+      ]
+    },
+    "NewTeacherWorkingHourRecordV1": {
+      "fields": [
+        "id", "branchId", "teacherId", "weekday", "startTime", "endTime", "createdAt"
+      ]
+    },
+    "WorkingHourListFilterV1": {
+      "fields": ["teacherId"],
+      "fieldTypes": {"teacherId": "non-empty string|null"},
+      "rules": ["null means all tenant Working Hours; a Teacher actor is normalized to its own ID before this port"]
+    },
+    "WorkingHourOverlapQueryV1": {
+      "fields": ["teacherId", "weekday", "startTime", "endTime"],
+      "rules": ["Overlap is existing.startTime < endTime and existing.endTime > startTime"]
+    },
+    "TeacherIdBatchV1": {
+      "fields": ["teacherIds"],
+      "fieldTypes": {"teacherIds": "readonly unique non-empty string[]"},
+      "rules": ["Maximum batch size is the number of Teachers selected by the owning Application call"]
+    },
+    "GroupIdBatchV1": {
+      "fields": ["groupIds"],
+      "fieldTypes": {"groupIds": "readonly unique non-empty string[]"},
+      "rules": ["IDs originate only from the approved Group base projection"]
+    },
+    "PortalProvisionIntentV1": {
+      "fields": ["teacherId", "displayName", "username", "password", "branchId"],
+      "fieldTypes": {
+        "teacherId": "non-empty string",
+        "displayName": "non-empty string",
+        "username": "string",
+        "password": "secret string",
+        "branchId": "string|null"
+      },
+      "rules": ["password is redacted and may cross only this Identity command adapter"]
+    },
+    "PortalAccessChangeIntentV1": {
+      "fields": ["teacherId", "displayName", "enabled", "username", "newPassword", "branchId"],
+      "optionalFields": ["enabled", "username", "newPassword", "branchId"],
+      "rules": ["newPassword is redacted and may cross only this Identity command adapter"]
+    },
+    "PortalDisableIntentV1": {
+      "fields": ["teacherId"]
+    },
+    "CredentialResetIntentV1": {
+      "fields": ["teacherId", "newPassword"],
+      "rules": ["newPassword is redacted and may cross only the Identity credential-reset adapter"]
+    },
+    "TeacherPortalAccessProjectionV1": {
+      "fields": ["teacherId", "hasAccess", "username", "accessStatus"],
+      "fieldTypes": {
+        "teacherId": "string",
+        "hasAccess": "boolean",
+        "username": "string",
+        "accessStatus": "active|inactive|not_granted"
+      }
+    },
+    "BranchResolutionRequestV1": {
+      "fields": ["requestedBranchId", "useMainWhenOmitted"],
+      "fieldTypes": {
+        "requestedBranchId": "string|null",
+        "useMainWhenOmitted": "boolean"
+      }
+    },
+    "BranchResolutionV1": {
+      "fields": ["branchId", "resolution"],
+      "fieldTypes": {
+        "branchId": "string|null",
+        "resolution": "explicit|main|none"
+      }
+    },
+    "ArchiveBlockerDecisionV1": {
+      "fields": ["teacherId", "blocked"],
+      "fieldTypes": {"teacherId": "string", "blocked": "boolean"},
+      "rules": ["No Group or Lesson row/detail is returned"]
+    },
+    "TeacherGroupCountV1": {
+      "fields": ["teacherId", "groupsCount"]
+    },
+    "TeacherGroupBaseProjectionV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "name", "subject", "description", "level",
+        "teacherId", "teacherName", "room", "monthlyFee", "capacity", "startDate",
+        "endDate", "status", "color", "note", "archivedAt", "archiveReason",
+        "createdAt", "updatedAt", "active"
+      ],
+      "rules": [
+        "Contains Academic Groups-owned base facts only",
+        "Teacher self monthlyFee omission is applied by the compatibility coordinator"
+      ]
+    },
+    "TeacherWorkloadProjectionV1": {
+      "fields": ["teacherId", "weeklyMinutes"]
+    },
+    "GroupScheduleProjectionV1": {
+      "fields": ["groupId", "schedulesCount", "scheduleSummary"]
+    },
+    "TeacherCompletedLessonCountV1": {
+      "fields": ["teacherId", "completedLessons"]
+    },
+    "GroupLessonMetricsV1": {
+      "fields": [
+        "groupId", "totalLessons", "plannedLessons", "completedLessons",
+        "cancelledLessons", "nextLessonDate"
+      ]
+    },
+    "TeacherStudentCountV1": {
+      "fields": ["teacherId", "studentsCount"]
+    },
+    "GroupStudentCountV1": {
+      "fields": ["groupId", "studentsCount"]
+    },
+    "WorkforceAuditIntentV1": {
+      "fields": ["actorUserId", "action", "entityType", "entityId", "correlationId"],
+      "fieldTypes": {
+        "actorUserId": "non-empty string",
+        "action": "created|updated|archived|restored|reset_password|deleted",
+        "entityType": "teacher|teacher_working_hour",
+        "entityId": "non-empty string",
+        "correlationId": "non-empty string"
+      },
+      "rules": [
+        "tenantId is supplied only by WorkforcePortCallContextV1",
+        "Password, username, contact, request body, provider record, and mutable entity data are forbidden",
+        "Audit owns record ID, timestamp, retention, and storage"
+      ]
+    },
+    "GeneratedIdKindV1": {
+      "values": ["teacher", "teacher_working_hour"]
+    }
+  },
+  "errorContracts": {
+    "OWNED_RECORD_CONFLICT": {
+      "owner": "workforce",
+      "mapping": "WORKFORCE_FAILURE",
+      "rule": "Insert/update uniqueness or invariant conflict not already expressed by the Application contract"
+    },
+    "IDENTITY_USERNAME_CONFLICT": {
+      "owner": "identity-access",
+      "mapping": "USERNAME_CONFLICT"
+    },
+    "IDENTITY_PORTAL_NOT_CONFIGURED": {
+      "owner": "identity-access",
+      "mapping": "PORTAL_ACCESS_NOT_CONFIGURED"
+    },
+    "BRANCH_REFERENCE_INVALID": {
+      "owner": "organization-branches",
+      "mapping": "BRANCH_INVALID"
+    },
+    "PROVIDER_UNAVAILABLE": {
+      "owner": "provider",
+      "mapping": "WORKFORCE_UNAVAILABLE"
+    },
+    "PROVIDER_FAILURE": {
+      "owner": "provider",
+      "mapping": "WORKFORCE_FAILURE"
+    },
+    "AUDIT_APPEND_FAILED": {
+      "owner": "audit-history",
+      "mapping": "WORKFORCE_FAILURE"
+    }
+  },
+  "ports": [
+    {
+      "id": "WF-PORT-OWN-01",
+      "name": "TeacherAggregateRepositoryV1",
+      "category": "owned_repository",
+      "interfaceOwner": "workforce-domain",
+      "providerContext": "workforce",
+      "implementationBoundary": "Workforce persistence adapter",
+      "contextType": "WorkforcePersistenceContextV1",
+      "allowedDirectTables": ["teachers"],
+      "providerAuthorityTables": ["teachers"],
+      "seamIds": [],
+      "methods": [
+        {"name": "findById", "signature": "findById(context, teacherId): TeacherAggregateSnapshotV1|null", "mode": "read"},
+        {"name": "insert", "signature": "insert(context, record: NewTeacherRecordV1): TeacherAggregateSnapshotV1|OWNED_RECORD_CONFLICT", "mode": "write"},
+        {"name": "replaceProfile", "signature": "replaceProfile(context, replacement: TeacherProfileReplacementV1): TeacherAggregateSnapshotV1|null|OWNED_RECORD_CONFLICT", "mode": "write"},
+        {"name": "setStatus", "signature": "setStatus(context, change: TeacherStatusChangeV1): TeacherAggregateSnapshotV1|null", "mode": "write"}
+      ],
+      "forbidden": ["Portal access mutation", "Foreign projection joins", "Audit append", "Generic save of arbitrary fields"]
+    },
+    {
+      "id": "WF-PORT-OWN-02",
+      "name": "TeacherWorkingHourRepositoryV1",
+      "category": "owned_repository",
+      "interfaceOwner": "workforce-domain",
+      "providerContext": "workforce",
+      "implementationBoundary": "Workforce persistence adapter",
+      "contextType": "WorkforcePersistenceContextV1",
+      "allowedDirectTables": ["teacher_working_hours"],
+      "providerAuthorityTables": ["teacher_working_hours"],
+      "seamIds": [],
+      "methods": [
+        {"name": "list", "signature": "list(context, filter: WorkingHourListFilterV1): readonly TeacherWorkingHourSnapshotV1[]", "mode": "read"},
+        {"name": "findById", "signature": "findById(context, workingHourId): TeacherWorkingHourSnapshotV1|null", "mode": "read"},
+        {"name": "findOverlap", "signature": "findOverlap(context, query: WorkingHourOverlapQueryV1): workingHourId|null", "mode": "read"},
+        {"name": "insert", "signature": "insert(context, record: NewTeacherWorkingHourRecordV1): TeacherWorkingHourSnapshotV1|OWNED_RECORD_CONFLICT", "mode": "write"},
+        {"name": "deleteById", "signature": "deleteById(context, workingHourId): TeacherWorkingHourSnapshotV1|null", "mode": "write"}
+      ],
+      "forbidden": ["Teacher lifecycle mutation", "Branch lookup/defaulting", "Audit append", "Foreign joins"]
+    },
+    {
+      "id": "WF-PORT-OWN-03",
+      "name": "TeacherDirectoryBaseQueryV1",
+      "category": "owned_query",
+      "interfaceOwner": "workforce-application",
+      "providerContext": "workforce",
+      "implementationBoundary": "Workforce query adapter",
+      "contextType": "WorkforcePersistenceContextV1",
+      "allowedDirectTables": ["teachers"],
+      "providerAuthorityTables": ["teachers"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "listTenantBase", "signature": "listTenantBase(context): readonly TeacherBaseProjectionV1[]", "mode": "read"}
+      ],
+      "ordering": "active before inactive, then SQLite-compatible name ordering",
+      "forbidden": ["Identity, Group, Student, Schedule, or Lesson joins", "Role projection", "Generic filters"]
+    },
+    {
+      "id": "WF-PORT-OWN-04",
+      "name": "TeacherProfileBaseQueryV1",
+      "category": "owned_query",
+      "interfaceOwner": "workforce-application",
+      "providerContext": "workforce",
+      "implementationBoundary": "Workforce query adapter",
+      "contextType": "WorkforcePersistenceContextV1",
+      "allowedDirectTables": ["teachers"],
+      "providerAuthorityTables": ["teachers"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "getBaseProfile", "signature": "getBaseProfile(context, teacherId): TeacherBaseProjectionV1|null", "mode": "read"}
+      ],
+      "forbidden": ["Working Hour, Identity, Group, Student, Schedule, or Lesson joins", "Authorization decision"]
+    },
+    {
+      "id": "WF-PORT-OWN-05",
+      "name": "TeacherReferenceQueryV1",
+      "category": "owned_query",
+      "interfaceOwner": "workforce-application",
+      "providerContext": "workforce",
+      "implementationBoundary": "Workforce query adapter",
+      "contextType": "WorkforcePersistenceContextV1",
+      "allowedDirectTables": ["teachers"],
+      "providerAuthorityTables": ["teachers"],
+      "seamIds": [],
+      "methods": [
+        {"name": "getReference", "signature": "getReference(context, teacherId): TeacherReferenceV1|null", "mode": "read"}
+      ],
+      "forbidden": ["Eligibility decision", "Contact, credential, workload, Group, Lesson, Attendance, or finance projection"]
+    },
+    {
+      "id": "WF-PORT-PROV-01",
+      "name": "TeacherPortalLifecycleCommandPortV1",
+      "category": "provider_command",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "identity-access",
+      "implementationBoundary": "Identity public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["users", "user_roles", "user_branch_access", "sessions"],
+      "seamIds": ["WF-SEAM-01"],
+      "methods": [
+        {"name": "provision", "signature": "provision(context, intent: PortalProvisionIntentV1): TeacherPortalAccessProjectionV1|IDENTITY_USERNAME_CONFLICT|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "write"},
+        {"name": "applyChange", "signature": "applyChange(context, intent: PortalAccessChangeIntentV1): TeacherPortalAccessProjectionV1|IDENTITY_USERNAME_CONFLICT|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "write"},
+        {"name": "disable", "signature": "disable(context, intent: PortalDisableIntentV1): TeacherPortalAccessProjectionV1|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "write"}
+      ],
+      "forbidden": ["Teacher business profile mutation", "Password hash/session/role record return", "Workforce direct Identity-table access"]
+    },
+    {
+      "id": "WF-PORT-PROV-02",
+      "name": "TeacherCredentialResetCommandPortV1",
+      "category": "provider_command",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "identity-access",
+      "implementationBoundary": "Identity public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["users", "sessions"],
+      "seamIds": ["WF-SEAM-02"],
+      "methods": [
+        {"name": "resetAndInvalidateSessions", "signature": "resetAndInvalidateSessions(context, intent: CredentialResetIntentV1): success|IDENTITY_PORTAL_NOT_CONFIGURED|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "write"}
+      ],
+      "forbidden": ["Password hash return", "Session identifiers", "Teacher business profile mutation"]
+    },
+    {
+      "id": "WF-PORT-PROV-03",
+      "name": "TeacherPortalAccessProjectionPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "identity-access",
+      "implementationBoundary": "Identity public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["users"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "getByTeacherIds", "signature": "getByTeacherIds(context, input: TeacherIdBatchV1): readonly TeacherPortalAccessProjectionV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "forbidden": ["Credential/password/session data", "Identity mutation", "Unbounded user query"]
+    },
+    {
+      "id": "WF-PORT-PROV-04",
+      "name": "BranchReferenceResolverPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "organization-branches",
+      "implementationBoundary": "Organization public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["branches"],
+      "seamIds": ["WF-SEAM-03"],
+      "methods": [
+        {"name": "resolveActive", "signature": "resolveActive(context, request: BranchResolutionRequestV1): BranchResolutionV1|BRANCH_REFERENCE_INVALID|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "forbidden": ["Branch row/entity return", "Branch mutation", "Workforce direct Branch-table access"]
+    },
+    {
+      "id": "WF-PORT-PROV-05",
+      "name": "ActiveGroupArchiveBlockerPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "academic-groups",
+      "implementationBoundary": "Academic Groups public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["groups", "group_teacher_assignments"],
+      "seamIds": ["WF-SEAM-04"],
+      "methods": [
+        {"name": "decide", "signature": "decide(context, teacherId): ArchiveBlockerDecisionV1|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "forbidden": ["Group row/entity return", "Assignment mutation", "Deriving the decision in Workforce"]
+    },
+    {
+      "id": "WF-PORT-PROV-06",
+      "name": "TeacherGroupProjectionPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "academic-groups",
+      "implementationBoundary": "Academic Groups public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["groups", "group_teacher_assignments"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "getCountsByTeacherIds", "signature": "getCountsByTeacherIds(context, input: TeacherIdBatchV1): readonly TeacherGroupCountV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"},
+        {"name": "listBaseByTeacherId", "signature": "listBaseByTeacherId(context, teacherId): readonly TeacherGroupBaseProjectionV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "ordering": "Profile Groups active descending then name",
+      "forbidden": ["Mutable Group entity return", "Schedule/Lesson/Student authority claims", "Group mutation"]
+    },
+    {
+      "id": "WF-PORT-PROV-07",
+      "name": "TeacherScheduleProjectionPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "scheduling",
+      "implementationBoundary": "Scheduling public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["schedules"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "getWorkloadByTeacherIds", "signature": "getWorkloadByTeacherIds(context, input: TeacherIdBatchV1): readonly TeacherWorkloadProjectionV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"},
+        {"name": "getGroupSummaries", "signature": "getGroupSummaries(context, input: GroupIdBatchV1): readonly GroupScheduleProjectionV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "rules": ["Group summary values preserve the frozen Teacher-profile compatibility semantics until WF-PRE-13 approves any explicit delta"],
+      "forbidden": ["Schedule row/entity return", "Working Hour mutation", "Teacher lifecycle decision"]
+    },
+    {
+      "id": "WF-PORT-PROV-08",
+      "name": "UpcomingLessonArchiveBlockerPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "lesson-delivery",
+      "implementationBoundary": "Lesson Delivery public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["lessons"],
+      "seamIds": ["WF-SEAM-05"],
+      "methods": [
+        {"name": "decide", "signature": "decide(context, teacherId): ArchiveBlockerDecisionV1|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "rules": ["Lesson Delivery owns effective current-date and lifecycle semantics"],
+      "forbidden": ["Lesson row/entity return", "Lesson mutation", "Deriving the decision in Workforce"]
+    },
+    {
+      "id": "WF-PORT-PROV-09",
+      "name": "TeacherLessonProjectionPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "lesson-delivery",
+      "implementationBoundary": "Lesson Delivery public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["lessons"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "getCompletedCountsByTeacherIds", "signature": "getCompletedCountsByTeacherIds(context, input: TeacherIdBatchV1): readonly TeacherCompletedLessonCountV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"},
+        {"name": "listUpcomingByTeacherId", "signature": "listUpcomingByTeacherId(context, teacherId): readonly TeacherProfileLessonViewV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"},
+        {"name": "getGroupMetrics", "signature": "getGroupMetrics(context, input: GroupIdBatchV1): readonly GroupLessonMetricsV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "ordering": "Upcoming Lessons by date then time, maximum 20",
+      "rules": ["Group metric values preserve the frozen Teacher-profile compatibility semantics until WF-PRE-13 approves any explicit delta"],
+      "forbidden": ["Mutable Lesson entity return", "Lesson mutation", "Teacher lifecycle decision"]
+    },
+    {
+      "id": "WF-PORT-PROV-10",
+      "name": "TeacherStudentCountProjectionPortV1",
+      "category": "provider_query",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "student-information",
+      "implementationBoundary": "Student Information public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["students"],
+      "seamIds": ["WF-SEAM-06"],
+      "methods": [
+        {"name": "getByTeacherIds", "signature": "getByTeacherIds(context, input: TeacherIdBatchV1): readonly TeacherStudentCountV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"},
+        {"name": "getByGroupIds", "signature": "getByGroupIds(context, input: GroupIdBatchV1): readonly GroupStudentCountV1[]|PROVIDER_UNAVAILABLE|PROVIDER_FAILURE", "mode": "read"}
+      ],
+      "forbidden": ["Student row/entity/contact return", "Student mutation", "Group ownership claim"]
+    },
+    {
+      "id": "WF-PORT-PROV-11",
+      "name": "WorkforceAuditAppenderPortV1",
+      "category": "provider_command",
+      "interfaceOwner": "workforce-compatibility-coordinator",
+      "providerContext": "audit-history",
+      "implementationBoundary": "Audit & History public Application anti-corruption adapter",
+      "contextType": "WorkforcePortCallContextV1",
+      "allowedDirectTables": [],
+      "providerAuthorityTables": ["audit_logs"],
+      "seamIds": ["WF-SEAM-07"],
+      "methods": [
+        {"name": "append", "signature": "append(context, intent: WorkforceAuditIntentV1): success|AUDIT_APPEND_FAILED|PROVIDER_UNAVAILABLE", "mode": "write"}
+      ],
+      "forbidden": ["Audit record ID/timestamp selection", "Credential/contact/request-body payload", "Workforce direct Audit-table access"]
+    },
+    {
+      "id": "WF-PORT-SYS-01",
+      "name": "WorkforceClockPortV1",
+      "category": "system",
+      "interfaceOwner": "workforce-application",
+      "providerContext": "system-clock",
+      "implementationBoundary": "Bootstrap-injected clock adapter",
+      "contextType": null,
+      "allowedDirectTables": [],
+      "providerAuthorityTables": [],
+      "seamIds": [],
+      "methods": [
+        {"name": "now", "signature": "now(): UTC ISO-8601 timestamp", "mode": "read"}
+      ],
+      "forbidden": ["Business timezone policy", "Lesson upcoming-date decision", "Direct Date construction inside deterministic use cases"]
+    },
+    {
+      "id": "WF-PORT-SYS-02",
+      "name": "WorkforceIdGeneratorPortV1",
+      "category": "system",
+      "interfaceOwner": "workforce-application",
+      "providerContext": "system-id",
+      "implementationBoundary": "Bootstrap-injected ID adapter",
+      "contextType": null,
+      "allowedDirectTables": [],
+      "providerAuthorityTables": [],
+      "seamIds": [],
+      "methods": [
+        {"name": "nextId", "signature": "nextId(kind: GeneratedIdKindV1): non-empty globally unique string", "mode": "read"}
+      ],
+      "forbidden": ["Provider-owned record IDs", "Audit record IDs", "Arbitrary entity kinds"]
+    }
+  ],
+  "operationPortMatrix": [
+    {
+      "contractId": "WF-APP-01",
+      "portIds": ["WF-PORT-OWN-03", "WF-PORT-PROV-03", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-09", "WF-PORT-PROV-10"]
+    },
+    {
+      "contractId": "WF-APP-02",
+      "portIds": ["WF-PORT-OWN-04", "WF-PORT-OWN-02", "WF-PORT-PROV-03", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-09", "WF-PORT-PROV-10"]
+    },
+    {
+      "contractId": "WF-APP-03",
+      "portIds": ["WF-PORT-OWN-01", "WF-PORT-PROV-01", "WF-PORT-PROV-03", "WF-PORT-PROV-04", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-09", "WF-PORT-PROV-10", "WF-PORT-PROV-11", "WF-PORT-SYS-01", "WF-PORT-SYS-02"]
+    },
+    {
+      "contractId": "WF-APP-04",
+      "portIds": ["WF-PORT-OWN-01", "WF-PORT-PROV-01", "WF-PORT-PROV-03", "WF-PORT-PROV-04", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-09", "WF-PORT-PROV-10", "WF-PORT-PROV-11"]
+    },
+    {
+      "contractId": "WF-APP-05",
+      "portIds": ["WF-PORT-OWN-01", "WF-PORT-PROV-01", "WF-PORT-PROV-03", "WF-PORT-PROV-05", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-08", "WF-PORT-PROV-09", "WF-PORT-PROV-10", "WF-PORT-PROV-11"]
+    },
+    {
+      "contractId": "WF-APP-06",
+      "portIds": ["WF-PORT-OWN-01", "WF-PORT-PROV-03", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-09", "WF-PORT-PROV-10", "WF-PORT-PROV-11"]
+    },
+    {
+      "contractId": "WF-APP-07",
+      "portIds": ["WF-PORT-OWN-05", "WF-PORT-PROV-02", "WF-PORT-PROV-11"]
+    },
+    {
+      "contractId": "WF-APP-08",
+      "portIds": ["WF-PORT-OWN-02", "WF-PORT-OWN-03"]
+    },
+    {
+      "contractId": "WF-APP-09",
+      "portIds": ["WF-PORT-OWN-05", "WF-PORT-OWN-02", "WF-PORT-PROV-04", "WF-PORT-PROV-11", "WF-PORT-SYS-01", "WF-PORT-SYS-02"]
+    },
+    {
+      "contractId": "WF-APP-10",
+      "portIds": ["WF-PORT-OWN-02", "WF-PORT-PROV-11"]
+    },
+    {
+      "contractId": "WF-REF-01",
+      "portIds": ["WF-PORT-OWN-05"]
+    }
+  ],
+  "compositionRules": {
+    "TeacherAdminViewV1": {
+      "workforce": ["TeacherAggregateSnapshotV1"],
+      "identity-access": ["TeacherPortalAccessProjectionV1"],
+      "academic-groups": ["TeacherGroupCountV1"],
+      "scheduling": ["TeacherWorkloadProjectionV1"],
+      "lesson-delivery": ["TeacherCompletedLessonCountV1"],
+      "student-information": ["TeacherStudentCountV1"],
+      "derivedByCoordinator": ["workloadPercent"],
+      "rules": ["Missing keyed projection rows fail the complete composition; they are not silently zero-filled"]
+    },
+    "TeacherProfileGroupAdminViewV1": {
+      "academic-groups": ["TeacherGroupBaseProjectionV1"],
+      "scheduling": ["GroupScheduleProjectionV1"],
+      "lesson-delivery": ["GroupLessonMetricsV1"],
+      "student-information": ["GroupStudentCountV1"],
+      "derivedByCoordinator": ["occupancyPercent", "attendanceRate"],
+      "rules": [
+        "occupancyPercent is derived from capacity and studentsCount using the frozen formula",
+        "attendanceRate remains the frozen compatibility value 0 until an approved Attendance contract changes it",
+        "Teacher self projection removes monthlyFee after composition"
+      ]
+    },
+    "TeacherProfileLessonViewV1": {
+      "lesson-delivery": ["TeacherProfileLessonViewV1"],
+      "derivedByCoordinator": [],
+      "rules": ["The provider returns an immutable compatibility projection, never a mutable Lesson entity"]
+    },
+    "TeacherWorkingHourViewV1": {
+      "workforce": ["TeacherWorkingHourSnapshotV1", "TeacherBaseProjectionV1|TeacherReferenceV1"],
+      "derivedByCoordinator": ["teacherName"],
+      "rules": [
+        "List/profile teacherName is joined in Application memory by tenant-scoped TeacherId",
+        "Create teacherName uses the already-loaded TeacherReferenceV1 displayName",
+        "Delete preserves the frozen empty teacherName quirk without an extra Teacher lookup",
+        "No Working Hour adapter Teacher-table join is allowed"
+      ]
+    }
+  },
+  "broadPortProhibitions": [
+    {
+      "id": "WF-PORT-GUARD-01",
+      "rule": "No port name or method may expose an unbounded generic repository/query/command, CRUD, execute, raw, SQL, table, database, transaction, or arbitrary-filter capability."
+    },
+    {
+      "id": "WF-PORT-GUARD-02",
+      "rule": "A provider port has exactly one providerContext and cannot claim tables or authority owned by another provider."
+    },
+    {
+      "id": "WF-PORT-GUARD-03",
+      "rule": "Only owned_repository and owned_query ports may declare allowedDirectTables, restricted to teachers or teacher_working_hours."
+    },
+    {
+      "id": "WF-PORT-GUARD-04",
+      "rule": "No command port returns provider credentials, hashes, sessions, roles, database rows, or mutable entities."
+    },
+    {
+      "id": "WF-PORT-GUARD-05",
+      "rule": "No UnitOfWork, event bus, outbox, migration router, retry executor, or cross-context transaction port is approved by WF-PRE-10."
+    }
+  ],
+  "adapterPlan": [
+    {
+      "adapterId": "WF-ADAPTER-OWNED-SQLITE-01",
+      "implements": ["WF-PORT-OWN-01", "WF-PORT-OWN-02", "WF-PORT-OWN-03", "WF-PORT-OWN-04", "WF-PORT-OWN-05"],
+      "placement": "future Workforce infrastructure",
+      "directTableAllowlist": ["teachers", "teacher_working_hours"],
+      "activation": "WF-EXT-04 after WF-PRE-11/13/14/16"
+    },
+    {
+      "adapterId": "WF-ADAPTER-IDENTITY-01",
+      "implements": ["WF-PORT-PROV-01", "WF-PORT-PROV-02", "WF-PORT-PROV-03"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After provider contract tests and WF-PRE-11"
+    },
+    {
+      "adapterId": "WF-ADAPTER-ORGANIZATION-01",
+      "implements": ["WF-PORT-PROV-04"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After provider contract tests and WF-PRE-13 Branch remediation approval"
+    },
+    {
+      "adapterId": "WF-ADAPTER-GROUPS-01",
+      "implements": ["WF-PORT-PROV-05", "WF-PORT-PROV-06"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After provider contract tests"
+    },
+    {
+      "adapterId": "WF-ADAPTER-SCHEDULING-01",
+      "implements": ["WF-PORT-PROV-07"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After provider contract tests"
+    },
+    {
+      "adapterId": "WF-ADAPTER-LESSONS-01",
+      "implements": ["WF-PORT-PROV-08", "WF-PORT-PROV-09"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After provider contract tests"
+    },
+    {
+      "adapterId": "WF-ADAPTER-STUDENTS-01",
+      "implements": ["WF-PORT-PROV-10"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After provider contract tests"
+    },
+    {
+      "adapterId": "WF-ADAPTER-AUDIT-01",
+      "implements": ["WF-PORT-PROV-11"],
+      "placement": "future Bootstrap/compatibility anti-corruption layer",
+      "directTableAllowlist": [],
+      "activation": "After WF-PRE-11/12 audit delivery decision and provider contract tests"
+    },
+    {
+      "adapterId": "WF-ADAPTER-SYSTEM-01",
+      "implements": ["WF-PORT-SYS-01", "WF-PORT-SYS-02"],
+      "placement": "future Bootstrap infrastructure",
+      "directTableAllowlist": [],
+      "activation": "With first authorized Workforce use case"
+    }
+  ],
+  "temporaryExceptions": [],
+  "deferredDecisions": {
+    "WF-PRE-11": "Local and cross-provider transaction boundaries, ordering, compensation, retry, idempotency, reconciliation, audit durable handoff, and whether an owned Unit of Work port is required",
+    "WF-PRE-12": "Event need, payload/version, publisher/subscriber, delivery, and replacement of any synchronous port",
+    "WF-PRE-13": "Executable contract suite for every adapter/method, two-tenant isolation, parity, target deltas, failure injection, and rollback assertions",
+    "WF-PRE-14": "Route increments, cohort, adapter activation, thresholds, rollback, and retirement runbook"
+  },
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Organization & Branches Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Academic Groups Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Scheduling Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Delivery Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Student Information Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Audit & History Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}
