@@ -1,0 +1,493 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-11",
+  "status": "approved",
+  "modelId": "workforce-consistency-2026-07-24.1",
+  "modelVersion": "1.0.0",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "647cdf227021bb85ceb84de3ff3796169cc09ce6",
+  "sourceFingerprints": {
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-context-seams.json": "b4c6754e09a3cb4cda19522f2fe3d13270e5f9fdfb480259743f0e312a17d5ae",
+    "architecture/workforce-table-access-manifest.json": "b5ee0a38035c7f4b7a02b0724829e17b6e3d4044ee42c7d35a848bcb4fd5d298",
+    "architecture/workforce-behavior-matrix.json": "84b7206ae682fe417b7f2b2f6314591b46bc56768e4a6b8de54148982dbcfc2d",
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2",
+    "src/repositories/appRepository.js": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc"
+  },
+  "consistencyPolicy": {
+    "authority": "Every authoritative mutation commits only inside the provider context that owns the changed data.",
+    "localAtomicity": "A local atomic unit includes one provider context and its owned tables only. All statements in the unit commit or roll back together.",
+    "distributedTransaction": "Forbidden. No shared SQLite transaction, two-phase commit, cross-context Unit of Work, or transaction object may cross a public port.",
+    "successAcknowledgement": "A target mutation may acknowledge success only after its authoritative local unit commits, every required synchronous outcome is known, and the approved Audit delivery requirement is satisfied.",
+    "unknownOutcome": "Timeout, disconnect, or process loss after dispatch but before a conclusive result is an unknown outcome, never assumed success or failure.",
+    "retry": "No Workforce HTTP command or coordinator/provider mutation is automatically retried. correlationId is diagnostic and is not an idempotency key.",
+    "compensation": "Only local database rollback before commit is generally approved. No cross-context compensating write is claimed safe without an explicit provider contract, concurrency token, and test.",
+    "reconciliation": "Unknown/partial outcomes are operator-visible consistency incidents. Reconciliation may inspect provider-owned facts through public queries only; it may not repair with foreign SQL.",
+    "audit": "Audit is mandatory for every mutation. Exact durable acceptance/event versus synchronous append is decided by WF-PRE-12; until then every target mutation route remains disabled.",
+    "routeAdmission": "A variant is target-admissible only when its routeAdmission is target_read_admissible_now or all named release gates have passed. This decision alone authorizes no routing.",
+    "legacyHold": "Frozen legacy cross-context transactions remain authoritative only for explicitly held variants. They are debt containment, not a target exception.",
+    "schema": "No schema, authority, receipt table, workflow journal, outbox, or migration-router change is approved by WF-PRE-11."
+  },
+  "outcomeStates": [
+    {
+      "state": "not_started",
+      "meaning": "No authoritative mutation was dispatched; safe to return the known error."
+    },
+    {
+      "state": "rolled_back",
+      "meaning": "The single-context atomic unit failed and all its writes rolled back; safe to return the mapped error."
+    },
+    {
+      "state": "committed",
+      "meaning": "The authoritative local unit committed and all required acknowledgement conditions are satisfied."
+    },
+    {
+      "state": "committed_unacknowledged",
+      "meaning": "A provider commit is known but Audit/response acknowledgement failed; return technical failure, never automatically replay, and reconcile."
+    },
+    {
+      "state": "unknown",
+      "meaning": "Dispatch occurred but commit outcome cannot be proven; return technical failure, quarantine automatic replay, and reconcile."
+    }
+  ],
+  "legacyEvidence": [
+    {
+      "id": "WF-LEGACY-TX-01",
+      "operations": ["WF-APP-03"],
+      "atomicity": "One SQLite transaction writes teachers and optionally users, user_roles, and user_branch_access; Audit append occurs after commit outside that transaction.",
+      "rollback": "Teacher and Identity writes roll back together on repository failure; Audit failure cannot roll back the committed business transaction.",
+      "evidence": ["AppRepository.createTeacher:1998-2029", "AppService.createTeacher:525-535"]
+    },
+    {
+      "id": "WF-LEGACY-TX-02",
+      "operations": ["WF-APP-04"],
+      "atomicity": "One SQLite transaction writes teachers and Identity users/roles/branch grants/sessions as applicable; Audit append occurs after commit.",
+      "rollback": "Teacher and Identity writes roll back together on repository failure; Audit remains outside.",
+      "evidence": ["AppRepository.updateTeacher:2032-2069", "AppService.updateTeacher:538-547"]
+    },
+    {
+      "id": "WF-LEGACY-TX-03",
+      "operations": ["WF-APP-05"],
+      "atomicity": "Blocker reads occur before one SQLite transaction updates Teacher/User and deletes sessions; Audit append occurs after commit.",
+      "rollback": "Teacher/User/session writes roll back together; blocker-check race and Audit are not in the transaction.",
+      "evidence": ["AppRepository.archiveTeacher:2072-2083", "AppService.archiveTeacher:550-565"]
+    },
+    {
+      "id": "WF-LEGACY-TX-04",
+      "operations": ["WF-APP-07"],
+      "atomicity": "Password update and session deletion are separate autocommit statements; Audit follows both.",
+      "rollback": "A failure after password update can leave sessions valid and cannot restore the prior credential.",
+      "evidence": ["AppRepository.resetTeacherPassword:2091-2096", "AppService.resetTeacherPassword:580-590"]
+    },
+    {
+      "id": "WF-LEGACY-TX-05",
+      "operations": ["WF-APP-06", "WF-APP-09", "WF-APP-10"],
+      "atomicity": "Each Workforce row mutation autocommits; Audit follows as a separate call.",
+      "rollback": "Audit failure cannot roll back the Teacher/Working Hour mutation.",
+      "evidence": ["AppRepository.restoreTeacher:2086-2088", "AppRepository.createTeacherWorkingHour:5005-5030", "AppRepository.deleteTeacherWorkingHour:5033-5037"]
+    }
+  ],
+  "atomicUnits": [
+    {
+      "id": "WF-ATOMIC-01",
+      "owner": "workforce",
+      "name": "Teacher aggregate mutation",
+      "portId": "WF-PORT-OWN-01",
+      "tables": ["teachers"],
+      "operations": ["insert", "replaceProfile", "setStatus"],
+      "isolation": "SQLite write transaction in the future owned adapter",
+      "commitRule": "Exactly one tenant-scoped Teacher mutation commits or the unit rolls back",
+      "excludes": ["Identity", "Branch", "Group", "Lesson", "Audit"]
+    },
+    {
+      "id": "WF-ATOMIC-02",
+      "owner": "workforce",
+      "name": "Teacher Working Hour mutation",
+      "portId": "WF-PORT-OWN-02",
+      "tables": ["teacher_working_hours"],
+      "operations": ["insert", "deleteById"],
+      "isolation": "SQLite write transaction in the future owned adapter",
+      "commitRule": "The adapter must recheck overlap and insert while protected from a same-Teacher/same-weekday competing insert inside the owned transaction",
+      "excludes": ["Teacher lifecycle", "Branch", "Audit"]
+    },
+    {
+      "id": "ID-ATOMIC-01",
+      "owner": "identity-access",
+      "name": "Teacher portal lifecycle mutation",
+      "portId": "WF-PORT-PROV-01",
+      "tables": ["users", "user_roles", "user_branch_access", "sessions"],
+      "operations": ["provision", "applyChange", "disable"],
+      "isolation": "Identity-owned transaction",
+      "commitRule": "The requested Identity lifecycle outcome and required session invalidation commit together or roll back together",
+      "excludes": ["teachers", "teacher_working_hours", "audit_logs"]
+    },
+    {
+      "id": "ID-ATOMIC-02",
+      "owner": "identity-access",
+      "name": "Credential reset and session invalidation",
+      "portId": "WF-PORT-PROV-02",
+      "tables": ["users", "sessions"],
+      "operations": ["resetAndInvalidateSessions"],
+      "isolation": "Identity-owned transaction",
+      "commitRule": "Credential replacement and invalidation of every session for the tenant-scoped Teacher User commit together or roll back together",
+      "excludes": ["Teacher lifecycle", "Audit"]
+    },
+    {
+      "id": "AUD-ATOMIC-01",
+      "owner": "audit-history",
+      "name": "Audit record append",
+      "portId": "WF-PORT-PROV-11",
+      "tables": ["audit_logs"],
+      "operations": ["append"],
+      "isolation": "Audit-owned transaction",
+      "commitRule": "One immutable minimum audit intent is accepted exactly according to the WF-PRE-12 delivery decision",
+      "excludes": ["Business-state mutation"]
+    }
+  ],
+  "providerPreconditionPolicy": {
+    "branchResolution": {
+      "consistency": "request-time validated snapshot",
+      "decision": "A later Branch lifecycle change does not roll back a committed Workforce reference.",
+      "routeEffect": "accepted for create/update/Working Hour variants"
+    },
+    "archiveBlockers": {
+      "consistency": "two provider request-time snapshots before Teacher archive",
+      "decision": "No distributed lock exists across Academic Groups, Lesson Delivery, and Workforce. A concurrent assignment/Lesson can race the archive decision.",
+      "routeEffect": "all archive variants remain legacy hold until a provider reservation/version protocol or an approved reconciliation invariant closes the race"
+    },
+    "teacherReference": {
+      "consistency": "request-time tenant-scoped snapshot",
+      "decision": "Reset preserves current behavior and requires existence/configured portal access, not active Teacher status.",
+      "routeEffect": "accepted for Identity-local reset after Audit delivery is decided"
+    }
+  },
+  "variantConsistencyMatrix": [
+    {
+      "variantId": "WF-CONS-01",
+      "contractId": "WF-APP-01",
+      "variant": "all",
+      "kind": "query",
+      "businessAuthorities": ["workforce", "identity-access", "academic-groups", "scheduling", "lesson-delivery", "student-information"],
+      "atomicUnitIds": [],
+      "ordering": ["Authorize and scope", "Read keyed provider snapshots", "Compose only when complete"],
+      "failure": "Any required provider unknown/unavailable outcome fails the whole query; no partial DTO",
+      "automaticRetry": false,
+      "compensation": "none",
+      "auditRequired": false,
+      "routeAdmission": "target_read_admissible_now",
+      "releaseGates": ["WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-02",
+      "contractId": "WF-APP-02",
+      "variant": "all",
+      "kind": "query",
+      "businessAuthorities": ["workforce", "identity-access", "academic-groups", "scheduling", "lesson-delivery", "student-information"],
+      "atomicUnitIds": [],
+      "ordering": ["Authorize self/admin scope", "Read base Teacher", "Read keyed provider snapshots", "Compose only when complete"],
+      "failure": "Any required provider unknown/unavailable outcome fails the whole query; no partial profile",
+      "automaticRetry": false,
+      "compensation": "none",
+      "auditRequired": false,
+      "routeAdmission": "target_read_admissible_now",
+      "releaseGates": ["WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-03A",
+      "contractId": "WF-APP-03",
+      "variant": "portalAccess is null",
+      "kind": "command",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": ["WF-ATOMIC-01"],
+      "ordering": ["Authorize/validate", "Resolve Branch snapshot", "Generate Teacher ID/time", "Commit Teacher insert", "Satisfy Audit delivery", "Compose response"],
+      "failure": "Before commit rolls back; after commit but before acknowledgement is committed_unacknowledged",
+      "automaticRetry": false,
+      "compensation": "local_rollback_before_commit_only",
+      "auditRequired": true,
+      "routeAdmission": "target_write_blocked_audit_delivery",
+      "releaseGates": ["WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-03B",
+      "contractId": "WF-APP-03",
+      "variant": "portalAccess is enabled",
+      "kind": "command",
+      "businessAuthorities": ["workforce", "identity-access"],
+      "atomicUnitIds": [],
+      "ordering": ["Execute frozen legacy operation only"],
+      "failure": "Legacy shared transaction rolls back Teacher and Identity together; Audit remains outside",
+      "automaticRetry": false,
+      "compensation": "none_approved",
+      "auditRequired": true,
+      "routeAdmission": "legacy_hold_cross_context_atomicity",
+      "releaseGates": ["explicit future consistency revision with reservation/idempotency semantics", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-04A",
+      "contractId": "WF-APP-04",
+      "variant": "portalAccessChange is null",
+      "kind": "command",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": ["WF-ATOMIC-01"],
+      "ordering": ["Authorize/validate", "Resolve optional Branch snapshot", "Commit Teacher profile replacement", "Satisfy Audit delivery", "Compose response"],
+      "failure": "Before commit rolls back; after commit but before acknowledgement is committed_unacknowledged",
+      "automaticRetry": false,
+      "compensation": "local_rollback_before_commit_only",
+      "auditRequired": true,
+      "routeAdmission": "target_write_blocked_audit_delivery",
+      "releaseGates": ["WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-04B",
+      "contractId": "WF-APP-04",
+      "variant": "portalAccessChange is non-null",
+      "kind": "command",
+      "businessAuthorities": ["workforce", "identity-access"],
+      "atomicUnitIds": [],
+      "ordering": ["Execute frozen legacy operation only"],
+      "failure": "Legacy shared transaction rolls back Teacher and Identity together; Audit remains outside",
+      "automaticRetry": false,
+      "compensation": "none_approved",
+      "auditRequired": true,
+      "routeAdmission": "legacy_hold_cross_context_atomicity",
+      "releaseGates": ["explicit future consistency revision with concurrency/idempotency semantics", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-05A",
+      "contractId": "WF-APP-05",
+      "variant": "Teacher has no portal access",
+      "kind": "command",
+      "businessAuthorities": ["academic-groups", "lesson-delivery", "workforce"],
+      "atomicUnitIds": [],
+      "ordering": ["Execute frozen legacy operation only"],
+      "failure": "Provider blocker snapshots cannot be made atomic with Teacher status without a reservation/version protocol",
+      "automaticRetry": false,
+      "compensation": "none_approved",
+      "auditRequired": true,
+      "routeAdmission": "legacy_hold_cross_context_precondition",
+      "releaseGates": ["explicit provider reservation/version or approved reconciliation invariant", "WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-05B",
+      "contractId": "WF-APP-05",
+      "variant": "Teacher has portal access",
+      "kind": "command",
+      "businessAuthorities": ["academic-groups", "lesson-delivery", "identity-access", "workforce"],
+      "atomicUnitIds": [],
+      "ordering": ["Execute frozen legacy operation only"],
+      "failure": "Both blocker TOCTOU and Workforce/Identity split-commit risk remain",
+      "automaticRetry": false,
+      "compensation": "none_approved",
+      "auditRequired": true,
+      "routeAdmission": "legacy_hold_cross_context_atomicity",
+      "releaseGates": ["explicit provider reservation/version and Identity consistency revision", "WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-06",
+      "contractId": "WF-APP-06",
+      "variant": "all",
+      "kind": "command",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": ["WF-ATOMIC-01"],
+      "ordering": ["Authorize/validate", "Commit active status", "Satisfy Audit delivery", "Compose response"],
+      "failure": "Before commit rolls back; after commit but before acknowledgement is committed_unacknowledged",
+      "automaticRetry": false,
+      "compensation": "local_rollback_before_commit_only",
+      "auditRequired": true,
+      "routeAdmission": "target_write_blocked_audit_delivery",
+      "releaseGates": ["WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-07",
+      "contractId": "WF-APP-07",
+      "variant": "all",
+      "kind": "command",
+      "businessAuthorities": ["identity-access"],
+      "atomicUnitIds": ["ID-ATOMIC-02"],
+      "ordering": ["Authorize/validate", "Read Teacher reference", "Atomically replace credential and invalidate all sessions", "Satisfy Audit delivery", "Acknowledge success"],
+      "failure": "Identity failure rolls back credential and sessions together; after Identity commit but before acknowledgement is committed_unacknowledged",
+      "automaticRetry": false,
+      "compensation": "local_identity_rollback_before_commit_only",
+      "auditRequired": true,
+      "routeAdmission": "target_write_blocked_audit_delivery",
+      "releaseGates": ["WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-08",
+      "contractId": "WF-APP-08",
+      "variant": "all",
+      "kind": "query",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": [],
+      "ordering": ["Authorize/scope", "Read Working Hours and Teacher names", "Sort/compose"],
+      "failure": "Owned read failure fails the query",
+      "automaticRetry": false,
+      "compensation": "none",
+      "auditRequired": false,
+      "routeAdmission": "target_read_admissible_now",
+      "releaseGates": ["WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-09",
+      "contractId": "WF-APP-09",
+      "variant": "all",
+      "kind": "command",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": ["WF-ATOMIC-02"],
+      "ordering": ["Authorize/validate Teacher", "Resolve Branch snapshot", "Generate ID/time", "Atomically recheck overlap and insert", "Satisfy Audit delivery", "Compose response"],
+      "failure": "Overlap/insertion failure rolls back; after commit but before acknowledgement is committed_unacknowledged",
+      "automaticRetry": false,
+      "compensation": "local_rollback_before_commit_only",
+      "auditRequired": true,
+      "routeAdmission": "target_write_blocked_audit_delivery",
+      "releaseGates": ["WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-10",
+      "contractId": "WF-APP-10",
+      "variant": "all",
+      "kind": "command",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": ["WF-ATOMIC-02"],
+      "ordering": ["Authorize/validate", "Atomically find and delete", "Satisfy Audit delivery", "Return frozen deleted projection"],
+      "failure": "Delete failure rolls back; after commit but before acknowledgement is committed_unacknowledged",
+      "automaticRetry": false,
+      "compensation": "local_rollback_before_commit_only",
+      "auditRequired": true,
+      "routeAdmission": "target_write_blocked_audit_delivery",
+      "releaseGates": ["WF-PRE-12", "WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    },
+    {
+      "variantId": "WF-CONS-REF-01",
+      "contractId": "WF-REF-01",
+      "variant": "all",
+      "kind": "query",
+      "businessAuthorities": ["workforce"],
+      "atomicUnitIds": [],
+      "ordering": ["Authorize service caller", "Read tenant-scoped Teacher reference"],
+      "failure": "Unknown/unavailable read fails the query",
+      "automaticRetry": false,
+      "compensation": "none",
+      "auditRequired": false,
+      "routeAdmission": "target_read_admissible_now",
+      "releaseGates": ["WF-PRE-13", "WF-PRE-14", "WF-PRE-16"]
+    }
+  ],
+  "routeAdmissionSummary": {
+    "targetReadAdmissibleVariants": ["WF-CONS-01", "WF-CONS-02", "WF-CONS-08", "WF-CONS-REF-01"],
+    "targetWriteAdmissibleVariants": [],
+    "auditBlockedSingleAuthorityVariants": ["WF-CONS-03A", "WF-CONS-04A", "WF-CONS-06", "WF-CONS-07", "WF-CONS-09", "WF-CONS-10"],
+    "legacyHoldVariants": ["WF-CONS-03B", "WF-CONS-04B", "WF-CONS-05A", "WF-CONS-05B"],
+    "authorizationEffect": "None. WF-PRE-11 is a design gate and does not authorize even read routing before WF-PRE-16."
+  },
+  "retryAndIdempotency": {
+    "externalKeyAccepted": false,
+    "correlationIdIsIdempotencyKey": false,
+    "automaticCommandRetry": false,
+    "queryRetry": "Only the future caller may retry a safe query within its own deadline; no retry is promised by the public contract.",
+    "knownFailureReplay": "A rolled_back/not_started command may be manually reissued as a new command after diagnosis.",
+    "unknownFailureReplay": "Forbidden until reconciliation proves the provider outcome.",
+    "stateSettingCommands": "Semantic convergence does not make transport replay safe; Audit and response duplication still require proof.",
+    "nonIdempotentCommands": ["WF-APP-03", "WF-APP-09"]
+  },
+  "reconciliationPolicy": {
+    "owner": "Operations with the authoritative provider owner",
+    "triggerStates": ["committed_unacknowledged", "unknown"],
+    "evidenceKey": ["tenantId", "contractId", "correlationId", "entityId when known", "provider timestamps"],
+    "allowedActions": [
+      "Read Workforce or provider state through approved public queries",
+      "Append a missing Audit intent only after authoritative state is proven",
+      "Classify the incident and choose an explicitly approved provider command"
+    ],
+    "forbiddenActions": [
+      "Direct foreign SQL repair",
+      "Blind replay of a command with unknown outcome",
+      "Fabricating success to the original request",
+      "Deleting or rewriting immutable Audit history",
+      "Cross-context rollback without a versioned compensation contract"
+    ],
+    "runbookGate": "WF-PRE-14 must provide exact commands, evidence capture, owners, thresholds, and escalation."
+  },
+  "consistencyRisks": [
+    {
+      "id": "WF-CONS-RISK-01",
+      "severity": "critical",
+      "issue": "Portal-enabled create/update and portal archive currently depend on a shared cross-context SQLite transaction.",
+      "treatment": "Keep variants on frozen legacy; no target compensation is invented."
+    },
+    {
+      "id": "WF-CONS-RISK-02",
+      "severity": "critical",
+      "issue": "Mandatory Audit cannot roll back a previously committed provider transaction.",
+      "treatment": "All target writes remain disabled until WF-PRE-12 decides delivery/acceptance and WF-PRE-13 tests failure states."
+    },
+    {
+      "id": "WF-CONS-RISK-03",
+      "severity": "high",
+      "issue": "Group/Lesson archive blocker snapshots can race a Teacher status change.",
+      "treatment": "All archive variants remain legacy hold until reservation/version or a governed reconciliation invariant exists."
+    },
+    {
+      "id": "WF-CONS-RISK-04",
+      "severity": "high",
+      "issue": "No external idempotency key or durable workflow receipt exists, so ambiguous command replay can duplicate or overwrite effects.",
+      "treatment": "No automatic retry; unknown outcomes require reconciliation."
+    },
+    {
+      "id": "WF-CONS-RISK-05",
+      "severity": "critical",
+      "issue": "Legacy password reset can commit the credential before session deletion fails.",
+      "treatment": "Target reset requires ID-ATOMIC-02; legacy remains until the Identity adapter contract proves atomicity."
+    }
+  ],
+  "guards": [
+    {
+      "id": "WF-CONS-GUARD-01",
+      "rule": "No target atomic unit may contain tables owned by more than one bounded context."
+    },
+    {
+      "id": "WF-CONS-GUARD-02",
+      "rule": "No target write route is enabled by WF-PRE-11."
+    },
+    {
+      "id": "WF-CONS-GUARD-03",
+      "rule": "A variant marked legacy_hold cannot call target mutation ports."
+    },
+    {
+      "id": "WF-CONS-GUARD-04",
+      "rule": "Unknown provider outcomes cannot be automatically retried or translated to success."
+    },
+    {
+      "id": "WF-CONS-GUARD-05",
+      "rule": "Credential reset cannot acknowledge success unless credential replacement and all-session invalidation are one Identity atomic unit."
+    },
+    {
+      "id": "WF-CONS-GUARD-06",
+      "rule": "Archive cannot route target while blocker TOCTOU has no approved close/reconciliation protocol."
+    },
+    {
+      "id": "WF-CONS-GUARD-07",
+      "rule": "No direct foreign SQL, cross-context Unit of Work, distributed transaction, workflow journal, outbox, or event is introduced by this decision."
+    }
+  ],
+  "temporaryTargetExceptions": [],
+  "deferredDecisions": {
+    "WF-PRE-12": "Audit delivery/acceptance and all other integration-event requirements; may supersede synchronous WF-SEAM-07 only with exact reliability semantics",
+    "WF-PRE-13": "Executable local/provider atomicity, timeout, rollback, unknown-outcome, tenant, blocker-race, Audit, and parity tests",
+    "WF-PRE-14": "Exact route variants, cohort, stop/rollback thresholds, incident reconciliation commands, evidence, and owners",
+    "WF-PRE-16": "Final migration authorization after every mandatory criterion passes"
+  },
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Academic Groups Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Delivery Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Audit & History Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Operations Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

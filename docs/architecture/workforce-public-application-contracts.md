@@ -109,7 +109,7 @@ Unexpected infrastructure outcomes are restricted to `WORKFORCE_UNAVAILABLE` and
 
 ## Authorization and Idempotency
 
-Queries are safe and replayable and accept no idempotency key. Commands accept no idempotency key and promise no automatic retry. Even state-setting commands are not advertised as safely retryable until WF-PRE-11 approves ordering, atomicity, compensation, retry, reconciliation, and stronger idempotency behavior.
+Queries are safe and replayable and accept no idempotency key. Commands accept no idempotency key and promise no automatic retry. WF-PRE-11 subsequently confirms that state-setting semantics do not make transport replay safe and unknown outcomes require reconciliation.
 
 Authorization failure occurs before provider mutation. Every query and mutation is explicitly tenant-scoped; a not-found result does not authorize a cross-tenant lookup.
 
@@ -155,7 +155,7 @@ Neither decision silently changes the current HTTP/runtime contract. A target ro
 This decision does not approve:
 
 - exact focused persistence/provider ports and adapter boundaries — subsequently approved by [WF-PRE-10](workforce-focused-ports.md);
-- cross-provider transaction, ordering, compensation, retry, reconciliation, or durable audit handoff — WF-PRE-11;
+- cross-provider transaction, ordering, compensation, retry, and reconciliation — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md); durable Audit delivery remains WF-PRE-12;
 - integration events — WF-PRE-12;
 - executable contract/parity/tenant/privacy/remediation tests — WF-PRE-13;
 - migration cohort, rollout, rollback, observation, or retirement — WF-PRE-14.
@@ -170,4 +170,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 **WF-PRE-09: PASSED**
 
-The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 subsequently approved the [focused ports](workforce-focused-ports.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-11.
+The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10/11 subsequently approved [focused ports](workforce-focused-ports.md) and [consistency](workforce-transaction-consistency.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-12.

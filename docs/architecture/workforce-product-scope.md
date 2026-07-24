@@ -73,7 +73,7 @@ The existing product surface may request these outcomes while operating on a Tea
 - keep portal access separately controlled when a Teacher is restored;
 - reset a configured Teacher portal password and invalidate existing sessions.
 
-Workforce owns only the request and business coordination from the Teacher workflow. Identity & Access owns users, credentials, password hashing, roles, branch-access grants, sessions, authentication, and the execution semantics of those operations. WF-PRE-07, WF-PRE-09, and WF-PRE-10 subsequently approved seam direction, public workflow contracts, and focused provider ports; WF-PRE-11 must still approve the consistency model before extraction.
+Workforce owns only the request and business coordination from the Teacher workflow. Identity & Access owns users, credentials, password hashing, roles, branch-access grants, sessions, authentication, and the execution semantics of those operations. WF-PRE-07 through WF-PRE-11 subsequently approved seam direction, public workflow contracts, focused provider ports, and consistency/route-admission behavior; event/Audit delivery remains WF-PRE-12.
 
 ### Role-sensitive access
 
@@ -234,4 +234,4 @@ Teacher profile/lifecycle, working hours, portal-access coordination, ten curren
 
 This result closes only WF-PRE-03. Workforce remains **NOT READY** for migration.
 
-Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23 through the approved [Workforce Module Definition](workforce-module-definition.md) and [Workforce Contract Freeze](workforce-contract-freeze.md); WF-PRE-06 through WF-PRE-10 passed on 2026-07-24 through the approved behavior, seam, table-access, public-Application, and [focused-port](workforce-focused-ports.md) decisions. The current next ordered prerequisite is WF-PRE-11.
+Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23; WF-PRE-06 through WF-PRE-11 passed on 2026-07-24 through the approved behavior, seam, table-access, public-Application, focused-port, and [consistency](workforce-transaction-consistency.md) decisions. The current next ordered prerequisite is WF-PRE-12.

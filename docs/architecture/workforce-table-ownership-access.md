@@ -158,11 +158,11 @@ These are exact current facts. They do not approve the same weaknesses for targe
 
 | Risk | Finding | Required treatment |
 |---|---|---|
-| WF-ACCESS-RISK-01 | Legacy transaction writes Workforce and Identity tables | WF-PRE-11 ordering/compensation/retry/reconciliation |
+| WF-ACCESS-RISK-01 | Legacy transaction writes Workforce and Identity tables | WF-PRE-11 keeps cross-context variants legacy-held; no target foreign write |
 | WF-ACCESS-RISK-02 | Broad `teachers()` projection couples mutations/reads to five foreign contexts | WF-SEAM-06 plus approved WF-PRE-09 Application DTOs and focused WF-PRE-10 reads |
 | WF-ACCESS-RISK-03 | Session deletes lack tenant predicate | Identity contract and WF-PRE-13 tenant/fan-out tests |
 | WF-ACCESS-RISK-04 | Working Hour Branch is unvalidated and has no FK | WF-PRE-09 target contract approved; WF-PRE-13 compatibility-remediation tests remain |
-| WF-ACCESS-RISK-05 | Audit writes foreign table after business persistence | WF-PRE-11/12 durable handoff/response decision |
+| WF-ACCESS-RISK-05 | Audit writes foreign table after business persistence | WF-PRE-11 outcome/retry semantics complete; WF-PRE-12 delivery decision remains |
 
 The risks block extraction where applicable; they do not change the ownership result.
 
@@ -211,4 +211,4 @@ This verifies decision completeness. It does not authorize target code, schema c
 
 Every direct and schema-only table dependency is exact, owner-approved, operation-mapped, deny-by-default, and assigned to either a focused Workforce port or a foreign provider contract. No foreign direct target access and no temporary exception are approved.
 
-WF-PRE-09 subsequently approved the [exact public Workforce Application contracts](workforce-public-application-contracts.md), and WF-PRE-10 approved [focused ports](workforce-focused-ports.md). The next ordered prerequisite is WF-PRE-11: approve the transaction/consistency model.
+WF-PRE-09 through WF-PRE-11 subsequently approved public Application contracts, focused ports, and the [transaction/consistency model](workforce-transaction-consistency.md). The next ordered prerequisite is WF-PRE-12: decide event and Audit delivery requirements.

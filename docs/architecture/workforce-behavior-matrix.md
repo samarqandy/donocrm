@@ -129,7 +129,7 @@ The operation rows bind the following compatibility and safety invariants:
 - Working Hours stay same-Teacher/day non-overlapping; exact adjacency is allowed.
 - Working Hour delete preserves the frozen empty `teacherName` response quirk unless changed through contract governance.
 
-These are current-compatibility requirements. WF-PRE-11 still owns target transaction, compensation, retry, and idempotency decisions.
+These are current-compatibility requirements. WF-PRE-11 subsequently approved target transaction, compensation, retry, idempotency, unknown-outcome, and route-admission decisions.
 
 ## Security and Privacy Decision
 
@@ -165,7 +165,7 @@ This command validates the approved inventory, not missing test implementations.
 WF-PRE-06 does not itself resolve:
 
 - WF-PRE-07 bounded-context seams, subsequently approved in the [seam decision](workforce-bounded-context-seams.md);
-- WF-PRE-11 target transaction/consistency behavior;
+- WF-PRE-11 target transaction/consistency behavior — subsequently completed;
 - WF-PRE-13 fixtures, repository/port contracts, legacy-target parity, thresholds, rollback cases, or execution ownership;
 - WF-PRE-14 migration/canary/rollback procedure;
 - WF-PRE-16 final Module Readiness.
@@ -178,4 +178,4 @@ The full Testing Readiness section is still failed because 48 operation rows and
 
 Ten out of ten operations contain explicit success/failure/invariant rows, all 69 applicable operation rows have stable test IDs, every non-applicable category has a reason, tenant/role/privacy cases are explicit, and current evidence gaps are measurable rather than implied away.
 
-WF-PRE-07 subsequently approved the bounded-context seams, WF-PRE-08 approved [exact table access](workforce-table-ownership-access.md), WF-PRE-09 approved [public Application contracts](workforce-public-application-contracts.md), and WF-PRE-10 approved [focused ports](workforce-focused-ports.md). The next ordered prerequisite is WF-PRE-11: approve the transaction/consistency model.
+WF-PRE-07 through WF-PRE-11 subsequently approved seams, table access, public contracts, focused ports, and the [transaction/consistency model](workforce-transaction-consistency.md). The next ordered prerequisite is WF-PRE-12: decide event and Audit delivery requirements.
