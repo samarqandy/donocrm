@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-EXT-03",
+  "status": "passed",
+  "implementationId": "workforce-application-facade-2026-07-24.1",
+  "decisionDate": "2026-07-24",
+  "sourceFingerprints": {
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-consistency-model.json": "1a87f79c014f4dd12f8a664b02416207c4b3835aa06a40ac8fe724a6ebbd75cb",
+    "architecture/workforce-test-parity-plan.json": "e1d90943abdd0ba94fce59f4ae9db6b476b7eb47f7b0fd8ae54cf41b078520a6",
+    "src/modules/workforce/application/Result.js": "57272b6abbdc6b45ae8b716a3038bf21a107896cbc67676f52095640c5c5d0de",
+    "src/modules/workforce/application/WorkforceApplication.js": "5d27d37c5b9d7ab423e0a47cedc6e99291348d0af005fb7157c03e2ec2dc19dc",
+    "src/modules/workforce/application/context.js": "56e72948ef652a870af1d92869aafce47779c6655925686689b8cab695dc1c41",
+    "src/modules/workforce/application/ports.js": "6653baae26fe30da555eb6a95dcf7c51d52600a1d60dd8c46759f52c0e70d448",
+    "src/modules/workforce/domain/Teacher.js": "62bb813dadc3da3a147765dc3b2496fc6595d14ef341f856dfec1b0d6de49612",
+    "src/modules/workforce/domain/TeacherWorkingHour.js": "0b4b2d8b8fce28d2a27bcb8afc0713aa66501b40c56e1983ef7329208e2a55c8",
+    "src/modules/workforce/domain/WorkforceError.js": "414d367c1e87779f4dd8fbb8ccb42ab36533eaac39e8947b71c1194be4670d2e",
+    "src/modules/workforce/domain/ports.js": "19ebf42013589df92cb3700846259c9343d185def424838bdfc3aff0ef664909",
+    "tests/workforce/domain/teacher-working-hour.test.js": "9a87b17279d5c61017370d79098d6c93f858b3a00da62a9a0a1393275e01f9fb",
+    "tests/workforce/domain/teacher.test.js": "8abe38411b18deae479bd8b150190322bf8506df9ecbdfa365d5242c1f8223cc",
+    "tests/workforce/application/workforce-application.contract.test.js": "6a3b8fb699ba15f3e6eb282f11b5b86d3e720e7d1214c45ede1f98e83aa5de33",
+    "tests/workforce/contracts/system-ports.contract.test.js": "24a20c64ebb5e8687d784431dfa70a742f690069aeed2f9edd4eb9b64bb9502e",
+    "tests/workforce/helpers/applicationFixture.js": "0017b616d3a5616e9c29e932c77bb71702153a45f8b5a55c999146d992d766ba"
+  },
+  "implementation": {
+    "publicFacadeClass": "WorkforceApplication",
+    "publicFacadeFile": "src/modules/workforce/application/WorkforceApplication.js",
+    "surfacesImplemented": ["WorkforceCompatibilityApplicationV1", "TeacherReferenceApplicationV1"],
+    "publicContractIds": [
+      "WF-APP-01", "WF-APP-02", "WF-APP-03", "WF-APP-04", "WF-APP-05",
+      "WF-APP-06", "WF-APP-07", "WF-APP-08", "WF-APP-09", "WF-APP-10", "WF-REF-01"
+    ],
+    "focusedPortIds": [
+      "WF-PORT-OWN-01", "WF-PORT-OWN-02", "WF-PORT-OWN-03", "WF-PORT-OWN-04", "WF-PORT-OWN-05",
+      "WF-PORT-PROV-01", "WF-PORT-PROV-02", "WF-PORT-PROV-03", "WF-PORT-PROV-04",
+      "WF-PORT-PROV-05", "WF-PORT-PROV-06", "WF-PORT-PROV-07", "WF-PORT-PROV-08",
+      "WF-PORT-PROV-09", "WF-PORT-PROV-10", "WF-PORT-PROV-11",
+      "WF-PORT-SYS-01", "WF-PORT-SYS-02"
+    ],
+    "focusedPortMethodCount": 32,
+    "resultModel": "immutable typed Result with closed semantic and technical errors",
+    "constructorPolicy": "all 18 focused dependencies and 32 methods are checked before use",
+    "partialResultPolicy": "forbidden; incomplete keyed provider projection fails the whole result",
+    "secretPolicy": "passwords cross only credential/Identity command ports and never enter DTO or Audit intent",
+    "legacyDependencyCount": 0,
+    "directSqlCount": 0
+  },
+  "implementedSuites": [
+    {
+      "id": "WF-TEST-SUITE-01",
+      "command": "node --test tests/workforce/domain/*.test.js",
+      "caseCount": 6,
+      "passing": 6
+    },
+    {
+      "id": "WF-TEST-SUITE-02",
+      "command": "node --test tests/workforce/application/workforce-application.contract.test.js",
+      "caseCount": 12,
+      "passing": 12
+    },
+    {
+      "id": "WF-TEST-SUITE-05",
+      "command": "node --test tests/workforce/contracts/system-ports.contract.test.js",
+      "caseCount": 3,
+      "passing": 3
+    }
+  ],
+  "admission": {
+    "pre13TargetSuitesImplemented": 3,
+    "pre13TargetSuitesPassing": 3,
+    "pre13TargetSuitesRemainingBlocking": 7,
+    "publicApplicationImplementations": 1,
+    "publicApplicationInstances": 0,
+    "ownedAdaptersImplemented": 0,
+    "providerAdaptersImplemented": 0,
+    "httpAdaptersImplemented": 0,
+    "adapterBindings": 0,
+    "routeBindings": 0,
+    "shadowRoutesEnabled": 0,
+    "targetRoutesEnabled": 0,
+    "legacyAuthority": true,
+    "legacyHoldVariants": ["WF-CONS-03B", "WF-CONS-04B", "WF-CONS-05A", "WF-CONS-05B"],
+    "nextOrderedIncrement": "WF-EXT-04"
+  },
+  "baselineTransition": {
+    "previousConfigurationHash": "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba",
+    "currentConfigurationHash": "adde24e84a4f43b7e6771489e574b2ce3f647b558e823a9b70b944d55d1d5d91",
+    "approvedFingerprintCount": 68,
+    "newFingerprintCount": 0,
+    "activeExceptionCount": 0,
+    "legacyMetricChanges": 0
+  },
+  "temporaryExceptions": [],
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

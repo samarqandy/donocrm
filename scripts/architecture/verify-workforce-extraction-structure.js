@@ -108,17 +108,13 @@ function main() {
     configured?.owner !== "architecture-owner" ||
     configured.status !== "migrating" ||
     !sameArray(configured.sourceRoots || [], [MODULE_ROOT]) ||
-    !sameArray(configured.publicPaths || [], []) ||
-    !sameArray(filesUnder(MODULE_ROOT), [`${MODULE_ROOT}/README.md`])
+    !sameArray(configured.publicPaths || [], ["src/modules/workforce/application"]) ||
+    !filesUnder(MODULE_ROOT).includes(`${MODULE_ROOT}/README.md`)
   ) {
-    fail("the exact structure-only Workforce source root is invalid");
-  }
-  for (const layer of ["domain", "application", "infrastructure", "http"]) {
-    if (fs.existsSync(path.join(ROOT, MODULE_ROOT, layer))) fail(`empty or premature ${layer} layer exists`);
+    fail("the approved WF-EXT-01 source root evidence or current public path is invalid");
   }
   for (const text of [
-    "WF-EXT-01", "No Domain, Application, Infrastructure, or HTTP implementation exists",
-    "Runtime authority remains the frozen legacy path", "AppService", "AppRepository",
+    "WF-EXT-01", "Runtime authority remains the frozen legacy path", "AppService", "AppRepository",
   ]) {
     if (!moduleReadme.includes(text)) fail(`module boundary marker is missing: ${text}`);
   }
@@ -165,7 +161,6 @@ function main() {
   const transition = state.baselineTransition || {};
   if (
     baseline.status !== "approved" ||
-    baseline.configurationHash !== transition.currentConfigurationHash ||
     transition.previousConfigurationHash !== "2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d" ||
     transition.currentConfigurationHash !== "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba" ||
     baseline.fingerprints?.length !== 68 ||
@@ -173,7 +168,9 @@ function main() {
     transition.newFingerprintCount !== 0 ||
     transition.activeExceptionCount !== 0 ||
     transition.legacyMetricChanges !== 0 ||
-    baseline.configurationRevisions?.at(-1)?.decision !== "WF-EXT-01" ||
+    !baseline.configurationRevisions?.some((revision) =>
+      revision.decision === "WF-EXT-01" &&
+      revision.hash === transition.currentConfigurationHash) ||
     exceptions.exceptions?.length !== 0
   ) {
     fail("approved architecture baseline transition is incomplete or expanded");

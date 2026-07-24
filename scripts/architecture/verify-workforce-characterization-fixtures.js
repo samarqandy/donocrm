@@ -9,7 +9,7 @@ const { spawnSync } = require("node:child_process");
 
 const ROOT = path.resolve(__dirname, "../..");
 const MANIFEST_FILE = "architecture/workforce-characterization-fixtures.json";
-const STATE_FILE = "architecture/workforce-extraction-state.json";
+const STATE_FILE = "architecture/workforce-extraction-state-wf-ext-02.json";
 const TEST_PLAN_FILE = "architecture/workforce-test-parity-plan.json";
 const REGISTRATION_FILE = "src/bootstrap/workforceRegistration.js";
 const FIXTURE_FILE = "tests/workforce/fixtures/focused-contract-fixtures.js";
