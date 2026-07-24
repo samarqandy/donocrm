@@ -6,6 +6,17 @@ const { ROOT } = require("./lib");
 
 const commands = [
   ["architecture", "scripts/architecture/scan.js"],
+  ["workforce contract freeze", "scripts/architecture/verify-workforce-contract-freeze.js"],
+  ["workforce behavior matrix", "scripts/architecture/verify-workforce-behavior-matrix.js"],
+  ["workforce context seams", "scripts/architecture/verify-workforce-context-seams.js"],
+  ["workforce table access", "scripts/architecture/verify-workforce-table-access.js"],
+  ["workforce application contracts", "scripts/architecture/verify-workforce-application-contracts.js"],
+  ["workforce focused ports", "scripts/architecture/verify-workforce-focused-ports.js"],
+  ["workforce consistency model", "scripts/architecture/verify-workforce-consistency-model.js"],
+  ["workforce event requirements", "scripts/architecture/verify-workforce-event-requirements.js"],
+  ["workforce test parity plan", "scripts/architecture/verify-workforce-test-parity-plan.js"],
+  ["workforce migration runbook", "scripts/architecture/verify-workforce-migration-runbook.js"],
+  ["workforce module readiness", "scripts/architecture/verify-workforce-module-readiness.js"],
 ];
 
 let failures = 0;

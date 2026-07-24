@@ -51,7 +51,7 @@ The current legacy implementation gains accidental cross-context atomicity by wr
 - a distributed transaction, which is prohibited; or
 - a durable workflow/reservation/idempotency protocol, which does not exist and would require a separately approved contract and persistence model.
 
-WF-PRE-11 therefore does not pretend that a best-effort sequence is equivalent. Cross-context variants remain on the frozen legacy path. At this gate, single-authority variants had exact target local atomicity but remained disabled pending WF-PRE-12. WF-PRE-12 subsequently retained synchronous mandatory Audit acceptance, and WF-PRE-13 specified the required proof suites. Those variants now wait on passing suite implementation, WF-PRE-14, and WF-PRE-16, with no route enabled.
+WF-PRE-11 therefore does not pretend that a best-effort sequence is equivalent. Cross-context variants remain on the frozen legacy path. At this gate, single-authority variants had exact target local atomicity but remained disabled pending WF-PRE-12. WF-PRE-12 subsequently retained synchronous mandatory Audit acceptance, WF-PRE-13 specified the required proof suites, WF-PRE-14 approved the runbook, and WF-PRE-16 passed ordered extraction entry. Those variants still wait on passing suite and activation evidence, with no route enabled.
 
 ## Consistency Outcome States
 
@@ -100,7 +100,7 @@ The following are structurally target-admissible because they perform no mutatio
 - WF-APP-08 List Working Hours;
 - WF-REF-01 Get Teacher Reference.
 
-Provider failure fails the complete query. Partial directories/profiles are forbidden. WF-PRE-13 subsequently specifies exact query/provider-failure/no-partial tests; actual routing still requires their passing implementation, WF-PRE-14, and final WF-PRE-16 authorization.
+Provider failure fails the complete query. Partial directories/profiles are forbidden. WF-PRE-13 subsequently specifies exact query/provider-failure/no-partial tests; actual routing still requires their passing implementation and the WF-PRE-14 activation controls. WF-PRE-16 authorizes implementation only.
 
 ### Single-authority write variants at the PRE-11 gate
 
@@ -211,7 +211,7 @@ WF-PRE-12 subsequently keeps WF-SEAM-07 synchronous through `WorkforceAuditAppen
 After WF-PRE-12:
 
 - the six single-authority variants have their Audit-choice condition resolved;
-- they remain pending implementation/passage of their WF-PRE-13-named suites, WF-PRE-14, and WF-PRE-16;
+- they remain pending implementation/passage of their WF-PRE-13-named suites and WF-PRE-14 activation evidence;
 - target mutation routes enabled remain zero;
 - all four independent legacy holds remain unchanged.
 
@@ -256,7 +256,7 @@ Temporary target exceptions: zero.
 - Audit delivery and all other event decisions — subsequently completed by [WF-PRE-12](workforce-event-requirements.md).
 - Atomicity, timeout, rollback, unknown-outcome, tenant, blocker-race, Audit, and parity test specification — subsequently approved by [WF-PRE-13](workforce-test-parity-plan.md).
 - Route variants, cohort, stop/rollback thresholds, and reconciliation runbook — WF-PRE-14.
-- Final migration authorization — WF-PRE-16.
+- Ordered extraction entry — WF-PRE-16; route activation remains a separate increment gate.
 
 ## Approval
 
@@ -268,4 +268,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 Authority, atomicity, ordering, failure, retry, compensation, session invalidation, unknown-outcome, reconciliation, and route-admission behavior are exact for all 14 variants. At this decision point, zero target write routes were enabled, six waited for the Audit decision, and four remained explicit legacy holds. WF-PRE-12 subsequently resolved the Audit choice without enabling a route.
 
-Module Readiness remains Failed. WF-PRE-12 through WF-PRE-14 subsequently approved [integration-event/Audit delivery](workforce-event-requirements.md), [test/parity](workforce-test-parity-plan.md), and the [migration/rollback runbook](workforce-migration-runbook.md); the next ordered prerequisite is WF-PRE-16.
+WF-PRE-12 through WF-PRE-14 subsequently approved [integration-event/Audit delivery](workforce-event-requirements.md), [test/parity](workforce-test-parity-plan.md), and the [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) then passed ordered extraction entry; runtime routes remain disabled.

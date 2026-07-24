@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-16",
+  "status": "approved",
+  "decision": "passed",
+  "decisionDate": "2026-07-24",
+  "gate": "Workforce Module Readiness",
+  "authorizationScope": "ordered_extraction_implementation_only",
+  "sourceFingerprints": {
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712",
+    "architecture/workforce-behavior-matrix.json": "84b7206ae682fe417b7f2b2f6314591b46bc56768e4a6b8de54148982dbcfc2d",
+    "architecture/workforce-context-seams.json": "b4c6754e09a3cb4cda19522f2fe3d13270e5f9fdfb480259743f0e312a17d5ae",
+    "architecture/workforce-table-access-manifest.json": "b5ee0a38035c7f4b7a02b0724829e17b6e3d4044ee42c7d35a848bcb4fd5d298",
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-consistency-model.json": "1a87f79c014f4dd12f8a664b02416207c4b3835aa06a40ac8fe724a6ebbd75cb",
+    "architecture/workforce-event-requirements.json": "03395fc5325f9fe62d44fe7383cd284ef8957b575a82575ae8bcc0857b908804",
+    "architecture/workforce-test-parity-plan.json": "e1d90943abdd0ba94fce59f4ae9db6b476b7eb47f7b0fd8ae54cf41b078520a6",
+    "architecture/workforce-migration-runbook.json": "de9b0719cc3b5d24f867a2fb76020ea67a182f0df82fde5e56bfb161824c326c"
+  },
+  "criteriaAccounting": {
+    "total": 55,
+    "passed": 54,
+    "approvedNotApplicableAtEntry": 1,
+    "failed": 0,
+    "unchecked": 0,
+    "sections": {
+      "governanceAndOwnership": {"total": 5, "passed": 5, "notApplicable": 0},
+      "legacyFreeze": {"total": 6, "passed": 6, "notApplicable": 0},
+      "moduleDefinition": {"total": 5, "passed": 5, "notApplicable": 0},
+      "portsContractsDependencies": {"total": 7, "passed": 7, "notApplicable": 0},
+      "dataAndTransactions": {"total": 5, "passed": 5, "notApplicable": 0},
+      "apiCompatibility": {"total": 4, "passed": 4, "notApplicable": 0},
+      "testingReadiness": {"total": 7, "passed": 7, "notApplicable": 0},
+      "architectureEnforcement": {"total": 5, "passed": 5, "notApplicable": 0},
+      "migrationAndRollback": {"total": 6, "passed": 5, "notApplicable": 1},
+      "finalApproval": {"total": 5, "passed": 5, "notApplicable": 0}
+    }
+  },
+  "approvedNotApplicable": [
+    {
+      "criterionId": "WF-EXIT-MR-05",
+      "criterion": "Rollback steps and responsible operator are verified in a production-like environment before canary",
+      "reason": "No Workforce target implementation, selector, operator command, or target route exists at migration-entry. A rehearsal cannot execute truthfully before WF-EXT implementation creates those assets.",
+      "entryTreatment": "Not applicable to permission to start ordered extraction implementation.",
+      "activationTreatment": "Mandatory fail-closed condition before WF-COHORT-00 completion and before any shadow, canary, target route, or authority transfer.",
+      "approvers": ["Architecture Owner", "Workforce Module Owner", "Operations Owner", "Data Owner", "Security Owner", "Quality Owner"]
+    }
+  ],
+  "evidenceDisposition": {
+    "legacyFreeze": {
+      "status": "passed",
+      "baselineCommit": "3bc3097e2903b4cc917807f9b799ca7628f54617",
+      "approvedFingerprints": 68,
+      "activeExceptions": 0,
+      "requiredCommand": "npm run architecture:enforce",
+      "expected": "68 approved baseline findings, zero unbaselined findings, zero candidate findings, zero exceptions"
+    },
+    "contractCompatibility": {
+      "status": "passed",
+      "operations": 10,
+      "breakingChanges": 0,
+      "requiredCommand": "npm run architecture:workforce-contract",
+      "basis": "The verifier binds the ten-operation baseline to exact source fingerprints and fails any unapproved transport/DTO/error/auth/privacy drift."
+    },
+    "workforceChecks": {
+      "status": "passed",
+      "decisionVerifiers": 11,
+      "requiredCommand": "npm run architecture:workforce",
+      "ciRequiredCheck": "architecture-enforce-blocking"
+    },
+    "pullRequestChecklist": {
+      "status": "passed",
+      "template": ".github/pull_request_template.md",
+      "canonicalChecklist": "docs/architecture/architecture-checklist.md",
+      "rule": "Every architecture-relevant migration PR must link the checklist, affected gate/increment, verifier output, exceptions, and approvals."
+    }
+  },
+  "authorization": {
+    "orderedExtractionImplementationMayBegin": true,
+    "firstAuthorizedItem": "WF-EXT-01",
+    "authorizedBacklog": ["WF-EXT-01", "WF-EXT-02", "WF-EXT-03", "WF-EXT-04", "WF-EXT-05", "WF-EXT-06", "WF-EXT-07", "WF-EXT-08", "WF-EXT-09", "WF-EXT-10", "WF-EXT-11", "WF-EXT-12"],
+    "orderingRule": "Start with WF-EXT-01 and advance one bounded increment at a time only after that increment's approved evidence and activation prerequisites pass.",
+    "sourceCreationAllowed": true,
+    "targetTestAndAdapterImplementationAllowed": true,
+    "schemaChangeAllowed": false,
+    "productionCohortBindingAllowedByThisGate": false,
+    "shadowRouteActivationAllowedByThisGate": false,
+    "targetRouteActivationAllowedByThisGate": false,
+    "authorityTransferAllowedByThisGate": false,
+    "legacyRemovalAllowedByThisGate": false
+  },
+  "activationBlockers": [
+    {
+      "id": "WF-ACT-01",
+      "condition": "All increment-required PRE-13 suites exist and pass at the candidate commit",
+      "current": "0/10 planned target suite commands implemented and 0/10 passing",
+      "blocks": ["shadow", "canary", "target route", "authority transfer"]
+    },
+    {
+      "id": "WF-ACT-02",
+      "condition": "All PRE-14 operator commands required by the increment exist and pass preflight/dry-run",
+      "current": "0/8 operator commands implemented",
+      "blocks": ["shadow", "canary", "target route", "authority transfer"]
+    },
+    {
+      "id": "WF-ACT-03",
+      "condition": "WF-COHORT-00 production-like synthetic rollback rehearsal passes for the increment",
+      "current": "0 rollback rehearsals executed",
+      "blocks": ["production canary", "target route", "authority transfer"]
+    },
+    {
+      "id": "WF-ACT-04",
+      "condition": "A separate approved production change record binds exact tenant/contract/variant/actor tuples",
+      "current": "0 production tenants, 0 target routes, 0 authority transfers",
+      "blocks": ["production canary", "target route", "authority transfer"]
+    }
+  ],
+  "invariants": [
+    "The frozen legacy path remains the default and sole runtime authority after WF-PRE-16.",
+    "The four PRE-11 legacy-hold variants remain ineligible for target selection.",
+    "No synchronous dual write, executing command shadow, or same-request post-dispatch fallback is authorized.",
+    "First extraction uses only the existing Workforce-owned SQLite tables and introduces no schema, second store, backfill, or relay.",
+    "A missing, invalid, stale, expired, or ambiguous selector always chooses legacy.",
+    "WF-PRE-16 authorizes implementation work, not rollout, canary, cutover, retirement, or production change."
+  ],
+  "currentRuntimeState": {
+    "plannedTargetSuitesImplemented": 0,
+    "plannedTargetSuitesPassing": 0,
+    "operatorCommandsImplemented": 0,
+    "rollbackRehearsalsExecuted": 0,
+    "productionCohortTenantIds": [],
+    "shadowRoutesEnabled": 0,
+    "targetRoutesEnabled": 0,
+    "authorityTransfersExecuted": 0,
+    "legacyHoldVariants": ["WF-CONS-03B", "WF-CONS-04B", "WF-CONS-05A", "WF-CONS-05B"]
+  },
+  "temporaryExceptions": [],
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Product Authority", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Organization & Branches Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Audit & History Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Operations Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "passed", "date": "2026-07-24"}
+  ]
+}

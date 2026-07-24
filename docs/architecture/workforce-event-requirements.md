@@ -159,7 +159,7 @@ WF-PRE-12 resolves the Audit-choice placeholder for these six single-authority v
 - `WF-CONS-09` — Create Working Hour;
 - `WF-CONS-10` — Delete Working Hour.
 
-Their disposition advances from “waiting for Audit delivery decision” to `target_write_pending_later_gates`. WF-PRE-13 subsequently specifies their required tests; they remain disabled until those suites pass and WF-PRE-14/WF-PRE-16 authorize routing.
+Their disposition advances from “waiting for Audit delivery decision” to `target_write_pending_later_gates`. WF-PRE-13 subsequently specifies their required tests; they remain disabled until those suites and WF-PRE-14 activation conditions pass. WF-PRE-16 authorizes implementation only.
 
 The following independent consistency blockers remain unchanged:
 
@@ -234,7 +234,7 @@ Temporary event exceptions: zero.
 
 - Executable synchronous-provider, Audit fault/ambiguity, tenant, and parity test specification — subsequently approved by [WF-PRE-13](workforce-test-parity-plan.md).
 - Route increments, Audit reconciliation, thresholds, fallback, observation, and rollback — WF-PRE-14.
-- Final Module Readiness and migration authorization — WF-PRE-16.
+- Final Module Readiness and ordered extraction implementation authorization — WF-PRE-16.
 - Any future consumer-driven event — a new governed event-contract decision.
 
 ## Approval
@@ -247,4 +247,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 All 19/19 dependencies have an exact synchronous/no-event disposition. There are zero published events, zero consumed events, zero approved event versions, synchronous mandatory Audit acceptance, zero temporary exceptions, and zero target mutation routes enabled.
 
-Module Readiness remains Failed. WF-PRE-13 and WF-PRE-14 subsequently approved the [test/parity plan](workforce-test-parity-plan.md) and [migration/rollback runbook](workforce-migration-runbook.md); the next ordered prerequisite is WF-PRE-16.
+WF-PRE-13 and WF-PRE-14 subsequently approved the [test/parity plan](workforce-test-parity-plan.md) and [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) then passed ordered extraction entry; Audit and route activation conditions remain fail-closed.

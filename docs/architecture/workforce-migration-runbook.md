@@ -267,7 +267,7 @@ WF-PRE-14 does not retire `AppService`, `AppRepository`, legacy routes, SQLite t
 | Target routes enabled | 0 |
 | Temporary exceptions | 0 |
 
-Module Readiness remains Failed until WF-PRE-16. Implementation and rehearsal are activation conditions, not facts inferred from this document.
+WF-PRE-16 subsequently passed Module Readiness for ordered extraction implementation. Implementation and rehearsal remain activation conditions, not facts inferred from this document.
 
 ## Approval
 
@@ -279,4 +279,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 The ordered route plan, cohort system, authority/fallback model, numeric thresholds, rollback/reconciliation procedure, evidence, observation, and retirement conditions are exact. Ten eligible variants have 10/10 route increments; four legacy-hold variants remain target-denied. The production cohort is empty, zero operator commands implemented, and zero target routes are enabled.
 
-The next ordered prerequisite is WF-PRE-16: execute the final Phase 1B Module Readiness decision.
+WF-PRE-16 subsequently passed; the next ordered implementation task is WF-EXT-01. This runbook still enables no route.

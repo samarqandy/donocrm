@@ -170,4 +170,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 **WF-PRE-09: PASSED**
 
-The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 through WF-PRE-14 subsequently approved ports, consistency, event/Audit, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-16.
+The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 through WF-PRE-14 subsequently approved ports, consistency, event/Audit, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) then authorized ordered extraction implementation; runtime activation remains blocked.
