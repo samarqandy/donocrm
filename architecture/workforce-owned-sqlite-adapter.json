@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-EXT-04",
+  "status": "passed",
+  "adapterEvidenceId": "workforce-owned-sqlite-2026-07-24.1",
+  "decisionDate": "2026-07-24",
+  "sourceFingerprints": {
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-table-access-manifest.json": "b5ee0a38035c7f4b7a02b0724829e17b6e3d4044ee42c7d35a848bcb4fd5d298",
+    "architecture/workforce-consistency-model.json": "1a87f79c014f4dd12f8a664b02416207c4b3835aa06a40ac8fe724a6ebbd75cb",
+    "architecture/workforce-test-parity-plan.json": "e1d90943abdd0ba94fce59f4ae9db6b476b7eb47f7b0fd8ae54cf41b078520a6",
+    "architecture/tables.yaml": "7ce65b3a99e736212f0c9a14e29e60bd0c11231bbbfc9ea2e3b45cd9c70f2e7b",
+    "src/db/schema.js": "87387d10b63df4d7a44c2671b3b859c7e8ba7455e931455147ed5e88f70575fa",
+    "src/modules/workforce/infrastructure/SQLiteTeacherRepository.js": "021e096ce88fb084cc70b55b0861d12326a002ea7708d65bd7bb90b326af2396",
+    "src/modules/workforce/infrastructure/SQLiteTeacherWorkingHourRepository.js": "59d3eda60215ce9099e8ad50ca0c687d96484ded748e43565c2c2770bdfd7911",
+    "src/modules/workforce/infrastructure/createSQLiteWorkforceAdapters.js": "28e5599744663d66672a4d72e471e49839d8665c9b84cde2caa526ec10fead36",
+    "src/modules/workforce/infrastructure/sqliteSupport.js": "79b3a332f240f3a607a9ecb0bff8993734626dac7c152a8c3123bd4abc39d33d",
+    "tests/workforce/contracts/owned-sqlite.contract.test.js": "78c43b29cbe4500b74275666a8570c5f283ce89b6c423264ccb1d2dbd4dc19de",
+    "tests/workforce/helpers/sqliteWorkingHourWorker.js": "ab51d1c200a07191dff56f5161bc692bc44ea1174c35107bb6f8d0fe4bf34fdb"
+  },
+  "adapter": {
+    "adapterId": "WF-ADAPTER-OWNED-SQLITE-01",
+    "factory": "createSQLiteWorkforceAdapters",
+    "implementationFiles": [
+      "src/modules/workforce/infrastructure/SQLiteTeacherRepository.js",
+      "src/modules/workforce/infrastructure/SQLiteTeacherWorkingHourRepository.js",
+      "src/modules/workforce/infrastructure/createSQLiteWorkforceAdapters.js",
+      "src/modules/workforce/infrastructure/sqliteSupport.js"
+    ],
+    "implementedPortIds": [
+      "WF-PORT-OWN-01",
+      "WF-PORT-OWN-02",
+      "WF-PORT-OWN-03",
+      "WF-PORT-OWN-04",
+      "WF-PORT-OWN-05"
+    ],
+    "implementedMethodCount": 12,
+    "directTableAllowlist": ["teachers", "teacher_working_hours"],
+    "directOperations": ["SELECT", "INSERT", "UPDATE", "DELETE"],
+    "databaseAcquisition": "injected SQLite handle only",
+    "schemaChanges": 0,
+    "migrationFilesAdded": 0,
+    "legacyDependencies": 0,
+    "foreignTableAccesses": 0,
+    "providerResponsibilities": 0,
+    "auditWrites": 0,
+    "identityWrites": 0,
+    "identifierGeneration": 0,
+    "timestampGeneration": 0
+  },
+  "contractSuite": {
+    "suiteId": "WF-TEST-SUITE-03",
+    "command": "node --test tests/workforce/contracts/owned-sqlite.contract.test.js",
+    "caseCount": 9,
+    "passing": 9,
+    "coverage": [
+      "all five owned ports and 12 methods",
+      "exact DTO and tenant scope",
+      "SQLite-compatible Teacher ordering",
+      "minimum Teacher reference",
+      "explicit-field profile/status mutation",
+      "owned conflict mapping and rollback",
+      "Working Hour overlap and adjacency",
+      "driver error classification",
+      "authorizer-enforced two-table access",
+      "unchanged production schema compatibility",
+      "barrier-controlled competing inserts with one winner"
+    ],
+    "determinism": {
+      "clock": "2026-07-24T06:00:00.000Z",
+      "database": "unique temporary SQLite per test fixture",
+      "concurrency": "two Worker connections released by SharedArrayBuffer/Atomics barrier",
+      "sleepCalls": 0,
+      "networkCalls": 0,
+      "cleanup": "all database handles close and process-owned temporary directories are removed"
+    }
+  },
+  "transactionPolicy": {
+    "teacherWrites": "single SQLite statements; native statement atomicity",
+    "workingHourInsert": "BEGIN IMMEDIATE, overlap recheck, insert, COMMIT",
+    "workingHourDelete": "BEGIN IMMEDIATE, tenant-scoped read/delete, COMMIT",
+    "failure": "ROLLBACK before mapping an owned constraint to OWNED_RECORD_CONFLICT",
+    "concurrency": "competing overlaps serialize; exactly one commit and one OWNED_RECORD_CONFLICT"
+  },
+  "admission": {
+    "pre13TargetSuitesImplemented": 4,
+    "pre13TargetSuitesPassing": 4,
+    "pre13TargetSuitesRemainingBlocking": 6,
+    "targetContractCasesPassing": 30,
+    "ownedAdapterImplementations": 1,
+    "providerAdapterImplementations": 0,
+    "publicApplicationInstances": 0,
+    "adapterBindings": 0,
+    "routeBindings": 0,
+    "shadowRoutesEnabled": 0,
+    "targetRoutesEnabled": 0,
+    "legacyAuthority": true,
+    "nextOrderedIncrement": "WF-EXT-05"
+  },
+  "baseline": {
+    "configurationHash": "adde24e84a4f43b7e6771489e574b2ce3f647b558e823a9b70b944d55d1d5d91",
+    "approvedFingerprintCount": 68,
+    "newFingerprintCount": 0,
+    "activeExceptionCount": 0,
+    "legacyMetricChanges": 0
+  },
+  "temporaryExceptions": [],
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}
