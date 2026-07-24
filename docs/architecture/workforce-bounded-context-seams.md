@@ -225,11 +225,11 @@ These risks do not invalidate the seam ownership decision. They block extraction
 
 ## Deferred Decisions
 
-WF-PRE-07 did not pre-empt the ordered decisions below; WF-PRE-08 and WF-PRE-09 have since passed:
+WF-PRE-07 did not pre-empt the ordered decisions below; WF-PRE-08 through WF-PRE-10 have since passed:
 
 - WF-PRE-08 exact table access and temporary compatibility exceptions — completed;
 - WF-PRE-09 exact public commands, queries, DTOs, errors, and Teacher-reference contract — completed;
-- WF-PRE-10 exact focused ports/adapters;
+- WF-PRE-10 exact focused ports/adapters — completed;
 - WF-PRE-11 transaction ordering, atomicity, compensation, retry, idempotency, and reconciliation;
 - WF-PRE-12 event need/version/delivery;
 - WF-PRE-13 contract/parity/tenant/failure tests;
@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-WF-PRE-08 subsequently approved the [exact Workforce table ownership/access manifest](workforce-table-ownership-access.md) with zero target exceptions, and WF-PRE-09 approved [exact public Application contracts](workforce-public-application-contracts.md). The next ordered prerequisite is WF-PRE-10: define focused ports.
+WF-PRE-08 subsequently approved the [exact Workforce table ownership/access manifest](workforce-table-ownership-access.md) with zero target exceptions, WF-PRE-09 approved [exact public Application contracts](workforce-public-application-contracts.md), and WF-PRE-10 approved [focused ports](workforce-focused-ports.md). The next ordered prerequisite is WF-PRE-11: approve the transaction/consistency model.

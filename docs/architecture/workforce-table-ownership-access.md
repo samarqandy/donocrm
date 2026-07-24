@@ -65,7 +65,7 @@ This matters because a mutation such as create/restore can read several foreign 
 | Legacy SQL | Allowed only on the frozen legacy path |
 | Temporary target exception | None approved |
 
-WF-PRE-09 subsequently fixes public Application contract signatures; focused owned/provider port signatures remain WF-PRE-10. This decision fixes authority and permitted access, not implementation names.
+WF-PRE-09 subsequently fixes public Application contract signatures and WF-PRE-10 fixes [focused owned/provider ports](workforce-focused-ports.md). This decision fixes authority and permitted access, not implementation names.
 
 ## Exact Table Inventory
 
@@ -211,4 +211,4 @@ This verifies decision completeness. It does not authorize target code, schema c
 
 Every direct and schema-only table dependency is exact, owner-approved, operation-mapped, deny-by-default, and assigned to either a focused Workforce port or a foreign provider contract. No foreign direct target access and no temporary exception are approved.
 
-WF-PRE-09 subsequently approved the [exact public Workforce Application contracts](workforce-public-application-contracts.md). The next ordered prerequisite is WF-PRE-10: define focused ports.
+WF-PRE-09 subsequently approved the [exact public Workforce Application contracts](workforce-public-application-contracts.md), and WF-PRE-10 approved [focused ports](workforce-focused-ports.md). The next ordered prerequisite is WF-PRE-11: approve the transaction/consistency model.

@@ -178,4 +178,4 @@ The full Testing Readiness section is still failed because 48 operation rows and
 
 Ten out of ten operations contain explicit success/failure/invariant rows, all 69 applicable operation rows have stable test IDs, every non-applicable category has a reason, tenant/role/privacy cases are explicit, and current evidence gaps are measurable rather than implied away.
 
-WF-PRE-07 subsequently approved the bounded-context seams, WF-PRE-08 approved [exact table access](workforce-table-ownership-access.md), and WF-PRE-09 approved [public Application contracts](workforce-public-application-contracts.md). The next ordered prerequisite is WF-PRE-10: define focused ports.
+WF-PRE-07 subsequently approved the bounded-context seams, WF-PRE-08 approved [exact table access](workforce-table-ownership-access.md), WF-PRE-09 approved [public Application contracts](workforce-public-application-contracts.md), and WF-PRE-10 approved [focused ports](workforce-focused-ports.md). The next ordered prerequisite is WF-PRE-11: approve the transaction/consistency model.

@@ -154,7 +154,7 @@ Neither decision silently changes the current HTTP/runtime contract. A target ro
 
 This decision does not approve:
 
-- exact focused persistence/provider ports or adapters — WF-PRE-10;
+- exact focused persistence/provider ports and adapter boundaries — subsequently approved by [WF-PRE-10](workforce-focused-ports.md);
 - cross-provider transaction, ordering, compensation, retry, reconciliation, or durable audit handoff — WF-PRE-11;
 - integration events — WF-PRE-12;
 - executable contract/parity/tenant/privacy/remediation tests — WF-PRE-13;
@@ -170,4 +170,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 **WF-PRE-09: PASSED**
 
-The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. Module Readiness remains Failed. The next ordered prerequisite is WF-PRE-10: define focused ports.
+The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 subsequently approved the [focused ports](workforce-focused-ports.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-11.
