@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "stateId": "workforce-extraction-2026-07-24.1",
   "status": "active",
-  "currentIncrement": "WF-EXT-03",
-  "completedIncrements": ["WF-EXT-01", "WF-EXT-02", "WF-EXT-03"],
-  "nextOrderedIncrement": "WF-EXT-04",
+  "currentIncrement": "WF-EXT-02",
+  "completedIncrements": ["WF-EXT-01", "WF-EXT-02"],
+  "nextOrderedIncrement": "WF-EXT-03",
   "decisionDate": "2026-07-24",
   "authorizationEvidence": {
     "decisionId": "WF-PRE-16",
@@ -16,31 +16,16 @@
     "manifest": "architecture/workforce-characterization-fixtures.json",
     "manifestSha256": "8df39a2fd086db79df248b8bd56cbedfd275e8eb958b97e8746300a2dc5ad2ed"
   },
-  "applicationFacadeEvidence": {
-    "decisionId": "WF-EXT-03",
-    "manifest": "architecture/workforce-application-facade-implementation.json",
-    "manifestSha256": "6d7d3ca9decfcccd47127788c683ef4674ae62fdd53ba44a465cc0d95999bb64"
-  },
   "moduleState": {
     "contextId": "workforce",
     "owner": "architecture-owner",
     "lifecycle": "migrating",
     "sourceRoot": "src/modules/workforce",
-    "trackedModuleFiles": [
-      "src/modules/workforce/README.md",
-      "src/modules/workforce/application/Result.js",
-      "src/modules/workforce/application/WorkforceApplication.js",
-      "src/modules/workforce/application/context.js",
-      "src/modules/workforce/application/ports.js",
-      "src/modules/workforce/domain/Teacher.js",
-      "src/modules/workforce/domain/TeacherWorkingHour.js",
-      "src/modules/workforce/domain/WorkforceError.js",
-      "src/modules/workforce/domain/ports.js"
-    ],
-    "implementedLayers": ["domain", "application"],
-    "publicApplicationImplemented": true,
-    "publicPaths": ["src/modules/workforce/application"],
-    "domainImplemented": true,
+    "trackedModuleFiles": ["src/modules/workforce/README.md"],
+    "implementedLayers": [],
+    "publicApplicationImplemented": false,
+    "publicPaths": [],
+    "domainImplemented": false,
     "infrastructureAdaptersImplemented": 0,
     "httpAdaptersImplemented": 0
   },
@@ -60,26 +45,20 @@
     "activation": "disabled"
   },
   "baselineTransition": {
-    "previousConfigurationHash": "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba",
-    "currentConfigurationHash": "adde24e84a4f43b7e6771489e574b2ce3f647b558e823a9b70b944d55d1d5d91",
+    "previousConfigurationHash": "2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d",
+    "currentConfigurationHash": "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba",
     "approvedFingerprintCount": 68,
     "newFingerprintCount": 0,
     "activeExceptionCount": 0,
     "legacyMetricChanges": 0,
-    "reason": "The approved Workforce Application public path is published after facade and focused-port implementation; no legacy code, ownership, or violation fingerprint changed."
+    "reason": "The Workforce context is now registered as migrating with an approved source root; no legacy code, ownership, or violation fingerprint changed."
   },
   "runtimeState": {
     "legacyAuthority": true,
     "legacyCharacterizationFixturesImplemented": 8,
     "legacyCharacterizationCasesPassing": 8,
-    "plannedTargetSuitesImplemented": 3,
-    "plannedTargetSuitesPassing": 3,
-    "targetContractCasesPassing": 21,
-    "publicApplicationImplementations": 1,
+    "plannedTargetSuitesImplemented": 0,
     "publicApplicationInstances": 0,
-    "publicContractsImplemented": 11,
-    "focusedPortsImplemented": 18,
-    "focusedPortMethodsImplemented": 32,
     "adapterBindings": 0,
     "routeBindings": 0,
     "shadowRoutesEnabled": 0,
@@ -89,12 +68,12 @@
     "schemaChanges": 0
   },
   "negativeAssertions": [
-    "Domain and Application contain only responsibilities required by the approved facade and focused contracts; Infrastructure and HTTP remain absent.",
-    "No target Workforce persistence/provider adapter, controller, route, SQL, schema, event, worker, or selector is implemented.",
+    "No empty Domain, Application, Infrastructure, or HTTP directory is created for architectural appearance.",
+    "No target Workforce business entity, use case, port, adapter, controller, route, SQL, schema, event, worker, or selector is implemented.",
     "The composition registration contains metadata only and cannot dispatch a request.",
     "No Workforce source imports legacy AppService, AppRepository, db/client, HTTP, provider, environment, or migration infrastructure.",
     "The frozen legacy path remains the sole authority for every Workforce tenant and operation.",
-    "WF-EXT-03 satisfies only PRE-13 suites 01, 02, and 05; seven target suites and all route activation conditions remain blocking."
+    "WF-EXT-02 characterization evidence does not satisfy any PRE-13 target suite or PRE-14 activation condition."
   ],
   "temporaryExceptions": [],
   "approvals": [

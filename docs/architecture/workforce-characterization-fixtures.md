@@ -9,8 +9,11 @@ Next ordered increment: WF-EXT-03
 Fixture manifest SHA-256:
 `8df39a2fd086db79df248b8bd56cbedfd275e8eb958b97e8746300a2dc5ad2ed`
 
-Live extraction state SHA-256:
+Immutable WF-EXT-02 extraction state SHA-256:
 `e89871dc7836bf9470a98928739c90a34197f733132fa827a30ea98f085a65f8`
+
+The hash refers to `architecture/workforce-extraction-state-wf-ext-02.json`.
+The live extraction pointer may advance without rewriting this gate.
 
 ## Decision
 
