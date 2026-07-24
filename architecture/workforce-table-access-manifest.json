@@ -1,0 +1,462 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-08",
+  "status": "approved",
+  "manifestId": "workforce-table-access-2026-07-24.1",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "5bcd2dd443b0ba429dfd04b711956945479e92b9",
+  "sourceFingerprints": {
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2",
+    "src/repositories/appRepository.js": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc",
+    "src/db/schema.js": "87387d10b63df4d7a44c2671b3b859c7e8ba7455e931455147ed5e88f70575fa",
+    "architecture/tables.yaml": "7ce65b3a99e736212f0c9a14e29e60bd0c11231bbbfc9ea2e3b45cd9c70f2e7b",
+    "architecture/workforce-context-seams.json": "b4c6754e09a3cb4cda19522f2fe3d13270e5f9fdfb480259743f0e312a17d5ae",
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712"
+  },
+  "scope": {
+    "entrypoints": [
+      "WF-HTTP-01",
+      "WF-HTTP-02",
+      "WF-HTTP-03",
+      "WF-HTTP-04",
+      "WF-HTTP-05",
+      "WF-HTTP-06",
+      "WF-HTTP-07",
+      "WF-HTTP-08",
+      "WF-HTTP-09",
+      "WF-HTTP-10"
+    ],
+    "closureRule": "Includes every SQL statement executed directly by the legacy AppService/AppRepository call closure for each frozen operation, including response projection, default lookup, blocker lookup, and post-success audit append.",
+    "verifiedContextBoundary": "The closure starts after the HTTP layer has established the verified actor/tenant/permission context. Identity/Platform SQL used to authenticate the request is an interface precondition, not Workforce capability access; Workforce-specific Identity projection/mutation access remains included.",
+    "directTableCount": 12,
+    "ownedDirectTableCount": 2,
+    "foreignDirectTableCount": 10,
+    "schemaOnlyDependencyCount": 2
+  },
+  "targetAccessPolicy": {
+    "defaultAccess": "deny",
+    "ownedDirectAccess": "Only a Workforce Infrastructure adapter implementing an approved focused port may directly read/write Workforce-owned tables after migration authorization.",
+    "foreignDirectAccess": "Forbidden from Workforce Domain, Application, Interface, Infrastructure, compatibility coordinator, and migration adapters.",
+    "foreignInteraction": "Use the WF-PRE-07 provider public contract family through the outer compatibility coordinator. Exact signatures remain WF-PRE-09/10.",
+    "schemaConstraints": "Existing cross-context foreign keys may remain for the first extraction because schema change is a non-goal; they grant no application read/write authority.",
+    "legacyAccess": "The exact current AppRepository SQL remains allowed only on the frozen legacy route. It is debt, not a target exception.",
+    "exceptions": "No temporary target table-access exception is approved."
+  },
+  "tables": [
+    {
+      "table": "teachers",
+      "owner": "workforce",
+      "classification": "owned_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read", "insert", "update"],
+      "currentOperations": ["WF-HTTP-01", "WF-HTTP-02", "WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-08", "WF-HTTP-09"],
+      "targetDirectAccess": "allow_owned_adapter",
+      "targetTreatment": {
+        "type": "focused_workforce_port",
+        "capability": "Teacher aggregate persistence and Workforce-owned base projection",
+        "seamIds": []
+      },
+      "tenantPredicate": "All current reads/writes in scope bind tenant_id; ID remains globally keyed but interpreted within tenant.",
+      "legacyEvidence": ["AppRepository.teachers:1946-1965", "AppRepository.teacherDetails:1972-1995", "AppRepository.create/update/archive/restoreTeacher:1998-2088", "AppRepository.teacherWorkingHours:4990-5003"]
+    },
+    {
+      "table": "teacher_working_hours",
+      "owner": "workforce",
+      "classification": "owned_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read", "insert", "delete"],
+      "currentOperations": ["WF-HTTP-02", "WF-HTTP-05", "WF-HTTP-08", "WF-HTTP-09", "WF-HTTP-10"],
+      "targetDirectAccess": "allow_owned_adapter",
+      "targetTreatment": {
+        "type": "focused_workforce_port",
+        "capability": "Teacher Working Hour persistence, list, overlap, and delete",
+        "seamIds": []
+      },
+      "tenantPredicate": "All current reads/inserts/deletes bind tenant_id; uniqueness covers tenant, Teacher, weekday, start, and end.",
+      "legacyEvidence": ["AppRepository.teacherWorkingHours/create/overlap/delete:4990-5037"]
+    },
+    {
+      "table": "users",
+      "owner": "identity-access",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read", "insert", "update"],
+      "currentOperations": ["WF-HTTP-01", "WF-HTTP-02", "WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-07", "WF-HTTP-09"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Identity portal-access lifecycle, credential reset, and Admin-only access projection",
+        "seamIds": ["WF-SEAM-01", "WF-SEAM-02", "WF-SEAM-06"]
+      },
+      "tenantPredicate": "Current scoped reads/writes bind tenant_id; username uniqueness is global in the existing schema.",
+      "legacyEvidence": ["AppRepository.teachers:1949-1961", "AppRepository.create/update/archive/resetTeacher:2010-2095"]
+    },
+    {
+      "table": "user_roles",
+      "owner": "identity-access",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["insert"],
+      "currentOperations": ["WF-HTTP-03", "WF-HTTP-04"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Identity Teacher-role provisioning",
+        "seamIds": ["WF-SEAM-01"]
+      },
+      "tenantPredicate": "Current inserts carry tenant_id; role_id is constructed from the tenant convention and enforced by an Identity-owned FK.",
+      "legacyEvidence": ["AppRepository.createTeacher:2012-2013", "AppRepository.updateTeacher:2047-2048"]
+    },
+    {
+      "table": "user_branch_access",
+      "owner": "identity-access",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["insert"],
+      "currentOperations": ["WF-HTTP-03", "WF-HTTP-04"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Identity Branch-access grant provisioning",
+        "seamIds": ["WF-SEAM-01"]
+      },
+      "tenantPredicate": "Current inserts carry tenant_id, user_id, and branch_id; disabling/moving access does not remove prior grants in this workflow.",
+      "legacyEvidence": ["AppRepository.createTeacher:2014-2016", "AppRepository.updateTeacher:2055-2057"]
+    },
+    {
+      "table": "sessions",
+      "owner": "identity-access",
+      "classification": "foreign_direct",
+      "tenantScoped": false,
+      "currentVerbs": ["delete"],
+      "currentOperations": ["WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-07"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Identity session invalidation",
+        "seamIds": ["WF-SEAM-01", "WF-SEAM-02"]
+      },
+      "tenantPredicate": "Current DELETE uses user_id only. Global User primary-key uniqueness is the isolation assumption; target caller must pass verified tenant/Teacher context to Identity.",
+      "legacyEvidence": ["AppRepository.updateTeacher:2053", "AppRepository.archiveTeacher:2077", "AppRepository.resetTeacherPassword:2095"]
+    },
+    {
+      "table": "branches",
+      "owner": "organization-branches",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read"],
+      "currentOperations": ["WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-09"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Branch reference validation and main/default resolution",
+        "seamIds": ["WF-SEAM-03"]
+      },
+      "tenantPredicate": "Current explicit Teacher Branch and main/default lookups bind tenant_id; explicit Working Hour branchId bypasses validation.",
+      "legacyEvidence": ["AppService.validateTeacherBranch:500-503", "AppRepository.branch/mainBranch:2150-2157", "AppRepository.createTeacherWorkingHour:5009"]
+    },
+    {
+      "table": "groups",
+      "owner": "academic-groups",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read"],
+      "currentOperations": ["WF-HTTP-01", "WF-HTTP-02", "WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-09"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Active Group archive blocker and Group profile/directory summary",
+        "seamIds": ["WF-SEAM-04", "WF-SEAM-06"]
+      },
+      "tenantPredicate": "All current subqueries/joins bind tenant_id on Group and joined rows.",
+      "legacyEvidence": ["AppRepository.teachers:1950-1958", "AppRepository.teacherDetails:1975-1991"]
+    },
+    {
+      "table": "students",
+      "owner": "student-information",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read"],
+      "currentOperations": ["WF-HTTP-01", "WF-HTTP-02", "WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-09"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Teacher-directory and Group-summary active Student count source facts",
+        "seamIds": ["WF-SEAM-06"]
+      },
+      "tenantPredicate": "Current count subqueries bind Student and Group tenant_id.",
+      "legacyEvidence": ["AppRepository.teachers:1951-1952", "AppRepository.teacherDetails:1978"]
+    },
+    {
+      "table": "schedules",
+      "owner": "scheduling",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read"],
+      "currentOperations": ["WF-HTTP-01", "WF-HTTP-02", "WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-09"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Teacher scheduled-workload projection",
+        "seamIds": ["WF-SEAM-06"]
+      },
+      "tenantPredicate": "Current recurring-schedule workload subquery binds tenant_id and teacher_id.",
+      "legacyEvidence": ["AppRepository.teachers:1953-1956"]
+    },
+    {
+      "table": "lessons",
+      "owner": "lesson-delivery",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["read"],
+      "currentOperations": ["WF-HTTP-01", "WF-HTTP-02", "WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-09"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Completed/upcoming Lesson projection and upcoming Lesson archive blocker",
+        "seamIds": ["WF-SEAM-05", "WF-SEAM-06"]
+      },
+      "tenantPredicate": "Current count/profile queries bind Lesson and joined Group/Teacher tenant_id.",
+      "legacyEvidence": ["AppRepository.teachers:1957-1958", "AppRepository.teacherDetails:1984-1993"]
+    },
+    {
+      "table": "audit_logs",
+      "owner": "audit-history",
+      "classification": "foreign_direct",
+      "tenantScoped": true,
+      "currentVerbs": ["insert"],
+      "currentOperations": ["WF-HTTP-03", "WF-HTTP-04", "WF-HTTP-05", "WF-HTTP-06", "WF-HTTP-07", "WF-HTTP-09", "WF-HTTP-10"],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_contract",
+        "capability": "Mandatory append of minimum Workforce audit intent",
+        "seamIds": ["WF-SEAM-07"]
+      },
+      "tenantPredicate": "Current insert carries verified context.tenantId and actor; it occurs after the business repository call.",
+      "legacyEvidence": ["AppService audit calls:535,547,565,577,590,797,808", "AppRepository.audit:5397-5408"]
+    },
+    {
+      "table": "tenants",
+      "owner": "platform-administration",
+      "classification": "schema_only",
+      "tenantScoped": false,
+      "currentVerbs": [],
+      "currentOperations": [],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "existing_schema_constraint",
+        "capability": "FK authority/cascade plus verified tenant context; no Workforce SQL access",
+        "seamIds": []
+      },
+      "tenantPredicate": "No direct table statement in the ten-operation closure; owned and foreign tables reference tenants through existing FKs.",
+      "legacyEvidence": ["schema.js teachers:42-56", "schema.js teacher_working_hours:535-545"]
+    },
+    {
+      "table": "roles",
+      "owner": "identity-access",
+      "classification": "schema_only",
+      "tenantScoped": true,
+      "currentVerbs": [],
+      "currentOperations": [],
+      "targetDirectAccess": "forbid",
+      "targetTreatment": {
+        "type": "provider_internal_constraint",
+        "capability": "Identity-owned FK target for user_roles; hidden behind portal provisioning",
+        "seamIds": ["WF-SEAM-01"]
+      },
+      "tenantPredicate": "No direct table statement in the ten-operation closure; current user_roles insert relies on the Identity-owned role FK/convention.",
+      "legacyEvidence": ["schema.js roles/user_roles:482-506", "AppRepository.create/updateTeacher role inserts:2012-2013,2047-2048"]
+    }
+  ],
+  "operationAccessMatrix": [
+    {
+      "operationId": "WF-HTTP-01",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read"] },
+        { "table": "users", "verbs": ["read"] },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-02",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read"] },
+        { "table": "teacher_working_hours", "verbs": ["read"] },
+        { "table": "users", "verbs": ["read"] },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-03",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read", "insert"] },
+        { "table": "users", "verbs": ["read", "insert"], "conditional": "Identity rows are inserted only when portal access is enabled; projection always reads users." },
+        { "table": "user_roles", "verbs": ["insert"], "conditional": "Portal access enabled." },
+        { "table": "user_branch_access", "verbs": ["insert"], "conditional": "Portal access enabled and a Branch resolves." },
+        { "table": "branches", "verbs": ["read"] },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-04",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read", "update"] },
+        { "table": "users", "verbs": ["read", "insert", "update"] },
+        { "table": "user_roles", "verbs": ["insert"], "conditional": "Access is enabled for a Teacher without User identity." },
+        { "table": "user_branch_access", "verbs": ["insert"], "conditional": "Access is enabled and a Branch resolves." },
+        { "table": "sessions", "verbs": ["delete"], "conditional": "Portal access is disabled." },
+        { "table": "branches", "verbs": ["read"] },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-05",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read", "update"] },
+        { "table": "teacher_working_hours", "verbs": ["read"] },
+        { "table": "users", "verbs": ["read", "update"] },
+        { "table": "sessions", "verbs": ["delete"] },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-06",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read", "update"] },
+        { "table": "users", "verbs": ["read"] },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-07",
+      "accesses": [
+        { "table": "users", "verbs": ["update"] },
+        { "table": "sessions", "verbs": ["delete"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-08",
+      "accesses": [
+        { "table": "teacher_working_hours", "verbs": ["read"] },
+        { "table": "teachers", "verbs": ["read"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-09",
+      "accesses": [
+        { "table": "teachers", "verbs": ["read"] },
+        { "table": "teacher_working_hours", "verbs": ["read", "insert"] },
+        { "table": "users", "verbs": ["read"] },
+        { "table": "branches", "verbs": ["read"], "conditional": "Only when branchId is omitted and main/default lookup executes." },
+        { "table": "groups", "verbs": ["read"] },
+        { "table": "students", "verbs": ["read"] },
+        { "table": "schedules", "verbs": ["read"] },
+        { "table": "lessons", "verbs": ["read"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    },
+    {
+      "operationId": "WF-HTTP-10",
+      "accesses": [
+        { "table": "teacher_working_hours", "verbs": ["read", "delete"] },
+        { "table": "audit_logs", "verbs": ["insert"] }
+      ]
+    }
+  ],
+  "reviewedExclusions": [
+    {
+      "table": "group_teacher_assignments",
+      "owner": "academic-groups",
+      "reason": "Conceptually related to Teacher assignment, but no SQL statement in the ten-operation closure reads or writes it."
+    },
+    {
+      "table": "teacher_rate_rules",
+      "owner": "lesson-finance-payroll",
+      "reason": "Consumes Teacher references elsewhere; no SQL statement in the ten-operation closure reads or writes it."
+    },
+    {
+      "table": "teacher_accruals",
+      "owner": "lesson-finance-payroll",
+      "reason": "Consumes Teacher references elsewhere; no SQL statement in the ten-operation closure reads or writes it."
+    },
+    {
+      "table": "platform_audit_logs",
+      "owner": "audit-history",
+      "reason": "Platform audit is separate; Workforce mutations append only tenant audit_logs."
+    }
+  ],
+  "temporaryExceptions": [],
+  "blockingRisks": [
+    {
+      "id": "WF-ACCESS-RISK-01",
+      "severity": "high",
+      "tables": ["teachers", "users", "user_roles", "user_branch_access", "sessions"],
+      "issue": "Legacy create/update/archive open transactions across Workforce- and Identity-owned tables.",
+      "treatment": "No target foreign write; WF-PRE-11 must approve provider ordering, compensation, retry, and reconciliation."
+    },
+    {
+      "id": "WF-ACCESS-RISK-02",
+      "severity": "high",
+      "tables": ["users", "groups", "students", "schedules", "lessons"],
+      "issue": "The broad teachers() projection makes read and mutation responses depend on five foreign contexts.",
+      "treatment": "WF-SEAM-06 outer composition plus exact WF-PRE-09/10 public reads; no broad Workforce query adapter."
+    },
+    {
+      "id": "WF-ACCESS-RISK-03",
+      "severity": "high",
+      "tables": ["sessions"],
+      "issue": "Current session deletes use user_id without a tenant predicate.",
+      "treatment": "Identity contract receives verified tenant and Teacher reference; tenant-isolation and fan-out invalidation tests are mandatory in WF-PRE-13."
+    },
+    {
+      "id": "WF-ACCESS-RISK-04",
+      "severity": "high",
+      "tables": ["branches", "teacher_working_hours"],
+      "issue": "Explicit Working Hour branchId is not validated and branch_id has no FK.",
+      "treatment": "WF-SEAM-RISK-01 remains blocking; exact compatibility/remediation is required in WF-PRE-09/13."
+    },
+    {
+      "id": "WF-ACCESS-RISK-05",
+      "severity": "high",
+      "tables": ["audit_logs"],
+      "issue": "Audit append is a foreign write after the business repository call.",
+      "treatment": "WF-SEAM-07 provider append; WF-PRE-11/12 decide durable handoff and response/reconciliation behavior."
+    }
+  ],
+  "approvals": [
+    { "role": "Architecture Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Workforce Module Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Data Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Identity & Access Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Organization & Branches Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Academic Groups Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Scheduling Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Lesson Delivery Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Student Information Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Audit & History Owner", "approver": "Sukhrob Khaydarov", "decision": "approved" },
+    { "role": "Security Owner", "approver": "Sukhrob Khaydarov", "decision": "approved with blocking risk treatments" }
+  ]
+}

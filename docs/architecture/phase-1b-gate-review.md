@@ -16,7 +16,7 @@ Phase 1B has established:
 - an ordered preparation/extraction/later backlog;
 - measurable migration entry criteria.
 
-Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline), WF-PRE-03 (approved Workforce product scope and explicit non-goals), WF-PRE-04 (complete Workforce module definition), WF-PRE-05 (ten-operation contract freeze), and WF-PRE-15 (blocking architecture no-growth CI). WF-PRE-06 completed the ten-operation behavior/test inventory and WF-PRE-07 approved seven bounded-context seams on 2026-07-24. These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
+Post-review closure on 2026-07-23 also completed WF-PRE-02 (approved Legacy Freeze baseline), WF-PRE-03 (approved Workforce product scope and explicit non-goals), WF-PRE-04 (complete Workforce module definition), WF-PRE-05 (ten-operation contract freeze), and WF-PRE-15 (blocking architecture no-growth CI). WF-PRE-06 completed the ten-operation behavior/test inventory, WF-PRE-07 approved seven bounded-context seams, and WF-PRE-08 approved exact table ownership/access on 2026-07-24. These closures reduce the preparation backlog but do not change the Workforce Module Readiness decision.
 
 No runtime behavior, API, schema, business logic, module, use case, or existing functionality was changed.
 
@@ -61,12 +61,12 @@ The register preserves every blocker from the original gate review and marks sub
 
 1. **Resolved 2026-07-22 by WF-PRE-01:** Architecture, Workforce, Product, Identity, Organization, Data, Operations, Quality, and Security authority is assigned to Sukhrob Khaydarov under Single-Founder Governance.
 2. **Resolved 2026-07-23 by WF-PRE-02:** the Legacy Freeze has an approved baseline commit, signed 68-fingerprint inventory, configuration hash, and empty active exception register.
-3. **Partially resolved 2026-07-23 by WF-PRE-04:** every mandatory module-definition section is complete and owner-approved. After the subsequent WF-PRE-06/07 closures, Module Readiness remains Failed until WF-PRE-08 through WF-PRE-14 and WF-PRE-16 pass.
+3. **Partially resolved 2026-07-23 by WF-PRE-04:** every mandatory module-definition section is complete and owner-approved. After the subsequent WF-PRE-06/07/08 closures, Module Readiness remains Failed until WF-PRE-09 through WF-PRE-14 and WF-PRE-16 pass.
 4. **Resolved 2026-07-23 by WF-PRE-03:** Product Authority approved Teacher profile/lifecycle, working hours, portal-access coordination, all ten current operations, compatibility commitments, and explicit first-extraction non-goals.
 5. **Partially resolved 2026-07-24 by WF-PRE-07:** Identity and Workforce authority, outer coordination, synchronous outcome, and forbidden writes are approved for provisioning, access disablement, password reset, and session invalidation; exact contracts and failure/compensation semantics remain WF-PRE-09/11 blockers.
-6. **Partially resolved 2026-07-24 by WF-PRE-07:** Branch, Group/Lesson blocker, and profile-composition ownership/direction/failure seams are approved; exact contracts/ports and the Working Hour Branch/privacy risk treatments remain WF-PRE-08/09/10/13 blockers.
+6. **Partially resolved 2026-07-24 by WF-PRE-07/08:** Branch, Group/Lesson blocker, and profile-composition ownership/direction/failure seams plus exact table-access treatment are approved; exact contracts/ports and the Working Hour Branch/privacy compatibility tests remain WF-PRE-09/10/13 blockers.
 7. Focused repository/application ports and public internal contracts are undefined.
-8. Table ownership is documented conceptually but no approved machine-readable access/exception manifest exists.
+8. **Resolved 2026-07-24 by WF-PRE-08:** all 12 directly accessed tables and two schema-only dependencies have exact owner, operation/verb, tenant, target-contract, legacy-transition, risk, and exception disposition in a verified machine-readable manifest.
 9. **Partially resolved 2026-07-24 by WF-PRE-06:** all ten operations and required behavior categories map to stable test IDs, but 48 operation rows and three cross-cutting cases still lack accepted automation; parity, adapter, full two-tenant, and rollback test plans remain unresolved under WF-PRE-13.
 10. **Resolved 2026-07-23 by WF-PRE-15:** structural no-growth enforcement is a required GitHub check, with Operations ownership and protected `main`.
 11. No Workforce migration/canary/authority/reconciliation/rollback runbook exists.
@@ -75,6 +75,6 @@ The register preserves every blocker from the original gate review and marks sub
 
 ## Required Next Decision
 
-WF-PRE-01 through WF-PRE-07 and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-08, approving the exact table ownership/access manifest. WF-PRE-08 through WF-PRE-14 and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
+WF-PRE-01 through WF-PRE-08 and WF-PRE-15 are complete. The next ordered preparation step is WF-PRE-09, defining exact public Workforce Application contracts. WF-PRE-09 through WF-PRE-14 and WF-PRE-16 remain incomplete in [migration-backlog.md](migration-backlog.md). The extraction items WF-EXT-01 onward remain unauthorized until a new gate report records that all [Phase 1B exit criteria](phase-1b-exit-criteria.md) passed.
 
 This gate does not authorize first-module migration.
