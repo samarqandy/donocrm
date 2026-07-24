@@ -41,7 +41,7 @@
     "platform-administration": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
     "identity-access": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
     "organization-branches": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
-    "workforce": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
+    "workforce": {"owner": "architecture-owner", "status": "migrating", "sourceRoots": ["src/modules/workforce"]},
     "academic-groups": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
     "scheduling": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},
     "lesson-delivery": {"owner": "architecture-owner", "status": "legacy", "sourceRoots": []},

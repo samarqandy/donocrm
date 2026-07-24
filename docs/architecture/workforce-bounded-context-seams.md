@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-WF-PRE-08 through WF-PRE-14 subsequently approved table access, public contracts, focused ports, consistency, event/Audit, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) then passed ordered extraction entry; WF-EXT-01 is next.
+WF-PRE-08 through WF-PRE-14 subsequently approved table access, public contracts, focused ports, consistency, event/Audit, test/parity, and the [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) passed ordered extraction entry, and [WF-EXT-01](workforce-extraction-entry.md) registered structure only. WF-EXT-02 is next.

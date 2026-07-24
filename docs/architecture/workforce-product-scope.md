@@ -234,4 +234,4 @@ Teacher profile/lifecycle, working hours, portal-access coordination, ten curren
 
 This result closes only WF-PRE-03. Workforce remains **NOT READY** for migration.
 
-Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23; WF-PRE-06 through WF-PRE-14 passed on 2026-07-24 through the ordered design/planning decisions ending with the [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) then passed ordered extraction entry; WF-EXT-01 is next.
+Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23; WF-PRE-06 through WF-PRE-14 passed on 2026-07-24 through the ordered design/planning decisions ending with the [migration/rollback runbook](workforce-migration-runbook.md). [WF-PRE-16](workforce-module-readiness-decision.md) passed ordered extraction entry, and [WF-EXT-01](workforce-extraction-entry.md) registered the structure/composition boundary. WF-EXT-02 is next.

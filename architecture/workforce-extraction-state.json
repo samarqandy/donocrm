@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "stateId": "workforce-extraction-2026-07-24.1",
+  "status": "active",
+  "currentIncrement": "WF-EXT-01",
+  "completedIncrements": ["WF-EXT-01"],
+  "nextOrderedIncrement": "WF-EXT-02",
+  "decisionDate": "2026-07-24",
+  "authorizationEvidence": {
+    "decisionId": "WF-PRE-16",
+    "manifest": "architecture/workforce-module-readiness-decision.json",
+    "manifestSha256": "e1bc2350ba9d441fb5a7ddf7f7e58ea2ee8f8af74cd29ed5f9a3dca2ae447c18"
+  },
+  "moduleState": {
+    "contextId": "workforce",
+    "owner": "architecture-owner",
+    "lifecycle": "migrating",
+    "sourceRoot": "src/modules/workforce",
+    "trackedModuleFiles": ["src/modules/workforce/README.md"],
+    "implementedLayers": [],
+    "publicApplicationImplemented": false,
+    "publicPaths": [],
+    "domainImplemented": false,
+    "infrastructureAdaptersImplemented": 0,
+    "httpAdaptersImplemented": 0
+  },
+  "compositionRegistration": {
+    "file": "src/bootstrap/workforceRegistration.js",
+    "compositionRoot": "src/bootstrap/stranglerContainer.js",
+    "export": "workforceRegistration",
+    "registryExport": "moduleRegistrations",
+    "moduleId": "workforce",
+    "incrementId": "WF-EXT-01",
+    "lifecycle": "structure_only",
+    "sourceRoot": "src/modules/workforce",
+    "publicApplication": null,
+    "adapterBindings": [],
+    "routeBindings": [],
+    "defaultAuthority": "legacy",
+    "activation": "disabled"
+  },
+  "baselineTransition": {
+    "previousConfigurationHash": "2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d",
+    "currentConfigurationHash": "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba",
+    "approvedFingerprintCount": 68,
+    "newFingerprintCount": 0,
+    "activeExceptionCount": 0,
+    "legacyMetricChanges": 0,
+    "reason": "The Workforce context is now registered as migrating with an approved source root; no legacy code, ownership, or violation fingerprint changed."
+  },
+  "runtimeState": {
+    "legacyAuthority": true,
+    "plannedTargetSuitesImplemented": 0,
+    "publicApplicationInstances": 0,
+    "adapterBindings": 0,
+    "routeBindings": 0,
+    "shadowRoutesEnabled": 0,
+    "targetRoutesEnabled": 0,
+    "productionCohortTenantIds": [],
+    "authorityTransfersExecuted": 0,
+    "schemaChanges": 0
+  },
+  "negativeAssertions": [
+    "No empty Domain, Application, Infrastructure, or HTTP directory is created for architectural appearance.",
+    "No Workforce business entity, use case, port, adapter, controller, route, SQL, schema, event, worker, or selector is implemented.",
+    "The composition registration contains metadata only and cannot dispatch a request.",
+    "No Workforce source imports legacy AppService, AppRepository, db/client, HTTP, provider, environment, or migration infrastructure.",
+    "The frozen legacy path remains the sole authority for every Workforce tenant and operation.",
+    "WF-EXT-01 does not satisfy any PRE-13 target suite or PRE-14 activation condition."
+  ],
+  "temporaryExceptions": [],
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Operations Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

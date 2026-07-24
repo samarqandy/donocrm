@@ -76,10 +76,16 @@ This manifest is the human-readable source for the future machine-readable no-gr
 | Semantic fingerprint artifact | 68 approved fingerprints in `architecture/baseline.json`; remote run `30027584361` |
 | Architecture Owner approval | `architecture-owner`, 2026-07-23 |
 | Module/Data/Security review | Attendance/Data/Security authority recorded under Single-Founder Governance |
-| CI configuration hash | `2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d` |
+| CI configuration hash | `7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba` |
 | Effective blocking date | 2026-07-23; required check `architecture-enforce-blocking` |
 
 The manifest is the authoritative automated no-growth comparison. Approved fingerprints remain visible debt; any unbaselined fingerprint fails the required check.
+
+WF-EXT-01 revised the executable configuration hash on 2026-07-24 because
+Workforce moved from an unregistered legacy context to an approved `migrating`
+source root. The original hash remains recorded in `architecture/baseline.json`;
+all 68 fingerprints, legacy metrics, ownership records, and the empty exception
+register are unchanged.
 
 ## State Transition Rules
 

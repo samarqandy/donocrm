@@ -25,7 +25,7 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
 | WF-PRE-16 | Completed | 2026-07-24 | [Passed Workforce Module Readiness decision](workforce-module-readiness-decision.md): 55/55 criteria disposed, ordered extraction implementation authorized, runtime activation fail-closed |
 
-WF-PRE-16 passed on 2026-07-24. Ordered extraction implementation is authorized beginning with WF-EXT-01; runtime activation remains blocked by WF-ACT-01 through WF-ACT-04.
+WF-PRE-16 passed on 2026-07-24 and WF-EXT-01 subsequently registered the structure/composition boundary. WF-EXT-02 is next; runtime activation remains blocked by WF-ACT-01 through WF-ACT-04.
 
 ## Ordering Rules
 
@@ -59,11 +59,11 @@ WF-PRE-16 passed on 2026-07-24. Ordered extraction implementation is authorized 
 
 ## Can Migrate During Extraction
 
-These are the authorized migration implementation items. They must proceed in order, beginning with WF-EXT-01. Completion of preparation does not bypass an increment's test, review, route, cohort, or activation conditions.
+These are the authorized migration implementation items. They proceed in order; WF-EXT-01 is complete and WF-EXT-02 is next. Completion of an item does not bypass a later increment's test, review, route, cohort, or activation conditions.
 
 | Order | ID | Backlog item | Required constraint |
 |---:|---|---|---|
-| 1 | WF-EXT-01 | Establish the approved module directory and composition registration | Structure only as required by approved definition; no broad empty architecture |
+| 1 | WF-EXT-01 | **Completed 2026-07-24 — Establish approved module directory and composition registration** | [Exact structure-only registration](workforce-extraction-entry.md); no empty layers, public Application, adapter, route, schema, or authority transfer |
 | 2 | WF-EXT-02 | Add characterization fixtures for focused contracts | Must reproduce legacy behavior before target routing |
 | 3 | WF-EXT-03 | Introduce one public Application facade and focused ports | No dependency on legacy service/repository from module inner layers |
 | 4 | WF-EXT-04 | Introduce a compatibility SQLite adapter | No schema change; only approved owned tables and explicit compatibility access |
