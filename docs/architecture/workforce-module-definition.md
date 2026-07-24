@@ -72,7 +72,7 @@ The capability exists in the current Teacher HTTP routes, `AppService` Teacher/w
 - **Upstream contexts:** Platform Administration & Tenancy for tenant context; Identity & Access for portal outcomes; Organization & Branches for Branch validity/default; Academic Groups and Lesson Delivery for archive blockers/profile facts; Scheduling and Student Information for workload/count projections; Audit & History for audit recording.
 - **Downstream contexts:** Academic Groups, Scheduling, Lesson Delivery, Attendance, Lesson Finance & Payroll, and Reporting consume Teacher references or approved projections.
 - **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at provider boundaries; published language for future Teacher reference/status contracts; an outer compatibility Application coordinator for cross-context lifecycle/profile composition.
-- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) now fixes context authority, dependency direction, synchronous first-extraction mode, failure boundaries, and the acyclic outer-coordinator placement. Exact table access, contract signatures, focused ports, consistency/compensation, events, tests, and migration routing remain WF-PRE-08 through WF-PRE-14.
+- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) fixes context authority/direction and [WF-PRE-08](workforce-table-ownership-access.md) fixes exact table access/transition. Contract signatures, focused ports, consistency/compensation, events, tests, and migration routing remain WF-PRE-09 through WF-PRE-14.
 
 No target code module currently exists. The bounded context is implemented across legacy technical layers and cross-context SQL. The future directory will implement this bounded context; the directory itself will not define or expand it.
 
@@ -217,6 +217,8 @@ Current legacy cross-table behavior is classified debt, not a new-module excepti
 
 ## Database Ownership
 
+WF-PRE-08 authoritative access evidence: [human decision](workforce-table-ownership-access.md) and [machine manifest](../../architecture/workforce-table-access-manifest.json). It binds all ten operation closures to 12 direct tables, two schema-only dependencies, exact verbs/owners, provider-contract treatment, and zero temporary target exceptions. The summary below remains the module-definition view.
+
 | Table/view/stream | Ownership | Authoritative store | Tenant key | Aggregate/projection | Writers | Readers |
 |---|---|---|---|---|---|---|
 | `teachers` | Owned | SQLite | `tenant_id` | Teacher aggregate persistence | Current legacy `AppRepository`; future Workforce adapter only after authorization | Workforce contracts; current legacy consumers during migration |
@@ -290,7 +292,7 @@ Current objective commands are `npm run test:backend` and `npm run architecture:
 | Canary scope | None |
 | Rollback trigger and path | Not approved; legacy remains sole active path |
 | Legacy removal criterion | Approved cutover, observation, zero-use, reconciliation, rollback-window closure, and Legacy Retirement Gate |
-| Blocking decisions | WF-PRE-08 through WF-PRE-14 and final WF-PRE-16 |
+| Blocking decisions | WF-PRE-09 through WF-PRE-14 and final WF-PRE-16 |
 
 Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not authorized by this definition.
 
@@ -301,7 +303,7 @@ Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not author
 | Freeze ten HTTP/DTO/error/auth contracts | Current behavior and OpenAPI gaps are bound to an approved baseline | [WF-PRE-05](workforce-contract-freeze.md) | Product/Quality | Completed |
 | Approve behavior/test matrix | Approved 81-row inventory; automation gaps remain assigned to WF-PRE-13 | [WF-PRE-06](workforce-behavior-matrix.md) | Quality/Module Owner | Completed |
 | Decide cross-context seams | Seven seams and outer acyclic coordination approved | [WF-PRE-07](workforce-bounded-context-seams.md) | Architecture/affected owners | Completed |
-| Approve access manifest | Conceptual ownership is not machine-enforced | WF-PRE-08 | Data/Architecture | Open |
+| Approve access manifest | Exact operation/table/verb/owner/transition manifest; zero target exceptions | [WF-PRE-08](workforce-table-ownership-access.md) | Data/Architecture | Completed |
 | Approve public Application contracts | No Workforce facade/reference contract exists | WF-PRE-09 | Module Owner/consumers | Open |
 | Approve focused ports | Current `AppRepository` is broad | WF-PRE-10 | Architecture/Module Owner | Open |
 | Approve consistency model | Teacher/Identity operations span authority | WF-PRE-11 | Architecture/Data/Security | Open |
@@ -317,7 +319,7 @@ Future work is preparation, not a feature or extraction commitment.
 | Gate | Decision | Approver | Date | Evidence/actions |
 |---|---|---|---|---|
 | Module Definition Completeness | Passed | Sukhrob Khaydarov, Architecture Owner and Workforce Module Owner | 2026-07-23 | Every mandatory template section is present; current/target/open states and owners are explicit |
-| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-08 through WF-PRE-14 and WF-PRE-16 remain blocking |
+| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-09 through WF-PRE-14 and WF-PRE-16 remain blocking |
 | Migration Cutover | Pending | Architecture, Data, Operations, Security, and Module Owner roles | 2026-07-23 | No target path, parity, cohort, thresholds, or rollback drill |
 | Legacy Retirement | Pending | Architecture, Data, and Module Owner roles | 2026-07-23 | No migration or zero-use/observation evidence |
 
@@ -325,4 +327,4 @@ Future work is preparation, not a feature or extraction commitment.
 
 **WF-PRE-04: PASSED — module definition completeness only.**
 
-The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 subsequently froze the current transport contract, WF-PRE-06 approved the behavior/test inventory, and WF-PRE-07 approved bounded-context seams. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-08.
+The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 subsequently froze the current transport contract, WF-PRE-06 approved the behavior/test inventory, WF-PRE-07 approved bounded-context seams, and WF-PRE-08 approved exact table access. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-09.

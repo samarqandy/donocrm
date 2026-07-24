@@ -56,7 +56,7 @@ Candidate: Workforce
 ## Data and Transactions
 
 - [x] `teachers` and `teacher_working_hours` are approved as Workforce-owned authoritative data.
-- [ ] Every current foreign table read/write has a documented target owner and transition treatment.
+- [x] The approved [WF-PRE-08 access manifest](workforce-table-ownership-access.md) assigns every current foreign read/write an exact owner, operation/verb closure, provider-contract treatment, legacy transition, and zero unexplained target exceptions.
 - [ ] Teacher/Identity create, update, access-disable, archive, password-reset, and session-invalidation consistency is approved.
 - [ ] Current and target authority is explicit for every tenant and operation.
 - [x] Database schema and authority changes are explicit first-extraction non-goals.

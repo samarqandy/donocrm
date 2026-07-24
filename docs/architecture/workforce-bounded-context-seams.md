@@ -131,7 +131,7 @@ Organization & Branches is the sole authority for:
 
 Workforce persists only the resolved `BranchId` reference. It must not query `branches`, infer the main Branch, or treat Identity Branch grants as business-validity evidence.
 
-`WF-SEAM-RISK-01` remains blocking: current Working Hour creation accepts an explicit `branchId` without validation. The target must not silently preserve that defect or directly query the Branch table. WF-PRE-08/09/13 must approve its compatibility/remediation treatment before Working Hour target routing.
+`WF-SEAM-RISK-01` remains blocking: current Working Hour creation accepts an explicit `branchId` without validation. The target must not silently preserve that defect or directly query the Branch table. WF-PRE-08 subsequently prohibited direct access; WF-PRE-09/13 must approve the compatibility/remediation contract and tests before Working Hour target routing.
 
 ## Archive-Blocker Seams
 
@@ -216,7 +216,7 @@ No temporary target exception is approved. Frozen legacy SQL remains visible deb
 
 | Risk | Severity | Treatment owner |
 |---|---|---|
-| WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08/09/13 compatibility/remediation |
+| WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08 direct-access prohibition complete; WF-PRE-09/13 compatibility/remediation remains |
 | WF-CONTRACT-RISK-01: Teacher self-profile can expose `monthlyFee` | High | Security-approved target omission and parity evidence |
 | WF-SEAM-RISK-02: Teacher/Identity share a legacy transaction | High | WF-PRE-11 consistency model |
 | WF-SEAM-RISK-03: audit can fail after state commits | High | WF-PRE-11/12 durable handoff/response semantics |
@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-The next ordered prerequisite is WF-PRE-08: approve the exact Workforce table ownership/access manifest and any narrowly scoped temporary migration-adapter exceptions.
+WF-PRE-08 subsequently approved the [exact Workforce table ownership/access manifest](workforce-table-ownership-access.md) with zero target exceptions. The next ordered prerequisite is WF-PRE-09: define exact public Workforce Application contracts.
