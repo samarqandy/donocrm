@@ -73,7 +73,7 @@ The existing product surface may request these outcomes while operating on a Tea
 - keep portal access separately controlled when a Teacher is restored;
 - reset a configured Teacher portal password and invalidate existing sessions.
 
-Workforce owns only the request and business coordination from the Teacher workflow. Identity & Access owns users, credentials, password hashing, roles, branch-access grants, sessions, authentication, and the execution semantics of those operations. WF-PRE-07, WF-PRE-09, and WF-PRE-11 must define the target contracts and consistency model before extraction.
+Workforce owns only the request and business coordination from the Teacher workflow. Identity & Access owns users, credentials, password hashing, roles, branch-access grants, sessions, authentication, and the execution semantics of those operations. WF-PRE-07 and WF-PRE-09 subsequently approved seam direction and public workflow contracts; WF-PRE-10/11 must still define focused provider ports and the consistency model before extraction.
 
 ### Role-sensitive access
 
@@ -234,4 +234,4 @@ Teacher profile/lifecycle, working hours, portal-access coordination, ten curren
 
 This result closes only WF-PRE-03. Workforce remains **NOT READY** for migration.
 
-Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23 through the approved [Workforce Module Definition](workforce-module-definition.md) and [Workforce Contract Freeze](workforce-contract-freeze.md); WF-PRE-06, WF-PRE-07, and WF-PRE-08 passed on 2026-07-24 through the approved [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md), [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md), and [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md). The current next ordered prerequisite is WF-PRE-09.
+Post-decision status: WF-PRE-04 and WF-PRE-05 subsequently passed on 2026-07-23 through the approved [Workforce Module Definition](workforce-module-definition.md) and [Workforce Contract Freeze](workforce-contract-freeze.md); WF-PRE-06, WF-PRE-07, WF-PRE-08, and WF-PRE-09 passed on 2026-07-24 through the approved [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md), [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md), [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md), and [Workforce Public Application Contracts](workforce-public-application-contracts.md). The current next ordered prerequisite is WF-PRE-10.

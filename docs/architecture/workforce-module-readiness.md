@@ -6,9 +6,9 @@ Candidate source: [migration-candidate-evaluation.md](migration-candidate-evalua
 
 ## Post-Review Decision Update
 
-WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06, WF-PRE-07, and WF-PRE-08 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation. The [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md) assigns provider authority, outer orchestration, synchronous communication, failure boundaries, and forbidden shortcuts. The [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md) binds 10/10 operations to exact tables/verbs, owners, provider treatments, risks, and zero target exceptions.
+WF-PRE-03, WF-PRE-04, and WF-PRE-05 passed on 2026-07-23; WF-PRE-06, WF-PRE-07, WF-PRE-08, and WF-PRE-09 passed on 2026-07-24. The [Workforce Product Scope Decision](workforce-product-scope.md) approves Teacher profile/lifecycle, working hours, portal-access coordination, the current ten-operation compatibility surface, owned/non-owned product responsibilities, and explicit first-extraction non-goals. The [Workforce Module Definition](workforce-module-definition.md) completes every mandatory template section. The [Workforce Contract Freeze](workforce-contract-freeze.md) binds all ten current HTTP operations to exact request, response, error, authorization/privacy, ordering, and OpenAPI evidence. The [Workforce Behavior and Test Matrix](workforce-behavior-matrix.md) maps all required behavior categories to stable test IDs while explicitly preserving missing automation. The [Workforce Bounded-Context Seam Decision](workforce-bounded-context-seams.md) assigns provider authority, outer orchestration, synchronous communication, failure boundaries, and forbidden shortcuts. The [Workforce Table Ownership and Access Manifest](workforce-table-ownership-access.md) binds 10/10 operations to exact tables/verbs, owners, provider treatments, risks, and zero target exceptions. The [Workforce Public Application Contracts](workforce-public-application-contracts.md) approve two versioned surfaces, exact canonical DTO/error/auth/idempotency rules for 10/10 compatibility operations, and one minimal downstream Teacher reference/status query.
 
-This resolves product scope, module-definition completeness, current HTTP contract baselining, behavior-inventory approval, bounded-context seam direction, and exact table-access disposition only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing ports, exact Application contracts, transaction decisions, executable test/parity plan, and runbook keep the candidate not ready.
+This resolves product scope, module-definition completeness, current HTTP contract baselining, behavior-inventory approval, bounded-context seam direction, exact table-access disposition, and exact public Application contracts only. The original readiness score below is retained as the 2026-07-22 gate measurement and is not selectively recalculated before the complete Module Readiness Gate is rerun. Missing focused ports, transaction decisions, event decision, executable test/parity plan, and runbook keep the candidate not ready.
 
 ## Scope of Review
 
@@ -69,7 +69,7 @@ These are observable legacy operations, not extracted use-case implementations:
 | Create Working Hour | Validate teacher/status/time/weekday/overlap | `AppService:772-798`; `AppRepository:5005-5030` |
 | Delete Working Hour | Tenant-scoped deletion and audit | `AppService:801-809`; `AppRepository:5033-5037` |
 
-The ten product operations and their inclusion are approved by WF-PRE-03. Exact Application contract names and technical boundaries must still be approved in the module definition before implementation. This inventory does not prescribe class names.
+The ten product operations and their inclusion are approved by WF-PRE-03. WF-PRE-09 subsequently fixes their exact public Application method names, canonical DTOs, semantic errors, authorization contexts, and idempotency expectations. Focused outbound port signatures remain WF-PRE-10.
 
 ## Repository Ports
 
@@ -118,13 +118,13 @@ Evidence: `src/http/api.js:283-296`, `:385-418`; `docs/openapi.yaml:861-925`, `:
 
 WF-PRE-05 exact evidence: [human-readable decision](workforce-contract-freeze.md) and [machine-readable baseline](../../architecture/workforce-contract-baseline.json). OpenAPI lists all ten operations but remains schema/error-incomplete; those gaps are explicit rather than treated as target precedent.
 
-### Missing contracts
+### Approved and remaining contracts
 
-- No public Workforce Application facade exists.
-- No documented internal Teacher reference/status contract exists for downstream modules.
-- No Identity coordination contract exists.
-- No versioned event or query contract exists for Workforce consumers.
-- The exact Teacher profile projection contract is mixed with Group/Lesson data.
+- `WorkforceCompatibilityApplicationV1` is the approved target public facade for all ten existing HTTP workflows.
+- `TeacherReferenceApplicationV1.getTeacherReference` is the sole approved first-extraction downstream query and returns exactly five fields.
+- Role-specific Teacher/profile DTOs, closed semantic errors, verified contexts, and no-key idempotency expectations are exact under WF-PRE-09.
+- Focused Identity/Organization/Group/Lesson/Audit provider port signatures remain WF-PRE-10.
+- No versioned integration event is approved; WF-PRE-12 remains open.
 
 Existing HTTP request/response behavior must remain unchanged during any future migration.
 
@@ -261,4 +261,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, WF-PRE-05 froze current HTTP compatibility, WF-PRE-06 approved the behavior inventory, WF-PRE-07 approved bounded-context seams, and WF-PRE-08 approved exact table access; the remaining preparation is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).
+Workforce is a sound first post-Attendance candidate but is **not ready for migration**. WF-PRE-03 resolved product scope, WF-PRE-04 completed the module definition, WF-PRE-05 froze current HTTP compatibility, WF-PRE-06 approved the behavior inventory, WF-PRE-07 approved bounded-context seams, WF-PRE-08 approved exact table access, and WF-PRE-09 approved public Application contracts; the remaining preparation starts with WF-PRE-10 and is recorded in [migration-backlog.md](migration-backlog.md) and [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md).

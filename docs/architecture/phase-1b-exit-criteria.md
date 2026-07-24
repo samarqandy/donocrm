@@ -44,8 +44,8 @@ Candidate: Workforce
 
 ## Ports, Contracts, and Dependencies
 
-- [ ] Public Application commands/queries, input/output DTOs, semantic errors, authorization, and idempotency expectations are documented.
-- [ ] Teacher reference/status contract for downstream consumers is documented.
+- [x] The approved [WF-PRE-09 public Application contracts](workforce-public-application-contracts.md) define 10/10 commands/queries, canonical input/output DTOs, closed semantic errors, verified authorization context, and explicit no-key retry/idempotency expectations.
+- [x] `TeacherReferenceApplicationV1` documents the exact five-field Teacher reference/status contract and allow-listed downstream consumers.
 - [ ] Focused ports are defined for Teacher persistence, Working Hours, Identity, Organization, blockers/projections, and Audit as applicable.
 - [ ] No proposed port reproduces the multi-context `AppRepository` surface.
 - [ ] Every upstream/downstream dependency has owner, direction, mode, and consistency behavior.
