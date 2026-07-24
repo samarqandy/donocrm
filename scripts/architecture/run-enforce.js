@@ -17,6 +17,7 @@ const commands = [
   ["workforce test parity plan", "scripts/architecture/verify-workforce-test-parity-plan.js"],
   ["workforce migration runbook", "scripts/architecture/verify-workforce-migration-runbook.js"],
   ["workforce module readiness", "scripts/architecture/verify-workforce-module-readiness.js"],
+  ["workforce extraction structure", "scripts/architecture/verify-workforce-extraction-structure.js"],
 ];
 
 let failures = 0;

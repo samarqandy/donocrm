@@ -2,9 +2,9 @@
 
 Definition ID: WF-PRE-04
 Definition status: Approved and complete
-Implementation status: Legacy; target module not created
+Implementation status: Migrating; WF-EXT-01 structure/composition only
 Module Readiness: Passed for ordered extraction implementation; runtime activation remains blocked
-Last reviewed: 2026-07-23
+Last reviewed: 2026-07-24
 
 This document instantiates every mandatory section of [module-template.md](module-template.md). It distinguishes approved scope, current legacy evidence, target constraints, and decisions deliberately reserved for later Workforce preparation gates.
 
@@ -14,15 +14,16 @@ This document instantiates every mandatory section of [module-template.md](modul
 |---|---|
 | Module name | Workforce |
 | Bounded context | Workforce |
-| Status | Legacy |
+| Status | Migrating; runtime authority remains legacy |
 | Module Owner | Sukhrob Khaydarov |
 | Product Authority | Sukhrob Khaydarov |
-| Current source location | `src/services/appService.js`, `src/repositories/appRepository.js`, `src/http/api.js`, and `src/db/schema.js` |
-| Approved future source location | `src/modules/workforce/`, created only after migration authorization |
-| Last reviewed | 2026-07-23 |
-| Related decisions | [ADR-001](adrs/ADR-001-target-architecture.md), [ADR-004](adrs/ADR-004-migration-strategy.md), [ADR-005](adrs/ADR-005-bounded-context-strategy.md), [ADR-006](adrs/ADR-006-dependency-rule.md), [ADR-007](adrs/ADR-007-shared-kernel.md), [ADR-008](adrs/ADR-008-api-versioning.md), and [WF-PRE-03](workforce-product-scope.md) |
+| Current source location | Runtime behavior: `src/services/appService.js`, `src/repositories/appRepository.js`, `src/http/api.js`, and `src/db/schema.js`; registered target root: `src/modules/workforce/` |
+| Approved target source location | `src/modules/workforce/`; structure registered by [WF-EXT-01](workforce-extraction-entry.md) |
+| Last reviewed | 2026-07-24 |
+| Related decisions | [ADR-001](adrs/ADR-001-target-architecture.md), [ADR-004](adrs/ADR-004-migration-strategy.md), [ADR-005](adrs/ADR-005-bounded-context-strategy.md), [ADR-006](adrs/ADR-006-dependency-rule.md), [ADR-007](adrs/ADR-007-shared-kernel.md), [ADR-008](adrs/ADR-008-api-versioning.md), [WF-PRE-03](workforce-product-scope.md), and [WF-EXT-01](workforce-extraction-entry.md) |
 
-`Legacy` means the capability is operational but has no compliant Workforce module boundary. A documented future path is not evidence that migration started.
+`Migrating` means the approved source root and composition metadata now exist. It
+does not mean a business layer, target route, adapter, or authority transfer exists.
 
 ## Purpose
 
@@ -74,7 +75,9 @@ The capability exists in the current Teacher HTTP routes, `AppService` Teacher/w
 - **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at provider boundaries; the approved `TeacherReferenceV1` published language; an outer compatibility Application coordinator for cross-context lifecycle/profile composition.
 - **Boundary uncertainties:** WF-PRE-07 through WF-PRE-13 fix seams, access, contracts, ports, consistency, events/Audit, and tests. [WF-PRE-14](workforce-migration-runbook.md) fixes route increments, authority, cohorts, thresholds, rollback, reconciliation, observation, and retirement. [WF-PRE-16](workforce-module-readiness-decision.md) subsequently passed ordered extraction entry.
 
-No target code module currently exists. The bounded context is implemented across legacy technical layers and cross-context SQL. The future directory will implement this bounded context; the directory itself will not define or expand it.
+WF-EXT-01 created the target source root and immutable Bootstrap registration only.
+The bounded context's behavior remains implemented across legacy technical layers
+and cross-context SQL. The directory itself does not define or expand the context.
 
 ## Public API
 
@@ -277,9 +280,11 @@ HTTP routes do not define ownership. ADR-008 remains Proposed, so no `/api/v1` r
 | Tenant isolation | Two-tenant reads and cross-ID attempts for every operation | General repository JOIN scenario follows Teacher test | Partial; per-operation matrix missing |
 | Migration | Route parity, shadow comparison, authority, rollback/reconciliation | PRE-13 test specification, PRE-14 runbook, and PRE-16 extraction entry approved; no harness/commands/rehearsal | Implementation/rehearsal remain activation conditions |
 | End-to-end | Profile, access, workload, hours, archive, history | `scripts/test-backend-logic.js` Teacher Management scenario | Passing: `npm run test:backend` expects 20/20 |
-| Architecture | No legacy growth or forbidden module edges | `npm run architecture:enforce` and required CI check | Passing baseline; Workforce-specific checks missing |
+| Architecture | No legacy growth or forbidden module edges | `npm run architecture:enforce`, `architecture:workforce-structure`, and required CI | Passing: exact structure/composition and zero-runtime state enforced |
 
-Current objective commands are `npm run test:backend` and `npm run architecture:enforce`. Their success characterizes legacy behavior only and does not pass Module Readiness.
+Current objective commands are `npm run test:backend`, `npm run
+architecture:workforce-structure`, and `npm run architecture:enforce`. Runtime
+behavior evidence remains legacy-only; the structure verifier proves only WF-EXT-01.
 
 ## Migration Status
 
@@ -288,14 +293,15 @@ Current objective commands are `npm run test:backend` and `npm run architecture:
 | Current architecture | Legacy HTTP branches call Teacher methods in shared `AppService` and shared cross-context `AppRepository` |
 | Current authority by tenant/data set | SQLite legacy path is authoritative for every tenant and all Teacher/working-hour operations |
 | Target authority | Workforce module through an approved SQLite compatibility adapter for first extraction; no transfer is authorized |
-| Migration phase | Not started; scope and module definition characterized only |
+| Migration phase | WF-EXT-01 completed: source root/composition registered; no business layer or route |
 | Backfill/parity state | No Workforce backfill; parity plan/harness missing |
 | Canary scope | None |
-| Rollback trigger and path | Not approved; legacy remains sole active path |
+| Rollback trigger and path | PRE-14 runbook approved; commands/rehearsal unimplemented; legacy remains sole active path |
 | Legacy removal criterion | Approved cutover, observation, zero-use, reconciliation, rollback-window closure, and Legacy Retirement Gate |
 | Blocking decisions | None for ordered extraction entry; WF-ACT-01 through WF-ACT-04 block runtime activation |
 
-Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not authorized by this definition.
+`src/modules/workforce/` was created by [WF-EXT-01](workforce-extraction-entry.md)
+with no empty layer directories or runtime behavior. WF-EXT-02 is next.
 
 ## Future Work
 
@@ -312,8 +318,10 @@ Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not author
 | Approve test/parity plan | 10 suites, eight fixtures, 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 variants, 11 parity rows, seven rollback cases | [WF-PRE-13](workforce-test-parity-plan.md) | Quality/Module/Data/Security/Operations | Completed; implementation remains per extraction activation gate |
 | Approve migration/rollback runbook | 10 increments, four holds, six cohorts, numeric stops, five-minute RTO, zero-loss RPO, reconciliation, observation, retirement | [WF-PRE-14](workforce-migration-runbook.md) | Operations/Data/Architecture/Security | Completed; commands/rehearsal remain unimplemented |
 | Pass final exit criteria | Migration implementation begins only after every criterion has a formal evidence disposition | [WF-PRE-16](workforce-module-readiness-decision.md) | Architecture and specialist roles | Completed |
+| Register module structure/composition | Create the exact source root and disabled immutable Bootstrap metadata without premature layers or routes | [WF-EXT-01](workforce-extraction-entry.md) | Architecture/Module/Operations/Quality | Completed |
 
-Future work is preparation, not a feature or extraction commitment.
+This table records preparation and extraction-entry gate history; later increments
+remain independently evidence-gated.
 
 ## Architecture Approval
 
@@ -328,4 +336,4 @@ Future work is preparation, not a feature or extraction commitment.
 
 **WF-PRE-04: PASSED — module definition completeness only.**
 
-The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 through WF-PRE-14 approved transport freeze, behavior inventory, seams, table access, public contracts, focused ports, consistency, event/Audit delivery, executable tests/parity, and migration/rollback runbook specifications. [WF-PRE-16](workforce-module-readiness-decision.md) subsequently passed Module Readiness for ordered extraction implementation. The next ordered task is WF-EXT-01; runtime activation remains prohibited.
+The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 through WF-PRE-14 approved transport freeze, behavior inventory, seams, table access, public contracts, focused ports, consistency, event/Audit delivery, executable tests/parity, and migration/rollback runbook specifications. [WF-PRE-16](workforce-module-readiness-decision.md) passed Module Readiness, and [WF-EXT-01](workforce-extraction-entry.md) registered the structure without runtime activation. The next ordered task is WF-EXT-02.

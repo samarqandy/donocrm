@@ -75,6 +75,6 @@ The register preserves every blocker from the original gate review and marks sub
 
 ## Next Ordered Work
 
-WF-PRE-01 through WF-PRE-16 are complete. The [final decision](workforce-module-readiness-decision.md) authorizes the ordered extraction backlog beginning with WF-EXT-01.
+WF-PRE-01 through WF-PRE-16 are complete. The [final decision](workforce-module-readiness-decision.md) authorized the ordered extraction backlog; [WF-EXT-01](workforce-extraction-entry.md) subsequently registered the structure/composition boundary and WF-EXT-02 is next.
 
 Runtime activation remains fail-closed until PRE-13 suites, PRE-14 operator controls, synthetic rollback rehearsal, and an exact production change record pass their named gates.

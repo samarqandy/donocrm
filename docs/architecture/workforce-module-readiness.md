@@ -255,4 +255,4 @@ Each dimension is scored 0–10, where 10 means ready to begin migration without
 
 ## Readiness Decision
 
-Workforce is the approved first post-Attendance candidate and is **ready for ordered extraction implementation** under [WF-PRE-16](workforce-module-readiness-decision.md). It is not ready for runtime activation: zero target suites, operator commands, rollback rehearsals, production tenants, and target routes are enabled. The next ordered task is WF-EXT-01.
+Workforce is the approved first post-Attendance candidate and is **ready for ordered extraction implementation** under [WF-PRE-16](workforce-module-readiness-decision.md). [WF-EXT-01](workforce-extraction-entry.md) has now registered structure/composition only. It is not ready for runtime activation: zero target suites, operator commands, rollback rehearsals, production tenants, and target routes are enabled. WF-EXT-02 is next.

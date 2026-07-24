@@ -5,7 +5,7 @@
   "capturedAt": "2026-07-23",
   "commit": "3bc3097e2903b4cc917807f9b799ca7628f54617",
   "approvedBy": "architecture-owner",
-  "configurationHash": "2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d",
+  "configurationHash": "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba",
   "legacyMetrics": {
     "src/services/appService.js": {"lines": 2457, "methods": 112, "sha256": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2"},
     "src/repositories/appRepository.js": {"lines": 5411, "methods": 163, "sha256": "0ef641250c847ab88cc08ca80945676ee34f3509e72f5745af83c9aa99bc61cc"},
@@ -87,9 +87,24 @@
   ],
   "notes": [
     "Candidate fingerprints were refreshed against the 68-finding scanner output on 2026-07-23.",
-    "Configuration hash is captured and bound to implementation commit 3bc3097e2903b4cc917807f9b799ca7628f54617.",
+    "The initial configuration hash was bound to implementation commit 3bc3097e2903b4cc917807f9b799ca7628f54617; later approved configuration-only revisions are recorded below.",
     "Approved by architecture-owner under the Single-Founder Governance model on 2026-07-23.",
     "Approved fingerprints remain visible technical debt; any new fingerprint is merge-blocking in enforce mode.",
-    "Blocking GitHub run 30027584361 passed for operational commit 568fe4c17dec0aa4a96c34d6c39340edb91065b1."
+    "Blocking GitHub run 30027584361 passed for operational commit 568fe4c17dec0aa4a96c34d6c39340edb91065b1.",
+    "WF-EXT-01 revised only the executable configuration hash after registering Workforce as migrating; the 68 fingerprints, legacy metrics, table ownership, and empty exception set did not change."
+  ],
+  "configurationRevisions": [
+    {
+      "date": "2026-07-23",
+      "decision": "WF-PRE-02",
+      "hash": "2732cc47b0b0913cf35aa4c176750c9cd4abafe16657d19fc2e00c9ef7b7f15d",
+      "scope": "Initial approved blocking configuration"
+    },
+    {
+      "date": "2026-07-24",
+      "decision": "WF-EXT-01",
+      "hash": "7e17f5d2633a11940c2c9ac625e8818afcd6b5ebac41fcb33e637feab0e734ba",
+      "scope": "Workforce context lifecycle changes from legacy/unregistered to migrating with source root; fingerprints and exceptions unchanged"
+    }
   ]
 }

@@ -279,4 +279,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 The ordered route plan, cohort system, authority/fallback model, numeric thresholds, rollback/reconciliation procedure, evidence, observation, and retirement conditions are exact. Ten eligible variants have 10/10 route increments; four legacy-hold variants remain target-denied. The production cohort is empty, zero operator commands implemented, and zero target routes are enabled.
 
-WF-PRE-16 subsequently passed; the next ordered implementation task is WF-EXT-01. This runbook still enables no route.
+WF-PRE-16 subsequently passed and [WF-EXT-01](workforce-extraction-entry.md) registered the structure/composition boundary. WF-EXT-02 is next. This runbook still enables no route.

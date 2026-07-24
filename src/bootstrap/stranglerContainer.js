@@ -21,8 +21,12 @@ const { StoreRouter } = require("../infrastructure/migration/StoreRouter");
 const { StranglerRouter } = require("../infrastructure/http/StranglerRouter");
 const { getPostgresPool } = require("../infrastructure/database/postgres/pool");
 const { now, today } = require("../utils/time");
+const { workforceRegistration } = require("./workforceRegistration");
 
 let router;
+const registrations = Object.freeze({
+  workforce: workforceRegistration(),
+});
 
 function parseTenantList(value) {
   return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
@@ -102,4 +106,8 @@ function stranglerRouter() {
   return router;
 }
 
-module.exports = { stranglerRouter };
+function moduleRegistrations() {
+  return registrations;
+}
+
+module.exports = { stranglerRouter, moduleRegistrations };

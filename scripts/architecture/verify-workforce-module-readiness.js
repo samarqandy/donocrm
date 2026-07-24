@@ -128,7 +128,10 @@ function main() {
   const migratingState =
     workforceModule?.status === "migrating" &&
     sameArray(workforceModule.sourceRoots || [], ["src/modules/workforce"]) &&
-    sameArray(workforceModule.publicPaths || [], ["src/modules/workforce/application"]) &&
+    (
+      sameArray(workforceModule.publicPaths || [], []) ||
+      sameArray(workforceModule.publicPaths || [], ["src/modules/workforce/application"])
+    ) &&
     fs.existsSync(path.join(ROOT, "src/modules/workforce"));
   if (
     workforceModule?.owner !== "architecture-owner" ||
