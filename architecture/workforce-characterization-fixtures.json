@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-EXT-02",
+  "status": "passed",
+  "fixtureSetId": "workforce-legacy-characterization-2026-07-24.1",
+  "decisionDate": "2026-07-24",
+  "sourceFingerprints": {
+    "architecture/workforce-test-parity-plan.json": "e1d90943abdd0ba94fce59f4ae9db6b476b7eb47f7b0fd8ae54cf41b078520a6",
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712",
+    "architecture/workforce-behavior-matrix.json": "84b7206ae682fe417b7f2b2f6314591b46bc56768e4a6b8de54148982dbcfc2d",
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "tests/workforce/fixtures/focused-contract-fixtures.js": "003d4a2f7abbdcee95a86cd51b6dbd591808449757b7f9f5036a0c9193a197bd",
+    "tests/workforce/characterization/legacy-focused-contracts.test.js": "c88b3cd6de1d9c13f6586b9f1862bd0f8328d0f39879e2c15dc1c2554f5c99f4"
+  },
+  "execution": {
+    "command": "TZ=Asia/Tashkent node --test tests/workforce/characterization/legacy-focused-contracts.test.js",
+    "runtimePath": "legacy AppService and AppRepository",
+    "database": "isolated in-memory SQLite per characterization case",
+    "networkCalls": 0,
+    "sleepCalls": 0,
+    "fixtureCount": 8,
+    "caseCount": 8,
+    "expectedPassing": 8
+  },
+  "deterministicControls": {
+    "timezone": "Asia/Tashkent",
+    "fixedClock": "2026-07-24T06:00:00.000Z",
+    "idSequencePrefix": "wf-test-",
+    "tenantIds": ["tenant_wf_a", "tenant_wf_b"],
+    "randomness": "forbidden",
+    "network": "forbidden",
+    "concurrency": "explicit barriers only; sleeps forbidden",
+    "sensitiveData": "synthetic only"
+  },
+  "fixtures": [
+    {"id": "WF-FIX-01", "case": "tenant-bound directory and Branch validation", "legacyExecutable": true},
+    {"id": "WF-FIX-02", "case": "Teacher and Identity atomic lifecycle", "legacyExecutable": true},
+    {"id": "WF-FIX-03", "case": "complete keyed zero provider projections", "legacyExecutable": true},
+    {"id": "WF-FIX-04", "case": "Working Hour adjacency, overlap, ordering, and tenant scope", "legacyExecutable": true},
+    {"id": "WF-FIX-05", "case": "ordered provider success and failure outcomes", "legacyExecutable": true},
+    {"id": "WF-FIX-06", "case": "narrow parity normalization and governed deltas", "legacyExecutable": true},
+    {"id": "WF-FIX-07", "case": "ten frozen HTTP method and path pairs", "legacyExecutable": true},
+    {"id": "WF-FIX-08", "case": "rollback and reconciliation terminal invariant", "legacyExecutable": true}
+  ],
+  "admission": {
+    "legacyAuthority": true,
+    "targetModuleFilesAdded": 0,
+    "targetApplicationContractsImplemented": 0,
+    "targetPortsImplemented": 0,
+    "targetAdaptersImplemented": 0,
+    "targetRoutesEnabled": 0,
+    "pre13TargetSuitesImplemented": 0,
+    "pre13TargetSuitesRemainingBlocking": 10,
+    "nextOrderedIncrement": "WF-EXT-03"
+  },
+  "temporaryExceptions": [],
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}
