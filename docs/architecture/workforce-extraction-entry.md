@@ -4,7 +4,11 @@ Status: WF-EXT-01 completed; structure registered, runtime activation disabled
 Decision date: 2026-07-24  
 Next ordered increment: WF-EXT-02
 
-State manifest SHA-256: `a4cb5d5c339a6a507f797ee2d0829026b47d0619dad024fe94b589d1c19b89cc`
+Immutable entry baseline SHA-256: `a4cb5d5c339a6a507f797ee2d0829026b47d0619dad024fe94b589d1c19b89cc`
+
+The hash refers to `architecture/workforce-extraction-entry-baseline.json`.
+`architecture/workforce-extraction-state.json` is the evolving extraction pointer
+and may advance without rewriting this completed gate's evidence.
 
 ## Decision
 

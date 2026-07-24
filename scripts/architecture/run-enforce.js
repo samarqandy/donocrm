@@ -18,6 +18,7 @@ const commands = [
   ["workforce migration runbook", "scripts/architecture/verify-workforce-migration-runbook.js"],
   ["workforce module readiness", "scripts/architecture/verify-workforce-module-readiness.js"],
   ["workforce extraction structure", "scripts/architecture/verify-workforce-extraction-structure.js"],
+  ["workforce characterization fixtures", "scripts/architecture/verify-workforce-characterization-fixtures.js"],
 ];
 
 let failures = 0;

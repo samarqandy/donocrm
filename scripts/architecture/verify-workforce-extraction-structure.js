@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "../..");
-const STATE_FILE = "architecture/workforce-extraction-state.json";
+const STATE_FILE = "architecture/workforce-extraction-entry-baseline.json";
 const DECISION_FILE = "docs/architecture/workforce-extraction-entry.md";
 const READINESS_FILE = "architecture/workforce-module-readiness-decision.json";
 const MODULES_FILE = "architecture/modules.yaml";

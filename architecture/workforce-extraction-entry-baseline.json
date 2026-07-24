@@ -2,19 +2,14 @@
   "schemaVersion": 1,
   "stateId": "workforce-extraction-2026-07-24.1",
   "status": "active",
-  "currentIncrement": "WF-EXT-02",
-  "completedIncrements": ["WF-EXT-01", "WF-EXT-02"],
-  "nextOrderedIncrement": "WF-EXT-03",
+  "currentIncrement": "WF-EXT-01",
+  "completedIncrements": ["WF-EXT-01"],
+  "nextOrderedIncrement": "WF-EXT-02",
   "decisionDate": "2026-07-24",
   "authorizationEvidence": {
     "decisionId": "WF-PRE-16",
     "manifest": "architecture/workforce-module-readiness-decision.json",
     "manifestSha256": "e1bc2350ba9d441fb5a7ddf7f7e58ea2ee8f8af74cd29ed5f9a3dca2ae447c18"
-  },
-  "characterizationEvidence": {
-    "decisionId": "WF-EXT-02",
-    "manifest": "architecture/workforce-characterization-fixtures.json",
-    "manifestSha256": "8df39a2fd086db79df248b8bd56cbedfd275e8eb958b97e8746300a2dc5ad2ed"
   },
   "moduleState": {
     "contextId": "workforce",
@@ -55,8 +50,6 @@
   },
   "runtimeState": {
     "legacyAuthority": true,
-    "legacyCharacterizationFixturesImplemented": 8,
-    "legacyCharacterizationCasesPassing": 8,
     "plannedTargetSuitesImplemented": 0,
     "publicApplicationInstances": 0,
     "adapterBindings": 0,
@@ -69,11 +62,11 @@
   },
   "negativeAssertions": [
     "No empty Domain, Application, Infrastructure, or HTTP directory is created for architectural appearance.",
-    "No target Workforce business entity, use case, port, adapter, controller, route, SQL, schema, event, worker, or selector is implemented.",
+    "No Workforce business entity, use case, port, adapter, controller, route, SQL, schema, event, worker, or selector is implemented.",
     "The composition registration contains metadata only and cannot dispatch a request.",
     "No Workforce source imports legacy AppService, AppRepository, db/client, HTTP, provider, environment, or migration infrastructure.",
     "The frozen legacy path remains the sole authority for every Workforce tenant and operation.",
-    "WF-EXT-02 characterization evidence does not satisfy any PRE-13 target suite or PRE-14 activation condition."
+    "WF-EXT-01 does not satisfy any PRE-13 target suite or PRE-14 activation condition."
   ],
   "temporaryExceptions": [],
   "approvals": [
