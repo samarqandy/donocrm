@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "stateId": "workforce-extraction-2026-07-24.1",
   "status": "active",
-  "currentIncrement": "WF-EXT-04",
-  "completedIncrements": ["WF-EXT-01", "WF-EXT-02", "WF-EXT-03", "WF-EXT-04"],
-  "nextOrderedIncrement": "WF-EXT-05",
+  "currentIncrement": "WF-EXT-03",
+  "completedIncrements": ["WF-EXT-01", "WF-EXT-02", "WF-EXT-03"],
+  "nextOrderedIncrement": "WF-EXT-04",
   "decisionDate": "2026-07-24",
   "authorizationEvidence": {
     "decisionId": "WF-PRE-16",
@@ -21,11 +21,6 @@
     "manifest": "architecture/workforce-application-facade-implementation.json",
     "manifestSha256": "6d7d3ca9decfcccd47127788c683ef4674ae62fdd53ba44a465cc0d95999bb64"
   },
-  "ownedSQLiteAdapterEvidence": {
-    "decisionId": "WF-EXT-04",
-    "manifest": "architecture/workforce-owned-sqlite-adapter.json",
-    "manifestSha256": "ec5967858c0da486a7ac521d83c4cae33477defe0f0c8d21933dd70b2d33b3a4"
-  },
   "moduleState": {
     "contextId": "workforce",
     "owner": "architecture-owner",
@@ -40,17 +35,13 @@
       "src/modules/workforce/domain/Teacher.js",
       "src/modules/workforce/domain/TeacherWorkingHour.js",
       "src/modules/workforce/domain/WorkforceError.js",
-      "src/modules/workforce/domain/ports.js",
-      "src/modules/workforce/infrastructure/SQLiteTeacherRepository.js",
-      "src/modules/workforce/infrastructure/SQLiteTeacherWorkingHourRepository.js",
-      "src/modules/workforce/infrastructure/createSQLiteWorkforceAdapters.js",
-      "src/modules/workforce/infrastructure/sqliteSupport.js"
+      "src/modules/workforce/domain/ports.js"
     ],
-    "implementedLayers": ["domain", "application", "infrastructure"],
+    "implementedLayers": ["domain", "application"],
     "publicApplicationImplemented": true,
     "publicPaths": ["src/modules/workforce/application"],
     "domainImplemented": true,
-    "infrastructureAdaptersImplemented": 1,
+    "infrastructureAdaptersImplemented": 0,
     "httpAdaptersImplemented": 0
   },
   "compositionRegistration": {
@@ -81,17 +72,14 @@
     "legacyAuthority": true,
     "legacyCharacterizationFixturesImplemented": 8,
     "legacyCharacterizationCasesPassing": 8,
-    "plannedTargetSuitesImplemented": 4,
-    "plannedTargetSuitesPassing": 4,
-    "targetContractCasesPassing": 30,
+    "plannedTargetSuitesImplemented": 3,
+    "plannedTargetSuitesPassing": 3,
+    "targetContractCasesPassing": 21,
     "publicApplicationImplementations": 1,
     "publicApplicationInstances": 0,
     "publicContractsImplemented": 11,
     "focusedPortsImplemented": 18,
     "focusedPortMethodsImplemented": 32,
-    "ownedSQLiteAdapterImplementations": 1,
-    "ownedSQLitePortsImplemented": 5,
-    "ownedSQLitePortMethodsImplemented": 12,
     "adapterBindings": 0,
     "routeBindings": 0,
     "shadowRoutesEnabled": 0,
@@ -101,12 +89,12 @@
     "schemaChanges": 0
   },
   "negativeAssertions": [
-    "Infrastructure contains only the approved owned SQLite compatibility adapter; HTTP remains absent.",
-    "No provider adapter, controller, route, schema, migration, event, worker, or selector is implemented.",
+    "Domain and Application contain only responsibilities required by the approved facade and focused contracts; Infrastructure and HTTP remain absent.",
+    "No target Workforce persistence/provider adapter, controller, route, SQL, schema, event, worker, or selector is implemented.",
     "The composition registration contains metadata only and cannot dispatch a request.",
     "No Workforce source imports legacy AppService, AppRepository, db/client, HTTP, provider, environment, or migration infrastructure.",
     "The frozen legacy path remains the sole authority for every Workforce tenant and operation.",
-    "WF-EXT-04 adds only PRE-13 suite 03; six target suites and all route activation conditions remain blocking."
+    "WF-EXT-03 satisfies only PRE-13 suites 01, 02, and 05; seven target suites and all route activation conditions remain blocking."
   ],
   "temporaryExceptions": [],
   "approvals": [

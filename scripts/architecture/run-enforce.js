@@ -20,6 +20,7 @@ const commands = [
   ["workforce extraction structure", "scripts/architecture/verify-workforce-extraction-structure.js"],
   ["workforce characterization fixtures", "scripts/architecture/verify-workforce-characterization-fixtures.js"],
   ["workforce application facade", "scripts/architecture/verify-workforce-application-facade.js"],
+  ["workforce owned SQLite adapter", "scripts/architecture/verify-workforce-owned-sqlite-adapter.js"],
 ];
 
 let failures = 0;

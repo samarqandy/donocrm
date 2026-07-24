@@ -60,7 +60,7 @@ WF-PRE-16 passed on 2026-07-24 and WF-EXT-01 subsequently registered the structu
 ## Can Migrate During Extraction
 
 These are the authorized migration implementation items. They proceed in order;
-WF-EXT-01 through WF-EXT-03 are complete and WF-EXT-04 is next. Completion of an
+WF-EXT-01 through WF-EXT-04 are complete and WF-EXT-05 is next. Completion of an
 item does not bypass a later increment's test, review, route, cohort, or activation
 conditions.
 
@@ -69,7 +69,7 @@ conditions.
 | 1 | WF-EXT-01 | **Completed 2026-07-24 — Establish approved module directory and composition registration** | [Exact structure-only registration](workforce-extraction-entry.md); no empty layers, public Application, adapter, route, schema, or authority transfer |
 | 2 | WF-EXT-02 | **Completed 2026-07-24 — Add characterization fixtures for focused contracts** | [Eight deterministic legacy fixtures](workforce-characterization-fixtures.md); reproduced legacy evidence before target routing |
 | 3 | WF-EXT-03 | **Completed 2026-07-24 — Introduce one public Application facade and focused ports** | [Facade implementation evidence](workforce-application-facade.md); 11 contracts, 18 ports/32 methods, and three target suites pass with no inner-layer legacy dependency |
-| 4 | WF-EXT-04 | Introduce a compatibility SQLite adapter | No schema change; only approved owned tables and explicit compatibility access |
+| 4 | WF-EXT-04 | **Completed 2026-07-24 — Introduce a compatibility SQLite adapter** | [Owned SQLite adapter evidence](workforce-owned-sqlite-adapter.md); five ports/12 methods and deterministic concurrency pass with no schema change or foreign-table access |
 | 5 | WF-EXT-05 | Extract read-only Teacher reference/list slice | Preserve DTO, authorization, ordering, and error contracts |
 | 6 | WF-EXT-06 | Shadow and compare read results | No user-visible behavior; parity thresholds approved in advance |
 | 7 | WF-EXT-07 | Extract working-hours behavior | Preserve overlap, tenant, role, and audit behavior; use focused port contracts |

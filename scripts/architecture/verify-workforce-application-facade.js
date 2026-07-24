@@ -9,7 +9,7 @@ const { spawnSync } = require("node:child_process");
 
 const ROOT = path.resolve(__dirname, "../..");
 const MANIFEST_FILE = "architecture/workforce-application-facade-implementation.json";
-const STATE_FILE = "architecture/workforce-extraction-state.json";
+const STATE_FILE = "architecture/workforce-extraction-state-wf-ext-03.json";
 const APPLICATION_CONTRACT_FILE = "architecture/workforce-application-contracts.json";
 const PORT_FILE = "architecture/workforce-focused-ports.json";
 const TEST_PLAN_FILE = "architecture/workforce-test-parity-plan.json";
@@ -125,18 +125,18 @@ function main() {
   }
 
   const moduleFiles = filesUnder(MODULE_ROOT);
+  const trackedFiles = state.moduleState?.trackedModuleFiles || [];
   if (
-    !same(moduleFiles, state.moduleState?.trackedModuleFiles) ||
+    trackedFiles.some((file) => !moduleFiles.includes(file)) ||
     !same(state.moduleState?.implementedLayers, ["domain", "application"]) ||
     state.moduleState?.domainImplemented !== true ||
     state.moduleState?.publicApplicationImplemented !== true ||
     !same(state.moduleState?.publicPaths, ["src/modules/workforce/application"]) ||
-    fs.existsSync(path.join(ROOT, MODULE_ROOT, "infrastructure")) ||
     fs.existsSync(path.join(ROOT, MODULE_ROOT, "http"))
   ) {
     fail("module layer/file topology is not the exact Domain/Application-only shape");
   }
-  const productionSource = moduleFiles
+  const productionSource = trackedFiles
     .filter((file) => file.endsWith(".js"))
     .map((file) => read(file).toString("utf8"))
     .join("\n");
