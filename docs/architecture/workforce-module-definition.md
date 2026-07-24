@@ -71,14 +71,14 @@ The capability exists in the current Teacher HTTP routes, `AppService` Teacher/w
   - **Profile projection:** a read result composed from Workforce facts and explicitly contracted foreign facts.
 - **Upstream contexts:** Platform Administration & Tenancy for tenant context; Identity & Access for portal outcomes; Organization & Branches for Branch validity/default; Academic Groups and Lesson Delivery for archive blockers/profile facts; Scheduling and Student Information for workload/count projections; Audit & History for audit recording.
 - **Downstream contexts:** Academic Groups, Scheduling, Lesson Delivery, Attendance, Lesson Finance & Payroll, and Reporting consume Teacher references or approved projections.
-- **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at provider boundaries; published language for future Teacher reference/status contracts; an outer compatibility Application coordinator for cross-context lifecycle/profile composition.
-- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) fixes context authority/direction and [WF-PRE-08](workforce-table-ownership-access.md) fixes exact table access/transition. Contract signatures, focused ports, consistency/compensation, events, tests, and migration routing remain WF-PRE-09 through WF-PRE-14.
+- **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at provider boundaries; the approved `TeacherReferenceV1` published language; an outer compatibility Application coordinator for cross-context lifecycle/profile composition.
+- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) fixes context authority/direction, [WF-PRE-08](workforce-table-ownership-access.md) fixes exact table access/transition, and [WF-PRE-09](workforce-public-application-contracts.md) fixes public Application signatures/DTOs/errors. Focused ports, consistency/compensation, events, tests, and migration routing remain WF-PRE-10 through WF-PRE-14.
 
 No target code module currently exists. The bounded context is implemented across legacy technical layers and cross-context SQL. The future directory will implement this bounded context; the directory itself will not define or expand it.
 
 ## Public API
 
-The table accounts for required application capabilities. Names are stable capability identifiers for this definition, not approved JavaScript class or method signatures. WF-PRE-05 froze the legacy transport contract in the [Workforce Contract Freeze](workforce-contract-freeze.md); WF-PRE-09 still owns exact Application DTOs, errors, and facade signatures.
+The table accounts for required application capabilities. WF-PRE-05 froze the legacy transport contract in the [Workforce Contract Freeze](workforce-contract-freeze.md); WF-PRE-09 subsequently approved exact Application method signatures, DTOs, errors, authorization contexts, and idempotency in [Workforce Public Application Contracts](workforce-public-application-contracts.md).
 
 | Operation/contract | Type | Input | Output | Authorization | Compatibility owner |
 |---|---|---|---|---|---|
@@ -94,7 +94,7 @@ The table accounts for required application capabilities. Names are stable capab
 | Delete Working Hour | Command | Actor context and Working Hour ID | Deleted working-hour summary | Admin only | Workforce Module Owner |
 | Teacher Reference/Status | Query contract | Tenant and Teacher ID | Minimum approved Teacher reference/status | Approved in-process consumers only | Workforce Module Owner |
 
-The Teacher reference/status contract is required but not yet defined; WF-PRE-09 remains blocking. In the target source tree, only the declared Workforce public facade/contract package may be imported by another module. `domain/`, `application/`, `infrastructure/`, `http/`, adapter, mapper, and repository implementation packages are private.
+WF-PRE-09 defines the sole downstream contract as `TeacherReferenceApplicationV1.getTeacherReference`, returning exactly `tenantId`, `teacherId`, `displayName`, `status`, and `branchId`. In the target source tree, only the declared Workforce public facade/contract package may be imported by another module. `domain/`, `application/`, `infrastructure/`, `http/`, adapter, mapper, and repository implementation packages are private.
 
 ## Use Cases
 
@@ -292,7 +292,7 @@ Current objective commands are `npm run test:backend` and `npm run architecture:
 | Canary scope | None |
 | Rollback trigger and path | Not approved; legacy remains sole active path |
 | Legacy removal criterion | Approved cutover, observation, zero-use, reconciliation, rollback-window closure, and Legacy Retirement Gate |
-| Blocking decisions | WF-PRE-09 through WF-PRE-14 and final WF-PRE-16 |
+| Blocking decisions | WF-PRE-10 through WF-PRE-14 and final WF-PRE-16 |
 
 Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not authorized by this definition.
 
@@ -304,7 +304,7 @@ Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not author
 | Approve behavior/test matrix | Approved 81-row inventory; automation gaps remain assigned to WF-PRE-13 | [WF-PRE-06](workforce-behavior-matrix.md) | Quality/Module Owner | Completed |
 | Decide cross-context seams | Seven seams and outer acyclic coordination approved | [WF-PRE-07](workforce-bounded-context-seams.md) | Architecture/affected owners | Completed |
 | Approve access manifest | Exact operation/table/verb/owner/transition manifest; zero target exceptions | [WF-PRE-08](workforce-table-ownership-access.md) | Data/Architecture | Completed |
-| Approve public Application contracts | No Workforce facade/reference contract exists | WF-PRE-09 | Module Owner/consumers | Open |
+| Approve public Application contracts | Two exact public surfaces, 10/10 compatibility contracts, and one minimal Teacher reference query approved | [WF-PRE-09](workforce-public-application-contracts.md) | Module Owner/consumers | Completed |
 | Approve focused ports | Current `AppRepository` is broad | WF-PRE-10 | Architecture/Module Owner | Open |
 | Approve consistency model | Teacher/Identity operations span authority | WF-PRE-11 | Architecture/Data/Security | Open |
 | Decide event requirements | No event or evidenced async need is approved | WF-PRE-12 | Architecture/consumers | Open |
@@ -319,7 +319,7 @@ Future work is preparation, not a feature or extraction commitment.
 | Gate | Decision | Approver | Date | Evidence/actions |
 |---|---|---|---|---|
 | Module Definition Completeness | Passed | Sukhrob Khaydarov, Architecture Owner and Workforce Module Owner | 2026-07-23 | Every mandatory template section is present; current/target/open states and owners are explicit |
-| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-09 through WF-PRE-14 and WF-PRE-16 remain blocking |
+| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-10 through WF-PRE-14 and WF-PRE-16 remain blocking |
 | Migration Cutover | Pending | Architecture, Data, Operations, Security, and Module Owner roles | 2026-07-23 | No target path, parity, cohort, thresholds, or rollback drill |
 | Legacy Retirement | Pending | Architecture, Data, and Module Owner roles | 2026-07-23 | No migration or zero-use/observation evidence |
 
@@ -327,4 +327,4 @@ Future work is preparation, not a feature or extraction commitment.
 
 **WF-PRE-04: PASSED — module definition completeness only.**
 
-The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 subsequently froze the current transport contract, WF-PRE-06 approved the behavior/test inventory, WF-PRE-07 approved bounded-context seams, and WF-PRE-08 approved exact table access. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-09.
+The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 subsequently froze the current transport contract, WF-PRE-06 approved the behavior/test inventory, WF-PRE-07 approved bounded-context seams, WF-PRE-08 approved exact table access, and WF-PRE-09 approved public Application contracts. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-10.

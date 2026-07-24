@@ -65,7 +65,7 @@ This matters because a mutation such as create/restore can read several foreign 
 | Legacy SQL | Allowed only on the frozen legacy path |
 | Temporary target exception | None approved |
 
-Exact contract and port signatures remain WF-PRE-09 and WF-PRE-10. This decision fixes authority and permitted access, not implementation names.
+WF-PRE-09 subsequently fixes public Application contract signatures; focused owned/provider port signatures remain WF-PRE-10. This decision fixes authority and permitted access, not implementation names.
 
 ## Exact Table Inventory
 
@@ -159,9 +159,9 @@ These are exact current facts. They do not approve the same weaknesses for targe
 | Risk | Finding | Required treatment |
 |---|---|---|
 | WF-ACCESS-RISK-01 | Legacy transaction writes Workforce and Identity tables | WF-PRE-11 ordering/compensation/retry/reconciliation |
-| WF-ACCESS-RISK-02 | Broad `teachers()` projection couples mutations/reads to five foreign contexts | WF-SEAM-06 plus focused WF-PRE-09/10 reads |
+| WF-ACCESS-RISK-02 | Broad `teachers()` projection couples mutations/reads to five foreign contexts | WF-SEAM-06 plus approved WF-PRE-09 Application DTOs and focused WF-PRE-10 reads |
 | WF-ACCESS-RISK-03 | Session deletes lack tenant predicate | Identity contract and WF-PRE-13 tenant/fan-out tests |
-| WF-ACCESS-RISK-04 | Working Hour Branch is unvalidated and has no FK | WF-PRE-09/13 compatibility-remediation |
+| WF-ACCESS-RISK-04 | Working Hour Branch is unvalidated and has no FK | WF-PRE-09 target contract approved; WF-PRE-13 compatibility-remediation tests remain |
 | WF-ACCESS-RISK-05 | Audit writes foreign table after business persistence | WF-PRE-11/12 durable handoff/response decision |
 
 The risks block extraction where applicable; they do not change the ownership result.
@@ -211,4 +211,4 @@ This verifies decision completeness. It does not authorize target code, schema c
 
 Every direct and schema-only table dependency is exact, owner-approved, operation-mapped, deny-by-default, and assigned to either a focused Workforce port or a foreign provider contract. No foreign direct target access and no temporary exception are approved.
 
-The next ordered prerequisite is WF-PRE-09: define exact public Workforce Application commands, queries, DTOs, errors, authorization context, idempotency expectations, and downstream Teacher reference/status contract.
+WF-PRE-09 subsequently approved the [exact public Workforce Application contracts](workforce-public-application-contracts.md). The next ordered prerequisite is WF-PRE-10: define focused ports.

@@ -1,0 +1,674 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-09",
+  "status": "approved",
+  "contractSetId": "workforce-application-2026-07-24.1",
+  "contractVersion": "1.0.0",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "f24eadeef9829b2aaa6e46779f56ca2c04d21acf",
+  "sourceFingerprints": {
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712",
+    "architecture/workforce-behavior-matrix.json": "84b7206ae682fe417b7f2b2f6314591b46bc56768e4a6b8de54148982dbcfc2d",
+    "architecture/workforce-context-seams.json": "b4c6754e09a3cb4cda19522f2fe3d13270e5f9fdfb480259743f0e312a17d5ae",
+    "architecture/workforce-table-access-manifest.json": "b5ee0a38035c7f4b7a02b0724829e17b6e3d4044ee42c7d35a848bcb4fd5d298",
+    "docs/architecture/module-dependencies.md": "8f509d9a2d92109d8aa10ba2a79f9cce1a33a46a00807de2b54d93053bc60337",
+    "src/services/appService.js": "09189d9a6592edd188178a59a7e0e782b1d4498a32745a0a0d5f17bad8c65dc2"
+  },
+  "contractPolicy": {
+    "publicBoundary": "Only contracts declared in this manifest are public. Domain entities, repositories, infrastructure models, provider internals, and HTTP request objects are private.",
+    "compatibilityFacade": "The existing Workforce HTTP adapter invokes WorkforceCompatibilityApplicationV1 and maps its typed result/error to the frozen unversioned HTTP contract.",
+    "coordinationPlacement": "WorkforceCompatibilityApplicationV1 is an outer Application coordinator assembled by Bootstrap; it owns workflow and compatibility composition but no provider data.",
+    "canonicalInput": "The HTTP adapter resolves transport aliases, JavaScript coercion, ignored bodies, and legacy defaults before calling the canonical Application contract.",
+    "authorization": "Application authorization is mandatory and is re-evaluated from verified WorkforceActorContextV1; HTTP prechecks are defense in depth, not the authorization owner.",
+    "tenantIsolation": "Every public call carries an explicit verified tenantId. Caller-supplied DTO fields cannot override tenant or actor identity.",
+    "errorModel": "Expected policy, validation, not-found, and conflict outcomes use the closed semantic error unions declared per contract. Unknown failures use the technical error union.",
+    "httpStability": "No runtime route, request, response, status, ordering, or current persistence behavior is changed by this decision.",
+    "noEntityLeak": "Public DTOs are immutable snapshots and never expose mutable Domain entities or provider-owned records."
+  },
+  "surfaces": [
+    {
+      "name": "WorkforceCompatibilityApplicationV1",
+      "visibility": "public-to-http-adapter",
+      "consumer": "Existing Workforce HTTP compatibility adapter",
+      "contextType": "WorkforceActorContextV1",
+      "contractIds": [
+        "WF-APP-01",
+        "WF-APP-02",
+        "WF-APP-03",
+        "WF-APP-04",
+        "WF-APP-05",
+        "WF-APP-06",
+        "WF-APP-07",
+        "WF-APP-08",
+        "WF-APP-09",
+        "WF-APP-10"
+      ]
+    },
+    {
+      "name": "TeacherReferenceApplicationV1",
+      "visibility": "public-to-approved-modules",
+      "consumer": "Academic Groups, Scheduling, Lesson Delivery, Attendance, Lesson Finance & Payroll, Reporting/Export",
+      "contextType": "WorkforceServiceContextV1",
+      "contractIds": [
+        "WF-REF-01"
+      ]
+    }
+  ],
+  "contextTypes": {
+    "WorkforceActorContextV1": {
+      "fields": [
+        "tenantId",
+        "actorUserId",
+        "role",
+        "permissions",
+        "correlationId"
+      ],
+      "fieldTypes": {
+        "tenantId": "string",
+        "actorUserId": "string",
+        "role": "admin|teacher",
+        "permissions": "readonly unique string[]",
+        "correlationId": "string"
+      },
+      "invariants": [
+        "Authentication is verified before construction",
+        "tenantId identifies an active tenant",
+        "role is the verified effective role, never request input",
+        "permissions are verified effective permissions, never request input",
+        "session, credential, full User, and tenant records are excluded"
+      ]
+    },
+    "WorkforceServiceContextV1": {
+      "fields": [
+        "tenantId",
+        "caller",
+        "correlationId"
+      ],
+      "fieldTypes": {
+        "tenantId": "string",
+        "caller": "WorkforceServiceCallerV1",
+        "correlationId": "string"
+      },
+      "callerValues": [
+        "workforce-compatibility-coordinator",
+        "academic-groups",
+        "scheduling",
+        "lesson-delivery",
+        "attendance",
+        "lesson-finance-payroll",
+        "reporting-export"
+      ],
+      "invariants": [
+        "Service identity and tenant scope are verified before construction",
+        "No human role, permission, session, or credential data is carried",
+        "Only allow-listed consumers may call TeacherReferenceApplicationV1"
+      ]
+    }
+  },
+  "inputTypes": {
+    "NoInputV1": {
+      "fields": []
+    },
+    "TeacherIdV1": {
+      "fields": ["teacherId"],
+      "fieldTypes": {
+        "teacherId": "non-empty string"
+      }
+    },
+    "WorkingHourIdV1": {
+      "fields": ["workingHourId"],
+      "fieldTypes": {
+        "workingHourId": "non-empty string"
+      }
+    },
+    "PortalAccessProvisionV1": {
+      "fields": ["username", "password"],
+      "fieldTypes": {
+        "username": "string",
+        "password": "secret string"
+      },
+      "rules": [
+        "username is 3 through 80 characters from the frozen allowed character set",
+        "password contains at least 8 characters",
+        "password is passed only to the Identity provider and is always redacted from logs, DTOs, and audit"
+      ]
+    },
+    "PortalAccessChangeV1": {
+      "fields": ["enabled", "username", "newPassword"],
+      "optionalFields": ["enabled", "username", "newPassword"],
+      "fieldTypes": {
+        "enabled": "boolean",
+        "username": "string",
+        "newPassword": "secret string"
+      },
+      "rules": [
+        "null means no access change",
+        "omitted members preserve the corresponding current intent",
+        "newPassword, when supplied, contains at least 8 characters and is Identity-only secret material"
+      ]
+    },
+    "CreateTeacherCommandV1": {
+      "fields": [
+        "profile",
+        "portalAccess"
+      ],
+      "fieldTypes": {
+        "profile": "TeacherCreateProfileV1",
+        "portalAccess": "PortalAccessProvisionV1|null"
+      }
+    },
+    "TeacherCreateProfileV1": {
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "specialization",
+        "employmentType",
+        "hiredAt",
+        "maxWeeklyMinutes",
+        "note",
+        "branchId"
+      ],
+      "fieldTypes": {
+        "name": "non-empty string",
+        "phone": "string",
+        "email": "string",
+        "specialization": "string",
+        "employmentType": "full_time|part_time|contract",
+        "hiredAt": "YYYY-MM-DD string|null",
+        "maxWeeklyMinutes": "integer 60..4800",
+        "note": "string",
+        "branchId": "string|null"
+      },
+      "rules": [
+        "All fields are present after transport normalization",
+        "branchId is an Organization-resolved active tenant Branch reference or null when no main/default Branch exists"
+      ]
+    },
+    "UpdateTeacherCommandV1": {
+      "fields": [
+        "teacherId",
+        "profile",
+        "portalAccessChange"
+      ],
+      "fieldTypes": {
+        "teacherId": "non-empty string",
+        "profile": "TeacherUpdateProfileV1",
+        "portalAccessChange": "PortalAccessChangeV1|null"
+      }
+    },
+    "TeacherUpdateProfileV1": {
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "specialization",
+        "note",
+        "employmentType",
+        "hiredAt",
+        "maxWeeklyMinutes",
+        "branchId"
+      ],
+      "requiredFields": [
+        "name",
+        "phone",
+        "email",
+        "specialization",
+        "note"
+      ],
+      "optionalFields": [
+        "employmentType",
+        "hiredAt",
+        "maxWeeklyMinutes",
+        "branchId"
+      ],
+      "fieldTypes": {
+        "name": "non-empty string",
+        "phone": "string",
+        "email": "string",
+        "specialization": "string",
+        "note": "string",
+        "employmentType": "full_time|part_time|contract",
+        "hiredAt": "YYYY-MM-DD string|null",
+        "maxWeeklyMinutes": "integer 60..4800",
+        "branchId": "non-empty string"
+      },
+      "rules": [
+        "Required fields are present after transport normalization; legacy omissions become empty strings before this boundary",
+        "Omitted optional fields preserve the current value",
+        "hiredAt null clears the date",
+        "branchId is Organization-resolved and cannot clear an existing Branch reference"
+      ]
+    },
+    "ResetTeacherPasswordCommandV1": {
+      "fields": ["teacherId", "newPassword"],
+      "fieldTypes": {
+        "teacherId": "non-empty string",
+        "newPassword": "secret string with minimum length 8"
+      },
+      "rules": [
+        "newPassword is passed only to Identity and is redacted from logs, DTOs, and audit"
+      ]
+    },
+    "CreateTeacherWorkingHourCommandV1": {
+      "fields": [
+        "teacherId",
+        "weekday",
+        "startTime",
+        "endTime",
+        "branchId"
+      ],
+      "fieldTypes": {
+        "teacherId": "non-empty string",
+        "weekday": "integer 1..7",
+        "startTime": "HH:mm string",
+        "endTime": "HH:mm string",
+        "branchId": "string|null"
+      },
+      "rules": [
+        "endTime is later than startTime",
+        "branchId is an Organization-resolved active tenant Branch reference or null when no main/default Branch exists",
+        "same-Teacher same-weekday intervals do not overlap"
+      ]
+    }
+  },
+  "outputTypes": {
+    "TeacherAdminViewV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "name", "phone", "email", "specialization",
+        "employmentType", "status", "hiredAt", "maxWeeklyMinutes", "weeklyMinutes",
+        "workloadPercent", "note", "createdAt", "groupsCount", "studentsCount",
+        "completedLessons", "hasAccess", "username", "accessStatus"
+      ],
+      "fieldTypeGroups": {
+        "string": [
+          "id", "tenantId", "branchId", "name", "phone", "email", "specialization",
+          "employmentType", "status", "hiredAt", "note", "createdAt", "username", "accessStatus"
+        ],
+        "integer": [
+          "maxWeeklyMinutes", "weeklyMinutes", "workloadPercent", "groupsCount",
+          "studentsCount", "completedLessons"
+        ],
+        "boolean": ["hasAccess"]
+      }
+    },
+    "TeacherSelfViewV1": {
+      "base": "TeacherAdminViewV1",
+      "omittedFields": ["username", "accessStatus"],
+      "retainedFields": ["hasAccess"]
+    },
+    "TeacherWorkingHourViewV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "teacherId", "teacherName", "weekday",
+        "startTime", "endTime", "createdAt"
+      ],
+      "fieldTypeGroups": {
+        "string": [
+          "id", "tenantId", "branchId", "teacherId", "teacherName", "weekday",
+          "startTime", "endTime", "createdAt"
+        ]
+      }
+    },
+    "TeacherProfileGroupAdminViewV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "name", "subject", "description", "level",
+        "teacherId", "teacherName", "room", "monthlyFee", "capacity", "startDate",
+        "endDate", "status", "color", "note", "archivedAt", "archiveReason",
+        "createdAt", "updatedAt", "active", "studentsCount", "occupancyPercent",
+        "schedulesCount", "scheduleSummary", "totalLessons", "plannedLessons",
+        "completedLessons", "cancelledLessons", "attendanceRate", "nextLessonDate"
+      ],
+      "fieldTypeGroups": {
+        "string": [
+          "id", "tenantId", "branchId", "name", "subject", "description", "level",
+          "teacherId", "teacherName", "room", "startDate", "endDate", "status",
+          "color", "note", "archivedAt", "archiveReason", "createdAt", "updatedAt",
+          "scheduleSummary", "nextLessonDate"
+        ],
+        "number": [
+          "monthlyFee", "capacity", "studentsCount", "occupancyPercent",
+          "schedulesCount", "totalLessons", "plannedLessons", "completedLessons",
+          "cancelledLessons", "attendanceRate"
+        ],
+        "boolean": ["active"]
+      }
+    },
+    "TeacherProfileGroupSelfViewV1": {
+      "base": "TeacherProfileGroupAdminViewV1",
+      "omittedFields": ["monthlyFee"]
+    },
+    "TeacherProfileLessonViewV1": {
+      "fields": [
+        "id", "tenantId", "branchId", "groupId", "scheduleId", "date", "time",
+        "startTime", "endTime", "occurrenceDate", "scheduleSeriesId", "occurrenceKey",
+        "overrideMask", "baseScheduleId", "baseScheduleVersion", "lessonType", "status",
+        "attendanceData", "attendanceVersion", "financialStatus", "financialVersion",
+        "version", "groupName", "subject", "roomId", "room", "teacherId",
+        "teacherName", "topic", "homework", "note", "cancelledReason",
+        "rescheduleReason", "createdBy", "createdAt", "updatedBy", "updatedAt",
+        "completedBy", "completedAt", "cancelledBy", "cancelledAt",
+        "financialReversedBy", "financialReversedAt", "financialReversalReason"
+      ],
+      "fieldTypeGroups": {
+        "string": [
+          "id", "tenantId", "branchId", "groupId", "date", "time", "startTime",
+          "endTime", "occurrenceDate", "scheduleSeriesId", "occurrenceKey",
+          "lessonType", "status", "financialStatus", "groupName", "subject",
+          "roomId", "room", "teacherId", "teacherName", "topic", "homework",
+          "note", "cancelledReason", "rescheduleReason", "createdBy", "createdAt",
+          "updatedBy", "updatedAt", "completedBy", "completedAt", "cancelledBy",
+          "cancelledAt", "financialReversedBy", "financialReversedAt",
+          "financialReversalReason"
+        ],
+        "integer": ["overrideMask", "attendanceVersion", "financialVersion", "version"],
+        "integer|null": ["scheduleId", "baseScheduleId", "baseScheduleVersion"],
+        "string|null": ["attendanceData"]
+      }
+    },
+    "TeacherDirectoryAdminResultV1": {
+      "fields": ["teachers"],
+      "fieldTypes": {"teachers": "readonly TeacherAdminViewV1[]"}
+    },
+    "TeacherDirectorySelfResultV1": {
+      "fields": ["teachers"],
+      "fieldTypes": {"teachers": "readonly TeacherSelfViewV1[] with length 0..1"}
+    },
+    "TeacherProfileAdminResultV1": {
+      "fields": ["teacher", "groups", "workingHours", "upcomingLessons"],
+      "fieldTypes": {
+        "teacher": "TeacherAdminViewV1",
+        "groups": "readonly TeacherProfileGroupAdminViewV1[]",
+        "workingHours": "readonly TeacherWorkingHourViewV1[]",
+        "upcomingLessons": "readonly TeacherProfileLessonViewV1[]"
+      }
+    },
+    "TeacherProfileSelfResultV1": {
+      "fields": ["teacher", "groups", "workingHours", "upcomingLessons"],
+      "fieldTypes": {
+        "teacher": "TeacherSelfViewV1",
+        "groups": "readonly TeacherProfileGroupSelfViewV1[]",
+        "workingHours": "readonly TeacherWorkingHourViewV1[]",
+        "upcomingLessons": "readonly TeacherProfileLessonViewV1[]"
+      }
+    },
+    "TeacherWorkingHoursResultV1": {
+      "fields": ["workingHours"],
+      "fieldTypes": {"workingHours": "readonly TeacherWorkingHourViewV1[]"}
+    },
+    "SuccessV1": {
+      "fields": ["success"],
+      "constants": {"success": true}
+    },
+    "TeacherReferenceV1": {
+      "fields": ["tenantId", "teacherId", "displayName", "status", "branchId"],
+      "fieldTypes": {
+        "tenantId": "string",
+        "teacherId": "string",
+        "displayName": "string",
+        "status": "active|inactive",
+        "branchId": "string|null"
+      },
+      "rules": [
+        "Both active and inactive Teachers are returned; the consuming context owns its eligibility rule",
+        "Contact, credential, workload, counts, Group, Lesson, schedule, attendance, and finance fields are forbidden"
+      ]
+    }
+  },
+  "semanticErrorCatalog": {
+    "ADMIN_REQUIRED": {"httpStatus": 403, "legacyMessage": "Admin role is required"},
+    "OWN_PROFILE_ONLY": {"httpStatus": 403, "legacyMessage": "Only own teacher profile is available"},
+    "PERMISSION_REQUIRED": {"httpStatus": 403, "legacyMessage": "Permission is required"},
+    "SERVICE_CALLER_FORBIDDEN": {"httpStatus": null, "legacyMessage": null},
+    "TEACHER_NOT_FOUND": {"httpStatus": 404, "legacyMessage": "Teacher not found"},
+    "PORTAL_ACCESS_NOT_CONFIGURED": {"httpStatus": 404, "legacyMessage": "Teacher portal access is not configured"},
+    "WORKING_HOUR_NOT_FOUND": {"httpStatus": 404, "legacyMessage": "Working hour not found"},
+    "USERNAME_CONFLICT": {"httpStatus": 409, "legacyMessage": "Username already exists"},
+    "ARCHIVE_BLOCKED": {"httpStatus": 409, "legacyMessage": "Teacher has active groups or upcoming lessons; reassign them before archiving"},
+    "WORKING_HOUR_OVERLAP": {"httpStatus": 409, "legacyMessage": "Working hours overlap with an existing interval"},
+    "NAME_REQUIRED": {"httpStatus": 422, "legacyMessage": "name is required"},
+    "USERNAME_INVALID": {"httpStatus": 422, "legacyMessage": "username is invalid"},
+    "PASSWORD_TOO_SHORT": {"httpStatus": 422, "legacyMessage": "password must contain at least 8 characters"},
+    "MAX_WEEKLY_MINUTES_OUT_OF_RANGE": {"httpStatus": 422, "legacyMessage": "maxWeeklyHours must be between 1 and 80"},
+    "EMAIL_INVALID": {"httpStatus": 422, "legacyMessage": "email is invalid"},
+    "EMPLOYMENT_TYPE_INVALID": {"httpStatus": 422, "legacyMessage": "employmentType is invalid"},
+    "HIRED_AT_INVALID": {"httpStatus": 422, "legacyMessage": "hiredAt is invalid"},
+    "BRANCH_INVALID": {"httpStatus": 422, "legacyMessage": "branchId is invalid"},
+    "RESTORE_BEFORE_ACCESS": {"httpStatus": 422, "legacyMessage": "Restore teacher before enabling portal access"},
+    "NEW_PASSWORD_REQUIRED": {"httpStatus": 422, "legacyMessage": "newPassword is required"},
+    "TEACHER_ID_REQUIRED": {"httpStatus": 422, "legacyMessage": "teacherId is required"},
+    "TEACHER_INACTIVE": {"httpStatus": 422, "legacyMessage": "Teacher is inactive"},
+    "START_TIME_REQUIRED": {"httpStatus": 422, "legacyMessage": "startTime is required"},
+    "START_TIME_INVALID": {"httpStatus": 422, "legacyMessage": "startTime is invalid"},
+    "END_TIME_REQUIRED": {"httpStatus": 422, "legacyMessage": "endTime is required"},
+    "END_TIME_INVALID": {"httpStatus": 422, "legacyMessage": "endTime is invalid"},
+    "END_NOT_AFTER_START": {"httpStatus": 422, "legacyMessage": "endTime must be after startTime"},
+    "WEEKDAY_INVALID": {"httpStatus": 422, "legacyMessage": "weekday is invalid"}
+  },
+  "technicalErrorUnion": [
+    {
+      "code": "WORKFORCE_UNAVAILABLE",
+      "retryable": true,
+      "httpStatus": 500,
+      "rule": "A required provider or owned adapter is temporarily unavailable; no partial success DTO is returned"
+    },
+    {
+      "code": "WORKFORCE_FAILURE",
+      "retryable": false,
+      "httpStatus": 500,
+      "rule": "An unclassified internal failure occurred; internal cause is not exposed"
+    }
+  ],
+  "transportBoundaryErrors": [
+    {"status": 400, "owner": "HTTP compatibility adapter", "condition": "Malformed URL or invalid JSON"},
+    {"status": 401, "owner": "Authentication middleware", "condition": "Missing, invalid, or expired session"},
+    {"status": 403, "owner": "Tenant context middleware", "condition": "Tenant context is missing"},
+    {"status": 403, "owner": "Tenant context middleware", "condition": "Tenant is suspended"},
+    {"status": 413, "owner": "HTTP compatibility adapter", "condition": "Consumed request body exceeds 1000000 characters"}
+  ],
+  "contracts": [
+    {
+      "id": "WF-APP-01",
+      "legacyOperationId": "WF-HTTP-01",
+      "kind": "query",
+      "method": "listTeachers",
+      "signature": "listTeachers(context: WorkforceActorContextV1, input: NoInputV1): Result<TeacherDirectoryAdminResultV1|TeacherDirectorySelfResultV1, never|WorkforceTechnicalErrorV1>",
+      "inputType": "NoInputV1",
+      "outputTypes": ["TeacherDirectoryAdminResultV1", "TeacherDirectorySelfResultV1"],
+      "authorization": {"owner": "Application", "roles": ["admin", "teacher"], "scope": "Admin tenant-wide; Teacher self-only"},
+      "semanticErrors": [],
+      "ordering": "active before inactive, then SQLite-compatible name ordering",
+      "seamIds": ["WF-SEAM-06"],
+      "idempotency": {"classification": "safe-query", "keyAccepted": false, "automaticRetry": true}
+    },
+    {
+      "id": "WF-APP-02",
+      "legacyOperationId": "WF-HTTP-02",
+      "kind": "query",
+      "method": "getTeacherProfile",
+      "signature": "getTeacherProfile(context: WorkforceActorContextV1, input: TeacherIdV1): Result<TeacherProfileAdminResultV1|TeacherProfileSelfResultV1, OWN_PROFILE_ONLY|TEACHER_NOT_FOUND|WorkforceTechnicalErrorV1>",
+      "inputType": "TeacherIdV1",
+      "outputTypes": ["TeacherProfileAdminResultV1", "TeacherProfileSelfResultV1"],
+      "authorization": {"owner": "Application", "roles": ["admin", "teacher"], "scope": "Admin tenant Teacher; Teacher only when teacherId equals actorUserId"},
+      "semanticErrors": ["OWN_PROFILE_ONLY", "TEACHER_NOT_FOUND"],
+      "ordering": "Groups active descending then name; hours by Teacher name/numeric weekday/startTime; upcoming Lessons by date/time, maximum 20",
+      "seamIds": ["WF-SEAM-06"],
+      "idempotency": {"classification": "safe-query", "keyAccepted": false, "automaticRetry": true}
+    },
+    {
+      "id": "WF-APP-03",
+      "legacyOperationId": "WF-HTTP-03",
+      "kind": "command",
+      "method": "createTeacher",
+      "signature": "createTeacher(context: WorkforceActorContextV1, command: CreateTeacherCommandV1): Result<TeacherAdminViewV1, CreateTeacherErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "CreateTeacherCommandV1",
+      "outputTypes": ["TeacherAdminViewV1"],
+      "authorization": {"owner": "Application", "roles": ["admin"], "scope": "Active tenant"},
+      "semanticErrors": ["ADMIN_REQUIRED", "USERNAME_CONFLICT", "NAME_REQUIRED", "USERNAME_INVALID", "PASSWORD_TOO_SHORT", "MAX_WEEKLY_MINUTES_OUT_OF_RANGE", "EMAIL_INVALID", "EMPLOYMENT_TYPE_INVALID", "HIRED_AT_INVALID", "BRANCH_INVALID"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-01", "WF-SEAM-03", "WF-SEAM-07"],
+      "idempotency": {"classification": "non-idempotent-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-APP-04",
+      "legacyOperationId": "WF-HTTP-04",
+      "kind": "command",
+      "method": "updateTeacher",
+      "signature": "updateTeacher(context: WorkforceActorContextV1, command: UpdateTeacherCommandV1): Result<TeacherAdminViewV1, UpdateTeacherErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "UpdateTeacherCommandV1",
+      "outputTypes": ["TeacherAdminViewV1"],
+      "authorization": {"owner": "Application", "roles": ["admin"], "scope": "Active tenant"},
+      "semanticErrors": ["ADMIN_REQUIRED", "TEACHER_NOT_FOUND", "USERNAME_CONFLICT", "NAME_REQUIRED", "RESTORE_BEFORE_ACCESS", "USERNAME_INVALID", "PASSWORD_TOO_SHORT", "MAX_WEEKLY_MINUTES_OUT_OF_RANGE", "EMAIL_INVALID", "EMPLOYMENT_TYPE_INVALID", "HIRED_AT_INVALID", "BRANCH_INVALID"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-01", "WF-SEAM-03", "WF-SEAM-07"],
+      "idempotency": {"classification": "state-setting-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-APP-05",
+      "legacyOperationId": "WF-HTTP-05",
+      "kind": "command",
+      "method": "archiveTeacher",
+      "signature": "archiveTeacher(context: WorkforceActorContextV1, input: TeacherIdV1): Result<TeacherAdminViewV1, ArchiveTeacherErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "TeacherIdV1",
+      "outputTypes": ["TeacherAdminViewV1"],
+      "authorization": {"owner": "Application", "roles": ["admin"], "scope": "Active tenant"},
+      "semanticErrors": ["ADMIN_REQUIRED", "TEACHER_NOT_FOUND", "ARCHIVE_BLOCKED"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-01", "WF-SEAM-04", "WF-SEAM-05", "WF-SEAM-07"],
+      "idempotency": {"classification": "state-transition-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-APP-06",
+      "legacyOperationId": "WF-HTTP-06",
+      "kind": "command",
+      "method": "restoreTeacher",
+      "signature": "restoreTeacher(context: WorkforceActorContextV1, input: TeacherIdV1): Result<TeacherAdminViewV1, RestoreTeacherErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "TeacherIdV1",
+      "outputTypes": ["TeacherAdminViewV1"],
+      "authorization": {"owner": "Application", "roles": ["admin"], "scope": "Active tenant"},
+      "semanticErrors": ["ADMIN_REQUIRED", "TEACHER_NOT_FOUND"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-07"],
+      "idempotency": {"classification": "state-setting-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-APP-07",
+      "legacyOperationId": "WF-HTTP-07",
+      "kind": "command",
+      "method": "resetTeacherPassword",
+      "signature": "resetTeacherPassword(context: WorkforceActorContextV1, command: ResetTeacherPasswordCommandV1): Result<SuccessV1, ResetTeacherPasswordErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "ResetTeacherPasswordCommandV1",
+      "outputTypes": ["SuccessV1"],
+      "authorization": {"owner": "Application", "roles": ["admin"], "scope": "Active tenant"},
+      "semanticErrors": ["ADMIN_REQUIRED", "PORTAL_ACCESS_NOT_CONFIGURED", "NEW_PASSWORD_REQUIRED", "PASSWORD_TOO_SHORT"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-02", "WF-SEAM-07"],
+      "idempotency": {"classification": "credential-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-APP-08",
+      "legacyOperationId": "WF-HTTP-08",
+      "kind": "query",
+      "method": "listTeacherWorkingHours",
+      "signature": "listTeacherWorkingHours(context: WorkforceActorContextV1, input: NoInputV1): Result<TeacherWorkingHoursResultV1, never|WorkforceTechnicalErrorV1>",
+      "inputType": "NoInputV1",
+      "outputTypes": ["TeacherWorkingHoursResultV1"],
+      "authorization": {"owner": "Application", "roles": ["admin", "teacher"], "scope": "Admin tenant-wide; Teacher self-only"},
+      "semanticErrors": [],
+      "ordering": "Teacher name, numeric weekday, then startTime",
+      "seamIds": [],
+      "idempotency": {"classification": "safe-query", "keyAccepted": false, "automaticRetry": true}
+    },
+    {
+      "id": "WF-APP-09",
+      "legacyOperationId": "WF-HTTP-09",
+      "kind": "command",
+      "method": "createTeacherWorkingHour",
+      "signature": "createTeacherWorkingHour(context: WorkforceActorContextV1, command: CreateTeacherWorkingHourCommandV1): Result<TeacherWorkingHourViewV1, CreateTeacherWorkingHourErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "CreateTeacherWorkingHourCommandV1",
+      "outputTypes": ["TeacherWorkingHourViewV1"],
+      "authorization": {"owner": "Application", "permissions": ["lessons.manage"], "scope": "Active tenant"},
+      "semanticErrors": ["PERMISSION_REQUIRED", "TEACHER_NOT_FOUND", "WORKING_HOUR_OVERLAP", "TEACHER_ID_REQUIRED", "TEACHER_INACTIVE", "START_TIME_REQUIRED", "START_TIME_INVALID", "END_TIME_REQUIRED", "END_TIME_INVALID", "END_NOT_AFTER_START", "WEEKDAY_INVALID", "BRANCH_INVALID"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-03", "WF-SEAM-07"],
+      "idempotency": {"classification": "non-idempotent-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-APP-10",
+      "legacyOperationId": "WF-HTTP-10",
+      "kind": "command",
+      "method": "deleteTeacherWorkingHour",
+      "signature": "deleteTeacherWorkingHour(context: WorkforceActorContextV1, input: WorkingHourIdV1): Result<TeacherWorkingHourViewV1, DeleteTeacherWorkingHourErrorV1|WorkforceTechnicalErrorV1>",
+      "inputType": "WorkingHourIdV1",
+      "outputTypes": ["TeacherWorkingHourViewV1"],
+      "authorization": {"owner": "Application", "roles": ["admin"], "scope": "Active tenant"},
+      "semanticErrors": ["ADMIN_REQUIRED", "WORKING_HOUR_NOT_FOUND"],
+      "ordering": "Not applicable",
+      "seamIds": ["WF-SEAM-07"],
+      "idempotency": {"classification": "state-transition-command", "keyAccepted": false, "automaticRetry": false}
+    },
+    {
+      "id": "WF-REF-01",
+      "kind": "query",
+      "method": "getTeacherReference",
+      "signature": "getTeacherReference(context: WorkforceServiceContextV1, input: TeacherIdV1): Result<TeacherReferenceV1, SERVICE_CALLER_FORBIDDEN|TEACHER_NOT_FOUND|WorkforceTechnicalErrorV1>",
+      "inputType": "TeacherIdV1",
+      "outputTypes": ["TeacherReferenceV1"],
+      "authorization": {"owner": "Application", "serviceCallers": ["academic-groups", "scheduling", "lesson-delivery", "attendance", "lesson-finance-payroll", "reporting-export", "workforce-compatibility-coordinator"], "scope": "Exact tenant only"},
+      "semanticErrors": ["SERVICE_CALLER_FORBIDDEN", "TEACHER_NOT_FOUND"],
+      "ordering": "Not applicable",
+      "seamIds": [],
+      "idempotency": {"classification": "safe-query", "keyAccepted": false, "automaticRetry": true}
+    }
+  ],
+  "intentionalTargetDeltas": [
+    {
+      "id": "WF-APP-DELTA-01",
+      "operationId": "WF-APP-09",
+      "legacyRiskId": "WF-SEAM-RISK-01",
+      "decision": "An explicit Working Hour branchId must resolve to an active Branch in the same tenant; invalid input returns BRANCH_INVALID.",
+      "legacyBehavior": "The current operation accepts an explicit branchId without validation.",
+      "runtimeEffectNow": "None; legacy HTTP/runtime remains unchanged.",
+      "activationGate": "WF-PRE-13 must approve characterization and target-remediation assertions before target routing.",
+      "rollbackRule": "Do not route WF-HTTP-09 to the target until the approved test distinguishes frozen legacy behavior from the remediated target."
+    },
+    {
+      "id": "WF-APP-DELTA-02",
+      "operationId": "WF-APP-02",
+      "legacyRiskId": "WF-CONTRACT-RISK-01",
+      "decision": "Teacher self profile omits Group monthlyFee; Admin retains it.",
+      "legacyBehavior": "Current profile projection exposes monthlyFee to Teacher self.",
+      "runtimeEffectNow": "None; legacy HTTP/runtime remains unchanged.",
+      "activationGate": "WF-PRE-13 WFT-PROFILE-006/007 must preserve characterization and approve target privacy remediation before target routing.",
+      "rollbackRule": "Do not route Teacher self profile to the target until role-sensitive projection tests pass."
+    }
+  ],
+  "explicitNonContracts": [
+    "HTTP request/response objects and transport aliases are not Application DTOs",
+    "Domain entities and value objects are not public DTOs",
+    "Provider-owned Identity, Branch, Group, Schedule, Lesson, Student, and Audit models are not Workforce contracts",
+    "TeacherReferenceV1 is not an eligibility, scheduling, payroll, authentication, or authorization decision",
+    "No generic repository, generic query, database row, SQL, transaction, or event contract is approved",
+    "No command accepts an idempotency key or promises automatic retry"
+  ],
+  "deferredDecisions": {
+    "WF-PRE-10": "Exact focused outbound provider and owned persistence port signatures/adapters",
+    "WF-PRE-11": "Cross-provider ordering, atomicity, durable handoff, compensation, retry, reconciliation, and stronger idempotency",
+    "WF-PRE-12": "Whether any synchronous contract is complemented or superseded by a versioned integration event",
+    "WF-PRE-13": "Executable contract/parity/tenant/privacy/remediation tests and routing thresholds",
+    "WF-PRE-14": "Migration increments, cohort, rollback, observation, and retirement runbook"
+  },
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Product Authority", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Organization & Branches Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Academic Groups Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Scheduling Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Delivery Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Attendance Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Finance & Payroll Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

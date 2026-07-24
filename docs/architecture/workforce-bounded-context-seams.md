@@ -131,7 +131,7 @@ Organization & Branches is the sole authority for:
 
 Workforce persists only the resolved `BranchId` reference. It must not query `branches`, infer the main Branch, or treat Identity Branch grants as business-validity evidence.
 
-`WF-SEAM-RISK-01` remains blocking: current Working Hour creation accepts an explicit `branchId` without validation. The target must not silently preserve that defect or directly query the Branch table. WF-PRE-08 subsequently prohibited direct access; WF-PRE-09/13 must approve the compatibility/remediation contract and tests before Working Hour target routing.
+`WF-SEAM-RISK-01` remains blocking for routing: current Working Hour creation accepts an explicit `branchId` without validation. WF-PRE-08 prohibited direct access and WF-PRE-09 approved target `BRANCH_INVALID` remediation; WF-PRE-13 must still approve legacy characterization and target-remediation tests before Working Hour target routing.
 
 ## Archive-Blocker Seams
 
@@ -216,7 +216,7 @@ No temporary target exception is approved. Frozen legacy SQL remains visible deb
 
 | Risk | Severity | Treatment owner |
 |---|---|---|
-| WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08 direct-access prohibition complete; WF-PRE-09/13 compatibility/remediation remains |
+| WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08 direct-access prohibition and WF-PRE-09 target contract complete; WF-PRE-13 executable compatibility/remediation remains |
 | WF-CONTRACT-RISK-01: Teacher self-profile can expose `monthlyFee` | High | Security-approved target omission and parity evidence |
 | WF-SEAM-RISK-02: Teacher/Identity share a legacy transaction | High | WF-PRE-11 consistency model |
 | WF-SEAM-RISK-03: audit can fail after state commits | High | WF-PRE-11/12 durable handoff/response semantics |
@@ -225,10 +225,10 @@ These risks do not invalidate the seam ownership decision. They block extraction
 
 ## Deferred Decisions
 
-WF-PRE-07 does not pre-empt:
+WF-PRE-07 did not pre-empt the ordered decisions below; WF-PRE-08 and WF-PRE-09 have since passed:
 
-- WF-PRE-08 exact table access and temporary compatibility exceptions;
-- WF-PRE-09 exact public commands, queries, DTOs, errors, and Teacher-reference contract;
+- WF-PRE-08 exact table access and temporary compatibility exceptions — completed;
+- WF-PRE-09 exact public commands, queries, DTOs, errors, and Teacher-reference contract — completed;
 - WF-PRE-10 exact focused ports/adapters;
 - WF-PRE-11 transaction ordering, atomicity, compensation, retry, idempotency, and reconciliation;
 - WF-PRE-12 event need/version/delivery;
@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-WF-PRE-08 subsequently approved the [exact Workforce table ownership/access manifest](workforce-table-ownership-access.md) with zero target exceptions. The next ordered prerequisite is WF-PRE-09: define exact public Workforce Application contracts.
+WF-PRE-08 subsequently approved the [exact Workforce table ownership/access manifest](workforce-table-ownership-access.md) with zero target exceptions, and WF-PRE-09 approved [exact public Application contracts](workforce-public-application-contracts.md). The next ordered prerequisite is WF-PRE-10: define focused ports.
