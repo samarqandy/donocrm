@@ -78,10 +78,10 @@ Candidate: Workforce
 - [x] The existing Teacher Management scenario passes unchanged.
 - [x] Full approved backend, smoke, hardening, and architecture baselines pass from a clean test environment.
 - [x] The approved [WF-PRE-06 behavior matrix](workforce-behavior-matrix.md) covers each of the ten use-case candidates for authorized success and applicable validation, authorization, not-found, conflict, tenant, infrastructure, and invariant behavior; missing automation remains explicit.
-- [ ] Two-tenant isolation cases exist for every planned query and mutation.
-- [ ] Repository/port contract tests are specified for every planned adapter.
-- [ ] Legacy-versus-target parity assertions and approved thresholds are documented.
-- [ ] Rollback and reconciliation test cases are documented.
+- [x] [WF-PRE-13](workforce-test-parity-plan.md) specifies exact two-tenant isolation cases across all 11 public contracts and all 18 focused ports, including same-ID collisions, provider calls, sessions, Audit intents, and DTOs.
+- [x] Shared repository/provider/system port contract suites are specified for all nine planned adapter groups, 18 ports, and 32 methods with fixtures, files, commands, expected results, owners, and activation gates.
+- [x] Legacy-versus-target parity covers all 11 contracts with zero semantic tolerance and exactly two governed delta IDs.
+- [x] Seven rollback/reconciliation cases cover `not_started`, `rolled_back`, `committed_unacknowledged`, unknown outcomes, Audit ambiguity, route fallback, and legacy-hold denial.
 
 **Pass measure:** 10/10 use cases have required behavior rows and zero unexplained baseline failures. No line-coverage percentage is invented because the repository has no approved coverage tool or threshold.
 

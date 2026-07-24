@@ -72,7 +72,7 @@ The capability exists in the current Teacher HTTP routes, `AppService` Teacher/w
 - **Upstream contexts:** Platform Administration & Tenancy for tenant context; Identity & Access for portal outcomes; Organization & Branches for Branch validity/default; Academic Groups and Lesson Delivery for archive blockers/profile facts; Scheduling and Student Information for workload/count projections; Audit & History for audit recording.
 - **Downstream contexts:** Academic Groups, Scheduling, Lesson Delivery, Attendance, Lesson Finance & Payroll, and Reporting consume Teacher references or approved projections.
 - **Context-map pattern:** customer/supplier for owned provider contracts; anti-corruption adapters at provider boundaries; the approved `TeacherReferenceV1` published language; an outer compatibility Application coordinator for cross-context lifecycle/profile composition.
-- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) fixes context authority/direction, [WF-PRE-08](workforce-table-ownership-access.md) fixes exact table access/transition, [WF-PRE-09](workforce-public-application-contracts.md) fixes public Application signatures/DTOs/errors, [WF-PRE-10](workforce-focused-ports.md) fixes focused port/adapter boundaries, [WF-PRE-11](workforce-transaction-consistency.md) fixes authority/atomicity/route admission, and [WF-PRE-12](workforce-event-requirements.md) fixes synchronous dependency and no-event/Audit delivery disposition. Tests and migration routing remain WF-PRE-13 and WF-PRE-14.
+- **Boundary uncertainties:** [WF-PRE-07](workforce-bounded-context-seams.md) fixes context authority/direction, [WF-PRE-08](workforce-table-ownership-access.md) fixes exact table access/transition, [WF-PRE-09](workforce-public-application-contracts.md) fixes public Application signatures/DTOs/errors, [WF-PRE-10](workforce-focused-ports.md) fixes focused port/adapter boundaries, [WF-PRE-11](workforce-transaction-consistency.md) fixes authority/atomicity/route admission, [WF-PRE-12](workforce-event-requirements.md) fixes synchronous dependency and no-event/Audit delivery disposition, and [WF-PRE-13](workforce-test-parity-plan.md) fixes executable test/parity specifications. Migration routing remains WF-PRE-14.
 
 No target code module currently exists. The bounded context is implemented across legacy technical layers and cross-context SQL. The future directory will implement this bounded context; the directory itself will not define or expand it.
 
@@ -119,8 +119,8 @@ These are approved target domain meanings; implementation and persistence-indepe
 
 | Entity/Aggregate Root | Identity | Lifecycle | Owned invariants | Persistence independence evidence |
 |---|---|---|---|---|
-| **Teacher (Aggregate Root)** | Tenant-scoped `TeacherId` | Created active; updated; archived to inactive; restored to active | Valid employment type/status; workload ceiling 60–4,800 minutes; required name; stable identity; portal state is not embedded | Target definition only; Domain tests required by WF-PRE-13 |
-| **TeacherWorkingHour (Aggregate Root)** | Tenant-scoped `WorkingHourId`, referencing `TeacherId` | Created and deleted | Weekday 1–7; normalized start/end; end after start; no overlap for same Teacher/weekday; creation only for active Teacher | Target definition only; Domain and repository contract tests required by WF-PRE-13 |
+| **Teacher (Aggregate Root)** | Tenant-scoped `TeacherId` | Created active; updated; archived to inactive; restored to active | Valid employment type/status; workload ceiling 60–4,800 minutes; required name; stable identity; portal state is not embedded | WF-PRE-13 suite/fixture/command approved; implementation remains missing before WF-EXT-03 |
+| **TeacherWorkingHour (Aggregate Root)** | Tenant-scoped `WorkingHourId`, referencing `TeacherId` | Created and deleted | Weekday 1–7; normalized start/end; end after start; no overlap for same Teacher/weekday; creation only for active Teacher | WF-PRE-13 Domain/repository/concurrency specifications approved; implementation remains missing |
 
 `BranchId`, tenant identity, Group IDs, Lesson IDs, User IDs, and consumer references are external identities, not Workforce entities.
 
@@ -150,15 +150,15 @@ Archive blocker evaluation and multi-context profile composition are outer Appli
 
 ## Repositories
 
-WF-PRE-10 approves the exact port division and signatures in [Workforce Focused Ports](workforce-focused-ports.md); WF-PRE-13 still supplies executable contract suites.
+WF-PRE-10 approves the exact port division and signatures in [Workforce Focused Ports](workforce-focused-ports.md); WF-PRE-13 subsequently supplies exact executable contract-suite specifications for all ports and adapter groups.
 
 | Port | Layer owning port | Aggregate/query | Required operations | Implementing adapters | Contract tests |
 |---|---|---|---|---|---|
-| `TeacherAggregateRepositoryV1` | Domain | Teacher aggregate | `findById`, `insert`, `replaceProfile`, `setStatus` | Target adapter absent; direct allowlist `teachers` | Missing; WF-PRE-13 |
-| `TeacherWorkingHourRepositoryV1` | Domain | TeacherWorkingHour aggregate | `list`, `findById`, `findOverlap`, `insert`, `deleteById` | Target adapter absent; direct allowlist `teacher_working_hours` | Missing; WF-PRE-13 |
-| `TeacherDirectoryBaseQueryV1` | Application | Workforce-owned Teacher facts | `listTenantBase`; outer coordinator composes keyed foreign projections | Target adapter absent; direct allowlist `teachers` | Missing; WF-PRE-13 |
-| `TeacherProfileBaseQueryV1` | Application | Workforce-owned Teacher facts | `getBaseProfile`; Working Hours and provider facts stay separate | Target adapter absent; direct allowlist `teachers` | Missing; WF-PRE-13 |
-| `TeacherReferenceQueryV1` | Application | Five-field Teacher reference | `getReference` for internal/public reference use | Target adapter absent; direct allowlist `teachers` | Missing; WF-PRE-13 |
+| `TeacherAggregateRepositoryV1` | Domain | Teacher aggregate | `findById`, `insert`, `replaceProfile`, `setStatus` | Target adapter absent; direct allowlist `teachers` | WF-PRE-13 shared contract specified; implementation missing |
+| `TeacherWorkingHourRepositoryV1` | Domain | TeacherWorkingHour aggregate | `list`, `findById`, `findOverlap`, `insert`, `deleteById` | Target adapter absent; direct allowlist `teacher_working_hours` | WF-PRE-13 shared contract specified; implementation missing |
+| `TeacherDirectoryBaseQueryV1` | Application | Workforce-owned Teacher facts | `listTenantBase`; outer coordinator composes keyed foreign projections | Target adapter absent; direct allowlist `teachers` | WF-PRE-13 shared contract specified; implementation missing |
+| `TeacherProfileBaseQueryV1` | Application | Workforce-owned Teacher facts | `getBaseProfile`; Working Hours and provider facts stay separate | Target adapter absent; direct allowlist `teachers` | WF-PRE-13 shared contract specified; implementation missing |
+| `TeacherReferenceQueryV1` | Application | Five-field Teacher reference | `getReference` for internal/public reference use | Target adapter absent; direct allowlist `teachers` | WF-PRE-13 shared contract specified; implementation missing |
 
 Identity, Branch, blocker/projection, Audit, clock, and ID capabilities are approved focused Application ports, not Workforce repositories. WF-PRE-11 approves provider-local atomic units and forbids a cross-context Unit of Work; no additional transaction port is approved. A single broad replacement for `AppRepository` is forbidden.
 
@@ -269,13 +269,13 @@ HTTP routes do not define ownership. ADR-008 remains Proposed, so no `/api/v1` r
 
 | Test type | Required behavior | Evidence/path | Status |
 |---|---|---|---|
-| Domain | Teacher lifecycle, value rules, interval validity/overlap | No Workforce Domain package/test | Missing; WF-PRE-13 |
+| Domain | Teacher lifecycle, value rules, interval validity/overlap | No Workforce Domain package/test | WF-PRE-13 specification approved; implementation missing before WF-EXT-03 |
 | Use case | Ten operations, authorization, semantic failures, provider failures | Current behavior is embedded in `scripts/test-backend-logic.js` | Partial legacy coverage; dedicated tests missing |
-| Repository contract | Equivalent SQLite/target adapter behavior | 18 focused ports approved; no adapters/tests | Missing; WF-PRE-13 |
+| Repository contract | Equivalent SQLite/target adapter behavior | 18 focused ports approved; no adapters/tests | WF-PRE-13 covers 18 ports/32 methods/nine adapters; implementation missing per activation gate |
 | Integration | Teacher/Identity transaction and SQLite behavior | Teacher Management scenario in `scripts/test-backend-logic.js` | Passing legacy characterization |
 | HTTP contract | Ten routes, DTO privacy, validation/errors | Teacher Management and RBAC scenarios; OpenAPI | Partial; exact matrix/comparison missing |
 | Tenant isolation | Two-tenant reads and cross-ID attempts for every operation | General repository JOIN scenario follows Teacher test | Partial; per-operation matrix missing |
-| Migration | Route parity, shadow comparison, authority, rollback/reconciliation | No Workforce migration harness/runbook | Missing; WF-PRE-13/14 |
+| Migration | Route parity, shadow comparison, authority, rollback/reconciliation | PRE-13 parity/rollback test specification approved; no migration harness/runbook | Runbook and rehearsal remain WF-PRE-14 |
 | End-to-end | Profile, access, workload, hours, archive, history | `scripts/test-backend-logic.js` Teacher Management scenario | Passing: `npm run test:backend` expects 20/20 |
 | Architecture | No legacy growth or forbidden module edges | `npm run architecture:enforce` and required CI check | Passing baseline; Workforce-specific checks missing |
 
@@ -293,7 +293,7 @@ Current objective commands are `npm run test:backend` and `npm run architecture:
 | Canary scope | None |
 | Rollback trigger and path | Not approved; legacy remains sole active path |
 | Legacy removal criterion | Approved cutover, observation, zero-use, reconciliation, rollback-window closure, and Legacy Retirement Gate |
-| Blocking decisions | WF-PRE-13, WF-PRE-14, and final WF-PRE-16 |
+| Blocking decisions | WF-PRE-14 and final WF-PRE-16 |
 
 Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not authorized by this definition.
 
@@ -302,14 +302,14 @@ Creating `src/modules/workforce/` is a future WF-EXT-01 action and is not author
 | Item | Reason/evidence | Dependency/decision | Priority authority | Status |
 |---|---|---|---|---|
 | Freeze ten HTTP/DTO/error/auth contracts | Current behavior and OpenAPI gaps are bound to an approved baseline | [WF-PRE-05](workforce-contract-freeze.md) | Product/Quality | Completed |
-| Approve behavior/test matrix | Approved 81-row inventory; automation gaps remain assigned to WF-PRE-13 | [WF-PRE-06](workforce-behavior-matrix.md) | Quality/Module Owner | Completed |
+| Approve behavior/test matrix | Approved 81-row inventory; WF-PRE-13 binds every applicable ID to an activation-gated executable suite while implementation gaps remain explicit | [WF-PRE-06](workforce-behavior-matrix.md); [WF-PRE-13](workforce-test-parity-plan.md) | Quality/Module Owner | Completed specification |
 | Decide cross-context seams | Seven seams and outer acyclic coordination approved | [WF-PRE-07](workforce-bounded-context-seams.md) | Architecture/affected owners | Completed |
 | Approve access manifest | Exact operation/table/verb/owner/transition manifest; zero target exceptions | [WF-PRE-08](workforce-table-ownership-access.md) | Data/Architecture | Completed |
 | Approve public Application contracts | Two exact public surfaces, 10/10 compatibility contracts, and one minimal Teacher reference query approved | [WF-PRE-09](workforce-public-application-contracts.md) | Module Owner/consumers | Completed |
 | Approve focused ports | 18 exact ports, 11/11 closures, nine adapter groups, two owned tables, zero foreign direct access | [WF-PRE-10](workforce-focused-ports.md) | Architecture/Module Owner | Completed |
 | Approve consistency model | 14 variants, five local atomic units, zero write-enabled, six Audit-blocked, four legacy-held | [WF-PRE-11](workforce-transaction-consistency.md) | Architecture/Data/Security | Completed |
 | Decide event requirements | 19/19 dependencies synchronous; zero event versions; mandatory synchronous Audit acceptance | [WF-PRE-12](workforce-event-requirements.md) | Architecture/consumers/Audit/Operations | Completed |
-| Approve test/parity plan | Port, tenant, parity, rollback evidence is missing | WF-PRE-13 | Quality | Open |
+| Approve test/parity plan | 10 suites, eight fixtures, 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 variants, 11 parity rows, seven rollback cases | [WF-PRE-13](workforce-test-parity-plan.md) | Quality/Module/Data/Security/Operations | Completed; implementation remains per extraction activation gate |
 | Approve migration/rollback runbook | No cohort, threshold, routing, reconciliation, or drill exists | WF-PRE-14 | Operations/Data/Architecture | Open |
 | Pass final exit criteria | Migration must remain unauthorized until every mandatory criterion passes | WF-PRE-16 | Architecture and specialist roles | Open |
 
@@ -320,7 +320,7 @@ Future work is preparation, not a feature or extraction commitment.
 | Gate | Decision | Approver | Date | Evidence/actions |
 |---|---|---|---|---|
 | Module Definition Completeness | Passed | Sukhrob Khaydarov, Architecture Owner and Workforce Module Owner | 2026-07-23 | Every mandatory template section is present; current/target/open states and owners are explicit |
-| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-13, WF-PRE-14, and WF-PRE-16 remain blocking |
+| Module Readiness | Failed | Sukhrob Khaydarov, Architecture Owner | 2026-07-24 | WF-PRE-14 and WF-PRE-16 remain blocking |
 | Migration Cutover | Pending | Architecture, Data, Operations, Security, and Module Owner roles | 2026-07-23 | No target path, parity, cohort, thresholds, or rollback drill |
 | Legacy Retirement | Pending | Architecture, Data, and Module Owner roles | 2026-07-23 | No migration or zero-use/observation evidence |
 
@@ -328,4 +328,4 @@ Future work is preparation, not a feature or extraction commitment.
 
 **WF-PRE-04: PASSED — module definition completeness only.**
 
-The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 through WF-PRE-12 subsequently approved transport freeze, behavior inventory, seams, table access, public contracts, focused ports, consistency, and event/Audit delivery disposition. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-13.
+The module definition is complete, evidence-linked, and owner-approved. WF-PRE-05 through WF-PRE-13 subsequently approved transport freeze, behavior inventory, seams, table access, public contracts, focused ports, consistency, event/Audit delivery, and executable test/parity specification. This decision does not pass Module Readiness or authorize source creation. The next ordered task is WF-PRE-14.

@@ -166,7 +166,7 @@ The machine manifest fixes the exact ordered port IDs for every row. A required 
 
 Teacher self removes `monthlyFee` only after complete composition. `TeacherProfileLessonViewV1` is an immutable Lesson Delivery compatibility projection. The verifier proves these fragments equal the exact PRE-09 output field sets without overlap or omission.
 
-Every batch count/access port returns exactly one keyed row for every requested ID, including explicit zero or not-granted values. Missing/duplicate keys fail composition. Group Scheduling/Lesson fragment values remain bound to frozen Teacher-profile compatibility semantics until WF-PRE-13 approves an explicit tested delta.
+Every batch count/access port returns exactly one keyed row for every requested ID, including explicit zero or not-granted values. Missing/duplicate keys fail composition. Group Scheduling/Lesson fragment values remain bound to frozen Teacher-profile compatibility semantics. WF-PRE-13 subsequently approves exact keyed-completeness and governed-delta assertions; they must pass before activation.
 
 ## Adapter Plan
 
@@ -176,7 +176,7 @@ Nine future adapter groups implement all 18 ports exactly once:
 - one anti-corruption adapter group per provider context;
 - one Bootstrap system adapter group for clock and IDs.
 
-This is a placement/contract plan, not implementation authorization. Adapter contract suites, failure injection, and two-tenant assertions remain WF-PRE-13.
+This is a placement/contract plan, not implementation authorization. WF-PRE-13 subsequently specifies adapter contract suites, failure injection, and two-tenant assertions for all nine groups; passing implementations remain required before activation.
 
 ## Broad-Port Prohibition
 
@@ -196,7 +196,7 @@ WF-PRE-10 does not approve:
 
 - local/cross-provider transaction boundaries, ordering, compensation, retry, reconciliation, and Unit-of-Work disposition — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md);
 - events, versions, publisher/subscriber, and Audit delivery — subsequently approved by [WF-PRE-12](workforce-event-requirements.md) with zero event contracts and synchronous mandatory Audit acceptance;
-- executable tests for every adapter/method, two-tenant isolation, parity, privacy/Branch deltas, and failure injection — WF-PRE-13;
+- executable tests for every adapter/method, two-tenant isolation, parity, privacy/Branch deltas, and failure injection — subsequently specified by [WF-PRE-13](workforce-test-parity-plan.md);
 - adapter activation, route cohort, thresholds, rollback, observation, or retirement — WF-PRE-14.
 
 ## Approval
@@ -209,4 +209,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 The exact focused port catalog covers all 11 PRE-09 Application contracts, both Workforce-owned tables, every foreign direct-access replacement, all seven PRE-07 seams, and nine future adapter groups without reproducing `AppRepository`. Module Readiness remains Failed and no extraction is authorized.
 
-WF-PRE-11 and WF-PRE-12 subsequently approved the [transaction and consistency model](workforce-transaction-consistency.md) and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.
+WF-PRE-11 through WF-PRE-13 subsequently approved the [transaction and consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14.

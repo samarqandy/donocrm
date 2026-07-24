@@ -131,7 +131,7 @@ Organization & Branches is the sole authority for:
 
 Workforce persists only the resolved `BranchId` reference. It must not query `branches`, infer the main Branch, or treat Identity Branch grants as business-validity evidence.
 
-`WF-SEAM-RISK-01` remains blocking for routing: current Working Hour creation accepts an explicit `branchId` without validation. WF-PRE-08 prohibited direct access and WF-PRE-09 approved target `BRANCH_INVALID` remediation; WF-PRE-13 must still approve legacy characterization and target-remediation tests before Working Hour target routing.
+`WF-SEAM-RISK-01` remains blocking for routing: current Working Hour creation accepts an explicit `branchId` without validation. WF-PRE-08 prohibited direct access, WF-PRE-09 approved target `BRANCH_INVALID` remediation, and WF-PRE-13 approved exact legacy-characterization/target-remediation assertions. Those assertions must pass before Working Hour target routing.
 
 ## Archive-Blocker Seams
 
@@ -216,7 +216,7 @@ No temporary target exception is approved. Frozen legacy SQL remains visible deb
 
 | Risk | Severity | Treatment owner |
 |---|---|---|
-| WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08 direct-access prohibition and WF-PRE-09 target contract complete; WF-PRE-13 executable compatibility/remediation remains |
+| WF-SEAM-RISK-01: Working Hour Branch is currently unvalidated | High | WF-PRE-08 direct-access prohibition, WF-PRE-09 target contract, and WF-PRE-13 executable compatibility/remediation specification complete; implementation must pass before activation |
 | WF-CONTRACT-RISK-01: Teacher self-profile can expose `monthlyFee` | High | Security-approved target omission and parity evidence |
 | WF-SEAM-RISK-02: Teacher/Identity share a legacy transaction | High | WF-PRE-11 keeps unsafe variants legacy-held; no target distributed transaction |
 | WF-SEAM-RISK-03: audit can fail after state commits | High | WF-PRE-12 approves synchronous required acceptance; failure remains `committed_unacknowledged`, never auto-retried, and requires WF-PRE-13/14 test/reconciliation evidence |
@@ -232,7 +232,7 @@ WF-PRE-07 did not pre-empt the ordered decisions below; WF-PRE-08 through WF-PRE
 - WF-PRE-10 exact focused ports/adapters — completed;
 - WF-PRE-11 transaction ordering, atomicity, compensation, retry, idempotency, and reconciliation — completed;
 - WF-PRE-12 event need/version/delivery — completed with zero events and synchronous mandatory Audit acceptance;
-- WF-PRE-13 contract/parity/tenant/failure tests;
+- WF-PRE-13 contract/parity/tenant/failure test specification — completed; suite implementation remains per activation gate;
 - WF-PRE-14 migration routing and rollback.
 
 ## Verification
@@ -253,4 +253,4 @@ The verifier proves decision completeness. It does not prove future public-contr
 
 Identity, Branch, Group/Lesson blocker, profile composition, and Audit boundaries now have explicit ownership and communication rules without permitting foreign-table access or cyclic module dependencies.
 
-WF-PRE-08 through WF-PRE-12 subsequently approved table access, public Application contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.
+WF-PRE-08 through WF-PRE-13 subsequently approved table access, public Application contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14.

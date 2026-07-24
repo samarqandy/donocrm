@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-13",
+  "status": "approved",
+  "planId": "workforce-test-parity-2026-07-24.1",
+  "planVersion": "1.0.0",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "a211a1af59c2b29d25d03a5fa00bfd28ebc69648",
+  "sourceFingerprints": {
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712",
+    "architecture/workforce-behavior-matrix.json": "84b7206ae682fe417b7f2b2f6314591b46bc56768e4a6b8de54148982dbcfc2d",
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-consistency-model.json": "1a87f79c014f4dd12f8a664b02416207c4b3835aa06a40ac8fe724a6ebbd75cb",
+    "architecture/workforce-event-requirements.json": "03395fc5325f9fe62d44fe7383cd284ef8957b575a82575ae8bcc0857b908804",
+    "docs/architecture/contract-testing.md": "dded759bedc4266d6093ffaa333a2f10d5682ec4062f847513b0f8398100ca24",
+    "scripts/test-backend-logic.js": "aec25dae4cb8503d1761d4ff8a37530c2c33afaf4e813536ab017dbc0a42ab33",
+    "scripts/qa-smoke.js": "63ad6287f8ac0a857b0f63fca38c34d8b473ec8277759c670d1aa60d2c90f155",
+    "scripts/test-p0-hardening.js": "54812e05847959d0b5d5e1c972975cd9d619fae0e65e0765d31ade0b7990e2c9"
+  },
+  "testPolicy": {
+    "purpose": "Approve an executable, deterministic proof plan for Workforce Domain, Application, focused ports, HTTP compatibility, tenant isolation, consistency, parity, and rollback without claiming missing target tests already pass.",
+    "contractAuthority": "WF-PRE-05 through WF-PRE-12 artifacts are the only expected-behavior authority. A test cannot invent or normalize away a semantic difference.",
+    "currentEvidence": "The existing Teacher Management backend scenario and smoke/hardening suites are legacy regression evidence only; no target Workforce module, adapter, Application contract suite, or port contract suite exists.",
+    "implementationStatus": "specification_approved_implementation_missing",
+    "activationRule": "Each planned command must exist, run from a clean checkout, and pass for its exact scope before the corresponding adapter, contract, route, cohort, or rollback step is eligible.",
+    "failureRule": "Failed, skipped, flaky, quarantined, unknown, or adapter-omitted required cases are blocking. Expected output may change only through the governing contract decision.",
+    "routeEffect": "WF-PRE-13 approves test specifications only. It enables zero target routes and authorizes no source module, adapter, schema, migration, or production change.",
+    "parityRule": "Business DTO, semantic error, persisted state, authority, tenant, authorization, audit intent, ordering, and identifier mismatches have zero tolerance except the two explicitly governed target deltas.",
+    "normalizationRule": "Normalize only generated timestamps/IDs supplied by deterministic fixtures and storage representation. Never normalize business fields, ordering, tenant identity, status, errors, privacy, or side effects.",
+    "executionEnvironment": "Node.js 24, Asia/Tashkent timezone, isolated temporary SQLite, deterministic fake providers, fixed clock/ID sequence, and no network or production data.",
+    "evidenceRule": "Every command publishes machine-readable case results, normalized diff, fixture/config hash, source commit, Node/database versions, duration, and terminal pass/fail."
+  },
+  "deterministicControls": {
+    "timezone": "Asia/Tashkent",
+    "fixedClock": "2026-07-24T06:00:00.000Z",
+    "idSequencePrefix": "wf-test-",
+    "tenantIds": ["tenant_wf_a", "tenant_wf_b"],
+    "randomness": "Forbidden unless explicitly seeded and recorded",
+    "network": "Forbidden; provider behavior uses deterministic fakes or local adapters",
+    "database": "A unique temporary SQLite database per test process; cleanup failure fails the suite",
+    "concurrency": "Explicit barriers/latches with bounded completion; sleeps and timing races are forbidden",
+    "sensitiveData": "Synthetic only; no production personal data, credentials, tokens, or secrets"
+  },
+  "fixtures": [
+    {
+      "id": "WF-FIX-01",
+      "name": "Two-tenant actor and Branch fixture",
+      "provides": ["two active tenants", "Admin and Teacher actors per tenant", "active/inactive/default/foreign Branch references", "independent sessions and permissions"],
+      "cleanup": "Dispose fake contexts and delete the process-owned temporary database"
+    },
+    {
+      "id": "WF-FIX-02",
+      "name": "Teacher lifecycle and Identity fixture",
+      "provides": ["active/inactive Teachers", "with/without portal access", "duplicate username", "multiple sessions", "exact Workforce and Identity snapshots"],
+      "cleanup": "Assert no orphan Teacher/User/role/grant/session rows, then delete the process-owned database"
+    },
+    {
+      "id": "WF-FIX-03",
+      "name": "Profile provider projection fixture",
+      "provides": ["Group counts/base views", "Schedule workload/summaries", "Lesson counts/upcoming/metrics", "Student counts", "complete keyed zero rows"],
+      "cleanup": "Reset all fake-provider call logs and projection maps"
+    },
+    {
+      "id": "WF-FIX-04",
+      "name": "Working Hour boundary and concurrency fixture",
+      "provides": ["weekday boundaries", "adjacent intervals", "overlaps", "inactive Teacher", "same-ID foreign tenant row", "barrier-controlled competing inserts"],
+      "cleanup": "Assert interval count/checksum, release barriers, and delete the process-owned database"
+    },
+    {
+      "id": "WF-FIX-05",
+      "name": "Provider fault and outcome fixture",
+      "provides": ["success", "explicit semantic failure", "unavailable before dispatch", "timeout after dispatch", "commit then acknowledgement failure", "ordered call log"],
+      "cleanup": "Assert no unconsumed fault script and clear provider histories"
+    },
+    {
+      "id": "WF-FIX-06",
+      "name": "Legacy-target parity dataset",
+      "provides": ["logically identical legacy and target inputs", "canonical expected DTOs/errors/effects", "two governed delta actors/inputs", "stable normalization map"],
+      "cleanup": "Persist diff artifact, assert both harnesses closed, and delete temporary state"
+    },
+    {
+      "id": "WF-FIX-07",
+      "name": "HTTP compatibility fixture",
+      "provides": ["all ten method/path pairs", "valid/invalid/oversized bodies", "Admin/Teacher/no-session cookies", "OpenAPI schemas", "shadow legacy and target dispatch hooks"],
+      "cleanup": "Close local server, invalidate sessions, and remove temporary files"
+    },
+    {
+      "id": "WF-FIX-08",
+      "name": "Rollback and reconciliation fixture",
+      "provides": ["legacy/target route marker", "known commit", "unknown outcome", "missing/existing Audit intent", "correlation evidence", "clean rollback checkpoint"],
+      "cleanup": "Assert legacy authority, no target write route, and no unresolved test incident"
+    }
+  ],
+  "suiteCatalog": [
+    {
+      "id": "WF-TEST-SUITE-01",
+      "name": "Workforce Domain unit contracts",
+      "type": "domain",
+      "ownerRoles": ["Workforce Module Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-02", "WF-FIX-04"],
+      "plannedFiles": ["tests/workforce/domain/teacher.test.js", "tests/workforce/domain/teacher-working-hour.test.js"],
+      "plannedCommand": "node --test tests/workforce/domain/*.test.js",
+      "expected": "Teacher lifecycle/value invariants and Working Hour validation/overlap/adjacency are deterministic and persistence-independent.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "WF-EXT-03"
+    },
+    {
+      "id": "WF-TEST-SUITE-02",
+      "name": "Workforce Application contract suite",
+      "type": "application",
+      "ownerRoles": ["Workforce Module Owner", "Quality Owner", "Security Owner"],
+      "fixtureIds": ["WF-FIX-01", "WF-FIX-02", "WF-FIX-03", "WF-FIX-04", "WF-FIX-05"],
+      "plannedFiles": ["tests/workforce/application/workforce-application.contract.test.js"],
+      "plannedCommand": "node --test tests/workforce/application/workforce-application.contract.test.js",
+      "expected": "All 11 public contracts pass canonical success/error/auth/privacy/order/provider-failure cases through fakes with exact call ordering and prohibited effects.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "WF-EXT-03"
+    },
+    {
+      "id": "WF-TEST-SUITE-03",
+      "name": "Workforce owned SQLite port contracts",
+      "type": "repository",
+      "ownerRoles": ["Workforce Module Owner", "Data Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-01", "WF-FIX-02", "WF-FIX-04", "WF-FIX-05"],
+      "plannedFiles": ["tests/workforce/contracts/owned-sqlite.contract.test.js"],
+      "plannedCommand": "node --test tests/workforce/contracts/owned-sqlite.contract.test.js",
+      "expected": "All five owned ports and 12 methods satisfy DTO, tenant, ordering, conflict, rollback, driver-error, and concurrency contracts using only teachers and teacher_working_hours.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "WF-EXT-04"
+    },
+    {
+      "id": "WF-TEST-SUITE-04",
+      "name": "Provider anti-corruption port contracts",
+      "type": "provider_contract",
+      "ownerRoles": ["Workforce Module Owner", "Affected Provider Owners", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-01", "WF-FIX-02", "WF-FIX-03", "WF-FIX-05"],
+      "plannedFiles": ["tests/workforce/contracts/provider-adapters.contract.test.js"],
+      "plannedCommand": "node --test tests/workforce/contracts/provider-adapters.contract.test.js",
+      "expected": "All 11 provider ports and 18 methods preserve minimum DTOs, keyed completeness, semantic failures, tenant scope, timeout/unknown outcomes, and zero foreign-table access.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "WF-EXT-09"
+    },
+    {
+      "id": "WF-TEST-SUITE-05",
+      "name": "System clock and ID port contracts",
+      "type": "system_contract",
+      "ownerRoles": ["Architecture Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-05"],
+      "plannedFiles": ["tests/workforce/contracts/system-ports.contract.test.js"],
+      "plannedCommand": "node --test tests/workforce/contracts/system-ports.contract.test.js",
+      "expected": "Clock and ID ports produce the fixed UTC instant and deterministic unique non-empty IDs without provider or Audit identity generation.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "first target use-case implementation"
+    },
+    {
+      "id": "WF-TEST-SUITE-06",
+      "name": "Workforce HTTP compatibility and privacy suite",
+      "type": "http",
+      "ownerRoles": ["Product Authority", "Workforce Module Owner", "Security Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-01", "WF-FIX-02", "WF-FIX-03", "WF-FIX-04", "WF-FIX-07"],
+      "plannedFiles": ["tests/workforce/http/workforce-http.compatibility.test.js"],
+      "plannedCommand": "node --test tests/workforce/http/workforce-http.compatibility.test.js",
+      "expected": "All ten frozen operations and 69 WFT behavior IDs match method/path/status/envelope/fields/order/privacy/error rules; common invalid-session/body/tenant cases pass.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "any target HTTP route"
+    },
+    {
+      "id": "WF-TEST-SUITE-07",
+      "name": "Two-tenant isolation matrix",
+      "type": "tenant_isolation",
+      "ownerRoles": ["Security Owner", "Data Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-01", "WF-FIX-02", "WF-FIX-03", "WF-FIX-04"],
+      "plannedFiles": ["tests/workforce/security/workforce-tenant-isolation.test.js"],
+      "plannedCommand": "node --test tests/workforce/security/workforce-tenant-isolation.test.js",
+      "expected": "All 11 public contracts and all 18 ports reject or hide same-ID foreign-tenant facts; no cross-tenant conflict, blocker, session, Audit intent, call, or DTO field appears.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "any target route"
+    },
+    {
+      "id": "WF-TEST-SUITE-08",
+      "name": "Consistency and Audit fault-injection suite",
+      "type": "consistency",
+      "ownerRoles": ["Workforce Module Owner", "Identity & Access Owner", "Audit & History Owner", "Operations Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-02", "WF-FIX-04", "WF-FIX-05", "WF-FIX-08"],
+      "plannedFiles": ["tests/workforce/consistency/workforce-consistency.test.js"],
+      "plannedCommand": "node --test tests/workforce/consistency/workforce-consistency.test.js",
+      "expected": "All 14 PRE-11 variants prove ordering, local rollback, legacy hold, no auto-retry, unknown/committed_unacknowledged outcomes, Audit acceptance, and prohibited compensation.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "any target command route"
+    },
+    {
+      "id": "WF-TEST-SUITE-09",
+      "name": "Legacy-target semantic parity suite",
+      "type": "parity",
+      "ownerRoles": ["Workforce Module Owner", "Data Owner", "Security Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-01", "WF-FIX-02", "WF-FIX-03", "WF-FIX-04", "WF-FIX-05", "WF-FIX-06"],
+      "plannedFiles": ["tests/workforce/parity/workforce-legacy-target.parity.test.js"],
+      "plannedCommand": "node --test tests/workforce/parity/workforce-legacy-target.parity.test.js",
+      "expected": "All 11 public contracts produce zero unexplained semantic/effect mismatches; only WF-APP-DELTA-01 and WF-APP-DELTA-02 use separately asserted legacy-characterization/target-remediation expectations.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "shadow or canary routing"
+    },
+    {
+      "id": "WF-TEST-SUITE-10",
+      "name": "Route rollback and reconciliation contract suite",
+      "type": "rollback",
+      "ownerRoles": ["Operations Owner", "Data Owner", "Workforce Module Owner", "Audit & History Owner", "Quality Owner"],
+      "fixtureIds": ["WF-FIX-05", "WF-FIX-08"],
+      "plannedFiles": ["tests/workforce/rollback/workforce-route-rollback.test.js"],
+      "plannedCommand": "node --test tests/workforce/rollback/workforce-route-rollback.test.js",
+      "expected": "Fallback selects frozen legacy authority, target writes remain disabled, known/unknown outcomes are classified, Audit reconciliation is duplicate-safe, and no foreign SQL or blind replay occurs.",
+      "implementationStatus": "missing_blocking",
+      "requiredBefore": "WF-PRE-14 runbook rehearsal or canary"
+    }
+  ],
+  "applicationContractCoverage": [
+    {"contractId": "WF-APP-01", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-LIST-001", "WFT-LIST-002", "WFT-LIST-003", "WFT-LIST-004", "WFT-LIST-005"], "requiredDimensions": ["success", "authorization", "tenant", "provider_failure", "dto_order_privacy"]},
+    {"contractId": "WF-APP-02", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-PROFILE-001", "WFT-PROFILE-002", "WFT-PROFILE-003", "WFT-PROFILE-004", "WFT-PROFILE-005", "WFT-PROFILE-006", "WFT-PROFILE-007"], "requiredDimensions": ["success", "authorization", "not_found", "tenant", "provider_failure", "legacy_privacy_characterization", "target_privacy_remediation"]},
+    {"contractId": "WF-APP-03", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-CREATE-001", "WFT-CREATE-002", "WFT-CREATE-003", "WFT-CREATE-004", "WFT-CREATE-005", "WFT-CREATE-006", "WFT-CREATE-007"], "requiredDimensions": ["success", "validation", "authorization", "conflict", "tenant", "provider_failure_rollback", "dto_audit"]},
+    {"contractId": "WF-APP-04", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-UPDATE-001", "WFT-UPDATE-002", "WFT-UPDATE-003", "WFT-UPDATE-004", "WFT-UPDATE-005", "WFT-UPDATE-006", "WFT-UPDATE-007", "WFT-UPDATE-008"], "requiredDimensions": ["success", "validation", "authorization", "not_found", "conflict", "tenant", "provider_failure_rollback", "dto_audit"]},
+    {"contractId": "WF-APP-05", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-ARCHIVE-001", "WFT-ARCHIVE-002", "WFT-ARCHIVE-003", "WFT-ARCHIVE-004", "WFT-ARCHIVE-005", "WFT-ARCHIVE-006", "WFT-ARCHIVE-007", "WFT-ARCHIVE-008"], "requiredDimensions": ["success", "validation", "authorization", "not_found", "blockers", "tenant", "provider_failure_rollback", "soft_archive_history"]},
+    {"contractId": "WF-APP-06", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-RESTORE-001", "WFT-RESTORE-002", "WFT-RESTORE-003", "WFT-RESTORE-004", "WFT-RESTORE-005", "WFT-RESTORE-006", "WFT-RESTORE-007"], "requiredDimensions": ["success", "validation", "authorization", "not_found", "tenant", "provider_failure_rollback", "portal_not_restored"]},
+    {"contractId": "WF-APP-07", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-RESET-001", "WFT-RESET-002", "WFT-RESET-003", "WFT-RESET-004", "WFT-RESET-005", "WFT-RESET-006", "WFT-RESET-007"], "requiredDimensions": ["success", "validation", "authorization", "not_configured", "tenant", "provider_failure_rollback", "all_sessions_invalidated"]},
+    {"contractId": "WF-APP-08", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-HOURS-LIST-001", "WFT-HOURS-LIST-002", "WFT-HOURS-LIST-003", "WFT-HOURS-LIST-004", "WFT-HOURS-LIST-005"], "requiredDimensions": ["success", "authorization", "tenant", "provider_failure", "ordering_teacher_name"]},
+    {"contractId": "WF-APP-09", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-HOURS-CREATE-001", "WFT-HOURS-CREATE-002", "WFT-HOURS-CREATE-003", "WFT-HOURS-CREATE-004", "WFT-HOURS-CREATE-005", "WFT-HOURS-CREATE-006", "WFT-HOURS-CREATE-007", "WFT-HOURS-CREATE-008"], "requiredDimensions": ["success", "validation", "authorization", "not_found", "overlap_concurrency", "tenant", "provider_failure_rollback", "branch_delta_audit"]},
+    {"contractId": "WF-APP-10", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-HOURS-DELETE-001", "WFT-HOURS-DELETE-002", "WFT-HOURS-DELETE-003", "WFT-HOURS-DELETE-004", "WFT-HOURS-DELETE-005", "WFT-HOURS-DELETE-006", "WFT-HOURS-DELETE-007"], "requiredDimensions": ["success", "validation", "authorization", "not_found", "tenant", "provider_failure_rollback", "empty_teacher_name_audit"]},
+    {"contractId": "WF-REF-01", "suiteId": "WF-TEST-SUITE-02", "behaviorTestIds": ["WFT-REF-001", "WFT-REF-002", "WFT-REF-003", "WFT-REF-004", "WFT-REF-005"], "requiredDimensions": ["active_and_inactive_success", "caller_allowlist", "not_found", "tenant", "exact_five_field_dto"]}
+  ],
+  "crossCuttingCoverage": [
+    {"testId": "WFT-COMMON-001", "suiteIds": ["WF-TEST-SUITE-06"], "expected": "All ten HTTP operations return frozen 401/403 and execute no target/legacy business mutation for invalid session or tenant."},
+    {"testId": "WFT-COMMON-002", "suiteIds": ["WF-TEST-SUITE-06"], "expected": "Every body-consuming route rejects malformed/oversized JSON with 400/413 before use-case execution."},
+    {"testId": "WFT-COMMON-003", "suiteIds": ["WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07"], "expected": "Every public contract and port proves two-tenant non-leak/non-mutation behavior."}
+  ],
+  "portContractCoverage": [
+    {"portId": "WF-PORT-OWN-01", "adapterId": "WF-ADAPTER-OWNED-SQLITE-01", "suiteId": "WF-TEST-SUITE-03", "methods": ["findById", "insert", "replaceProfile", "setStatus"], "requiredCases": ["success", "not_found", "conflict", "tenant", "commit", "injected_rollback", "driver_error"]},
+    {"portId": "WF-PORT-OWN-02", "adapterId": "WF-ADAPTER-OWNED-SQLITE-01", "suiteId": "WF-TEST-SUITE-03", "methods": ["list", "findById", "findOverlap", "insert", "deleteById"], "requiredCases": ["success", "not_found", "ordering", "tenant", "overlap", "adjacency", "concurrent_insert", "injected_rollback", "driver_error"]},
+    {"portId": "WF-PORT-OWN-03", "adapterId": "WF-ADAPTER-OWNED-SQLITE-01", "suiteId": "WF-TEST-SUITE-03", "methods": ["listTenantBase"], "requiredCases": ["empty", "success", "ordering", "tenant", "exact_dto", "driver_error"]},
+    {"portId": "WF-PORT-OWN-04", "adapterId": "WF-ADAPTER-OWNED-SQLITE-01", "suiteId": "WF-TEST-SUITE-03", "methods": ["getBaseProfile"], "requiredCases": ["success", "not_found", "tenant", "exact_dto", "driver_error"]},
+    {"portId": "WF-PORT-OWN-05", "adapterId": "WF-ADAPTER-OWNED-SQLITE-01", "suiteId": "WF-TEST-SUITE-03", "methods": ["getReference"], "requiredCases": ["active", "inactive", "not_found", "tenant", "exact_five_field_dto", "driver_error"]},
+    {"portId": "WF-PORT-PROV-01", "adapterId": "WF-ADAPTER-IDENTITY-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["provision", "applyChange", "disable"], "requiredCases": ["success", "semantic_conflict", "tenant", "session_invalidation", "unavailable", "unknown", "minimum_intent"]},
+    {"portId": "WF-PORT-PROV-02", "adapterId": "WF-ADAPTER-IDENTITY-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["resetAndInvalidateSessions"], "requiredCases": ["success", "not_configured", "tenant", "credential_and_all_sessions_atomic", "unavailable", "unknown", "no_sensitive_output"]},
+    {"portId": "WF-PORT-PROV-03", "adapterId": "WF-ADAPTER-IDENTITY-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["getByTeacherIds"], "requiredCases": ["empty", "complete_keyed_success", "not_granted_row", "duplicate_or_missing_key_failure", "tenant", "unavailable"]},
+    {"portId": "WF-PORT-PROV-04", "adapterId": "WF-ADAPTER-ORGANIZATION-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["resolveActive"], "requiredCases": ["explicit_valid", "default_valid", "inactive_or_foreign_invalid", "tenant", "unavailable", "no_table_leak"]},
+    {"portId": "WF-PORT-PROV-05", "adapterId": "WF-ADAPTER-GROUPS-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["decide"], "requiredCases": ["blocked", "not_blocked", "tenant", "unknown_fail_closed", "semantic_only"]},
+    {"portId": "WF-PORT-PROV-06", "adapterId": "WF-ADAPTER-GROUPS-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["getCountsByTeacherIds", "listBaseByTeacherId"], "requiredCases": ["empty", "complete_keyed_zero", "success", "ordering", "tenant", "unavailable", "exact_dto"]},
+    {"portId": "WF-PORT-PROV-07", "adapterId": "WF-ADAPTER-SCHEDULING-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["getWorkloadByTeacherIds", "getGroupSummaries"], "requiredCases": ["empty", "complete_keyed_zero", "success", "ordering", "tenant", "unavailable", "exact_dto"]},
+    {"portId": "WF-PORT-PROV-08", "adapterId": "WF-ADAPTER-LESSONS-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["decide"], "requiredCases": ["blocked", "not_blocked", "effective_date", "tenant", "unknown_fail_closed", "semantic_only"]},
+    {"portId": "WF-PORT-PROV-09", "adapterId": "WF-ADAPTER-LESSONS-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["getCompletedCountsByTeacherIds", "listUpcomingByTeacherId", "getGroupMetrics"], "requiredCases": ["empty", "complete_keyed_zero", "success", "twenty_item_limit", "ordering", "tenant", "unavailable", "exact_dto"]},
+    {"portId": "WF-PORT-PROV-10", "adapterId": "WF-ADAPTER-STUDENTS-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["getByTeacherIds", "getByGroupIds"], "requiredCases": ["empty", "complete_keyed_zero", "success", "tenant", "unavailable", "exact_dto"]},
+    {"portId": "WF-PORT-PROV-11", "adapterId": "WF-ADAPTER-AUDIT-01", "suiteId": "WF-TEST-SUITE-04", "methods": ["append"], "requiredCases": ["accepted_once", "explicit_failure", "unavailable_before_dispatch", "ambiguous_after_dispatch", "tenant_actor_entity_correlation", "sensitive_fields_absent"]},
+    {"portId": "WF-PORT-SYS-01", "adapterId": "WF-ADAPTER-SYSTEM-01", "suiteId": "WF-TEST-SUITE-05", "methods": ["now"], "requiredCases": ["fixed_utc_instant", "repeatable", "no_environment_access"]},
+    {"portId": "WF-PORT-SYS-02", "adapterId": "WF-ADAPTER-SYSTEM-01", "suiteId": "WF-TEST-SUITE-05", "methods": ["nextId"], "requiredCases": ["non_empty", "unique_sequence", "supported_kinds", "no_provider_identity"]}
+  ],
+  "consistencyCoverage": [
+    {"variantId": "WF-CONS-01", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-01-SUCCESS", "WFC-01-PROVIDER-FAIL", "WFC-01-NO-PARTIAL"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-02", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-02-SUCCESS", "WFC-02-PROVIDER-FAIL", "WFC-02-NO-PARTIAL"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-03A", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-03A-ROLLBACK", "WFC-03A-AUDIT-FAIL", "WFC-03A-NO-RETRY"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-03B", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-03B-LEGACY-ROLLBACK", "WFC-03B-TARGET-DENIED"], "targetTreatment": "legacy_characterization_only"},
+    {"variantId": "WF-CONS-04A", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-04A-ROLLBACK", "WFC-04A-AUDIT-FAIL", "WFC-04A-NO-RETRY"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-04B", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-04B-LEGACY-ROLLBACK", "WFC-04B-TARGET-DENIED"], "targetTreatment": "legacy_characterization_only"},
+    {"variantId": "WF-CONS-05A", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-05A-BLOCKER-RACE", "WFC-05A-TARGET-DENIED"], "targetTreatment": "legacy_characterization_only"},
+    {"variantId": "WF-CONS-05B", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-05B-BLOCKER-IDENTITY-RISK", "WFC-05B-TARGET-DENIED"], "targetTreatment": "legacy_characterization_only"},
+    {"variantId": "WF-CONS-06", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-06-ROLLBACK", "WFC-06-AUDIT-FAIL", "WFC-06-NO-PORTAL-RESTORE"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-07", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-07-IDENTITY-ATOMIC", "WFC-07-AUDIT-FAIL", "WFC-07-NO-RETRY"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-08", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-08-SUCCESS", "WFC-08-FAILURE"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-09", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-09-CONCURRENT-OVERLAP", "WFC-09-ROLLBACK", "WFC-09-AUDIT-FAIL"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-10", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-10-ROLLBACK", "WFC-10-AUDIT-FAIL", "WFC-10-NO-RETRY"], "targetTreatment": "target_contract"},
+    {"variantId": "WF-CONS-REF-01", "suiteId": "WF-TEST-SUITE-08", "testIds": ["WFC-REF-SUCCESS", "WFC-REF-FAILURE"], "targetTreatment": "target_contract"}
+  ],
+  "parityPlan": {
+    "suiteId": "WF-TEST-SUITE-09",
+    "comparisonDimensions": ["result_dto", "semantic_error", "ordering", "persisted_effect", "prohibited_effect", "tenant", "authorization", "privacy", "audit_intent", "provider_call_order", "outcome_classification"],
+    "zeroToleranceDimensions": ["result_dto", "semantic_error", "persisted_effect", "prohibited_effect", "tenant", "authorization", "privacy", "audit_intent", "authority"],
+    "numericTolerance": null,
+    "allowedDeltaIds": ["WF-APP-DELTA-01", "WF-APP-DELTA-02"],
+    "contracts": [
+      {"contractId": "WF-APP-01", "mode": "exact", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-02", "mode": "governed_delta", "allowedDeltaIds": ["WF-APP-DELTA-02"]},
+      {"contractId": "WF-APP-03", "mode": "exact_by_admissible_variant", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-04", "mode": "exact_by_admissible_variant", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-05", "mode": "legacy_characterization_target_denied", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-06", "mode": "exact", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-07", "mode": "exact", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-08", "mode": "exact", "allowedDeltaIds": []},
+      {"contractId": "WF-APP-09", "mode": "governed_delta", "allowedDeltaIds": ["WF-APP-DELTA-01"]},
+      {"contractId": "WF-APP-10", "mode": "exact", "allowedDeltaIds": []},
+      {"contractId": "WF-REF-01", "mode": "canonical_reference", "allowedDeltaIds": []}
+    ],
+    "passRule": "Every required case passes with zero unexplained mismatch; both governed deltas pass their legacy characterization and target remediation assertions separately.",
+    "failureArtifact": "artifacts/architecture/workforce-parity-diff.json"
+  },
+  "rollbackAndReconciliationCoverage": [
+    {"id": "WF-ROLL-01", "scenario": "Target route not selected or fails before dispatch", "expected": "Known not_started result; no target/legacy mutation, no Audit intent, a later request may use the approved route policy."},
+    {"id": "WF-ROLL-02", "scenario": "Provider-local mutation rolls back", "expected": "rolled_back; exact pre-state checksum, no Audit intent, no automatic retry."},
+    {"id": "WF-ROLL-03", "scenario": "Business commit followed by explicit Audit failure", "expected": "committed_unacknowledged; technical failure, business state proven, no business replay, missing Audit handled only by approved reconciliation."},
+    {"id": "WF-ROLL-04", "scenario": "Business commit followed by ambiguous Audit acceptance", "expected": "committed_unacknowledged with unknown Audit substate; quarantine until Audit-owned evidence prevents duplicate append."},
+    {"id": "WF-ROLL-05", "scenario": "Provider mutation outcome unknown", "expected": "unknown; no fallback mutation or blind replay; public-query evidence and operator escalation required."},
+    {"id": "WF-ROLL-06", "scenario": "Route fallback rehearsal", "expected": "Frozen legacy authority is selected, target mutation remains disabled, tenant/HTTP behavior stays valid, and no synchronous dual write occurs."},
+    {"id": "WF-ROLL-07", "scenario": "Legacy-hold variant reaches target selector", "expected": "Selector denies target invocation and executes only the governed frozen legacy route."}
+  ],
+  "artifactContract": {
+    "directory": "artifacts/architecture/workforce/",
+    "requiredFiles": ["test-results.json", "test-results.xml", "fixture-manifest.json", "normalized-diff.json", "environment.json"],
+    "requiredMetadata": ["gitCommit", "planHash", "suiteId", "caseId", "fixtureHash", "nodeVersion", "databaseVersion", "timezone", "startedAt", "durationMs", "status"],
+    "retention": "Attach to the migration PR and retain under the CI evidence policy",
+    "redaction": "No password, hash, cookie, token, personal data, or raw provider credential may enter an artifact"
+  },
+  "releaseAdmission": {
+    "currentLegacyEvidenceCommands": ["npm run test:backend", "npm run test:smoke", "npm run test:p0", "npm run architecture:enforce"],
+    "plannedSuiteCount": 10,
+    "plannedSuiteCommandsImplemented": 0,
+    "plannedSuiteCommandsPassing": 0,
+    "behaviorIdsSpecified": 69,
+    "referenceTestIdsSpecified": 5,
+    "publicContractsSpecified": 11,
+    "portsSpecified": 18,
+    "portMethodsSpecified": 32,
+    "consistencyVariantsSpecified": 14,
+    "governedDeltasSpecified": 2,
+    "targetRoutesEnabled": 0,
+    "moduleReadinessEffect": "WF-PRE-13 plan completeness passes, but Module Readiness remains Failed until WF-PRE-14 and WF-PRE-16; each extraction increment must implement and pass its named suite before activation."
+  },
+  "risks": [
+    {"id": "WF-TEST-RISK-01", "severity": "high", "issue": "Legacy end-to-end coverage can be mistaken for focused target contract evidence.", "treatment": "Current evidence stays classified legacy-only; every target layer has a separate blocking suite and command."},
+    {"id": "WF-TEST-RISK-02", "severity": "critical", "issue": "Parity fixtures can bless target output or hide the two intentional contract deltas.", "treatment": "Zero semantic tolerance, immutable predecessor expectations, and an exact two-item delta allowlist."},
+    {"id": "WF-TEST-RISK-03", "severity": "critical", "issue": "Audit timeout or post-commit failure can cause unsafe automatic replay and duplicate mutation.", "treatment": "Fault suite proves outcome classification, no auto-retry, quarantine, and duplicate-safe reconciliation."},
+    {"id": "WF-TEST-RISK-04", "severity": "high", "issue": "Tenant isolation may pass at HTTP while leaking through a port or composed provider projection.", "treatment": "The two-tenant suite covers all 11 public contracts, all 18 ports, same-ID collisions, provider calls, Audit intents, and DTOs."},
+    {"id": "WF-TEST-RISK-05", "severity": "high", "issue": "Timing-based concurrency tests can be flaky and fail to prove Working Hour overlap protection.", "treatment": "Use explicit barriers with bounded completion; sleeps and probabilistic races are forbidden."}
+  ],
+  "guards": [
+    {"id": "WF-TEST-GUARD-01", "rule": "All 69 applicable PRE-06 behavior IDs and three cross-cutting IDs have exact suite coverage."},
+    {"id": "WF-TEST-GUARD-02", "rule": "All 11 PRE-09 public contracts, 18 PRE-10 ports, 32 port methods, nine adapter groups, and 14 PRE-11 variants are covered."},
+    {"id": "WF-TEST-GUARD-03", "rule": "Parity has zero semantic tolerance and exactly two governed delta IDs."},
+    {"id": "WF-TEST-GUARD-04", "rule": "Every planned suite has owner, fixtures, exact files, exact command, expected result, implementation status, and activation gate."},
+    {"id": "WF-TEST-GUARD-05", "rule": "Missing/skipped/flaky/quarantined/unknown cases block activation and cannot be converted to expected output without governance."},
+    {"id": "WF-TEST-GUARD-06", "rule": "Audit/unknown outcomes never auto-retry or use foreign SQL reconciliation."},
+    {"id": "WF-TEST-GUARD-07", "rule": "WF-PRE-13 claims zero implemented planned suites, enables zero routes, and does not authorize runtime/source/schema changes."}
+  ],
+  "temporaryTestExceptions": [],
+  "deferredDecisions": {
+    "WF-PRE-14": "Exact route increments, cohort, numeric stop/rollback thresholds, reconciliation commands, observation window, rehearsal, and operational owners",
+    "WF-PRE-16": "Final Module Readiness decision after all preparation evidence is linked",
+    "WF-EXT-02+": "Implement and pass each approved suite before its named extraction increment or route activation"
+  },
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Product Authority", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Organization & Branches Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Academic Groups Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Scheduling Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Lesson Delivery Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Student Information Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Audit & History Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Operations Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

@@ -146,7 +146,7 @@ The original business command and Audit append are never automatically replayed.
 
 Reconciliation must quarantine the original command, prove authoritative business state through provider-owned contracts, determine Audit acceptance through an Audit-owned mechanism, and append a missing intent only under the WF-PRE-14 procedure. Direct `audit_logs` SQL and fabricated success are forbidden.
 
-This synchronous choice preserves the known compatibility acknowledgement boundary. It does not claim atomic durable handoff. WF-PRE-13 must exercise success, explicit failure, timeout, ambiguous acceptance, and duplicate-risk behavior.
+This synchronous choice preserves the known compatibility acknowledgement boundary. It does not claim atomic durable handoff. WF-PRE-13 subsequently specifies success, explicit failure, timeout, ambiguous acceptance, duplicate-risk, and no-retry cases; those suites must pass before command activation.
 
 ## Effect on PRE-11 Write Admission
 
@@ -159,7 +159,7 @@ WF-PRE-12 resolves the Audit-choice placeholder for these six single-authority v
 - `WF-CONS-09` — Create Working Hour;
 - `WF-CONS-10` — Delete Working Hour.
 
-Their disposition advances from “waiting for Audit delivery decision” to `target_write_pending_later_gates`. They remain disabled until WF-PRE-13, WF-PRE-14, and WF-PRE-16 pass.
+Their disposition advances from “waiting for Audit delivery decision” to `target_write_pending_later_gates`. WF-PRE-13 subsequently specifies their required tests; they remain disabled until those suites pass and WF-PRE-14/WF-PRE-16 authorize routing.
 
 The following independent consistency blockers remain unchanged:
 
@@ -232,7 +232,7 @@ Temporary event exceptions: zero.
 
 ## Explicit Deferrals
 
-- Executable synchronous-provider, Audit fault/ambiguity, tenant, and parity tests — WF-PRE-13.
+- Executable synchronous-provider, Audit fault/ambiguity, tenant, and parity test specification — subsequently approved by [WF-PRE-13](workforce-test-parity-plan.md).
 - Route increments, Audit reconciliation, thresholds, fallback, observation, and rollback — WF-PRE-14.
 - Final Module Readiness and migration authorization — WF-PRE-16.
 - Any future consumer-driven event — a new governed event-contract decision.
@@ -247,4 +247,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 All 19/19 dependencies have an exact synchronous/no-event disposition. There are zero published events, zero consumed events, zero approved event versions, synchronous mandatory Audit acceptance, zero temporary exceptions, and zero target mutation routes enabled.
 
-Module Readiness remains Failed. The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.
+Module Readiness remains Failed. WF-PRE-13 subsequently approved the [executable test and parity plan](workforce-test-parity-plan.md); the next ordered prerequisite is WF-PRE-14.
