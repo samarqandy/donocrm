@@ -68,7 +68,7 @@ Current approved inventory:
 | Approved not-applicable rows | 12 |
 | Cross-cutting planned tests | 3 |
 
-Coverage status is evidence accounting, not a release score. A `partial` or `missing` row cannot satisfy WF-PRE-13 by being present in this matrix.
+Coverage status is evidence accounting, not a release score. A `partial` or `missing` row cannot satisfy target activation by being present in this matrix. WF-PRE-13 subsequently binds every applicable ID to an exact executable suite while retaining its missing implementation status.
 
 ## Operation Matrix
 
@@ -158,7 +158,7 @@ The command verifies:
 - evidence rules for every coverage state;
 - the blocking privacy-risk mapping.
 
-This command validates the approved inventory, not missing test implementations. It is intentionally not a general required CI check because the test evidence fingerprints will change as WF-PRE-13 automation is added; such changes require an explicit matrix evidence refresh.
+This command validates the approved inventory, not missing test implementations. It is intentionally not a general required CI check because test evidence fingerprints will change as the WF-PRE-13-approved suites are implemented; such changes require an explicit matrix evidence refresh.
 
 ## Gate Separation
 
@@ -167,7 +167,7 @@ WF-PRE-06 does not itself resolve:
 - WF-PRE-07 bounded-context seams, subsequently approved in the [seam decision](workforce-bounded-context-seams.md);
 - WF-PRE-11 target transaction/consistency behavior — subsequently completed;
 - WF-PRE-12 synchronous dependency, no-event, and Audit delivery behavior — subsequently completed;
-- WF-PRE-13 fixtures, repository/port contracts, legacy-target parity, thresholds, rollback cases, or execution ownership;
+- WF-PRE-13 fixtures, repository/port contracts, legacy-target parity, thresholds, rollback cases, and execution ownership — subsequently specified in the [executable test/parity plan](workforce-test-parity-plan.md);
 - WF-PRE-14 migration/canary/rollback procedure;
 - WF-PRE-16 final Module Readiness.
 
@@ -179,4 +179,4 @@ The full Testing Readiness section is still failed because 48 operation rows and
 
 Ten out of ten operations contain explicit success/failure/invariant rows, all 69 applicable operation rows have stable test IDs, every non-applicable category has a reason, tenant/role/privacy cases are explicit, and current evidence gaps are measurable rather than implied away.
 
-WF-PRE-07 through WF-PRE-12 subsequently approved seams, table access, public contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). The next ordered prerequisite is WF-PRE-13: approve the executable test and parity plan.
+WF-PRE-07 through WF-PRE-13 subsequently approved seams, table access, public contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14: approve the migration and rollback runbook.

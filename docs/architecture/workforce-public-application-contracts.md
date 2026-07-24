@@ -145,8 +145,8 @@ Contact, credentials, workload, counts, Group/Lesson/Schedule/Attendance data, a
 
 Two target differences are approved but not activated:
 
-1. `WF-APP-DELTA-01`: explicit Working Hour `branchId` must resolve to an active same-tenant Branch. Invalid input produces `BRANCH_INVALID`. The current route's unvalidated explicit reference remains frozen legacy behavior until WF-PRE-13 approves both characterization and target-remediation tests.
-2. `WF-APP-DELTA-02`: Teacher self profile omits Group `monthlyFee`; Admin retains it. Current exposure remains characterized separately until WF-PRE-13 approves the role-sensitive privacy test and target routing.
+1. `WF-APP-DELTA-01`: explicit Working Hour `branchId` must resolve to an active same-tenant Branch. Invalid input produces `BRANCH_INVALID`. WF-PRE-13 subsequently approves separate legacy-characterization and target-remediation assertions; they must pass before target routing.
+2. `WF-APP-DELTA-02`: Teacher self profile omits Group `monthlyFee`; Admin retains it. WF-PRE-13 subsequently approves separate legacy exposure and target role-sensitive privacy assertions; they must pass before target routing.
 
 Neither decision silently changes the current HTTP/runtime contract. A target route cannot activate until its specific gate and rollback rule pass.
 
@@ -157,7 +157,7 @@ This decision does not approve:
 - exact focused persistence/provider ports and adapter boundaries — subsequently approved by [WF-PRE-10](workforce-focused-ports.md);
 - cross-provider transaction, ordering, compensation, retry, and reconciliation — subsequently approved by [WF-PRE-11](workforce-transaction-consistency.md);
 - integration-event and Audit delivery disposition — subsequently approved by [WF-PRE-12](workforce-event-requirements.md) with synchronous mandatory Audit acceptance and zero event versions;
-- executable contract/parity/tenant/privacy/remediation tests — WF-PRE-13;
+- executable contract/parity/tenant/privacy/remediation test specification — subsequently approved by [WF-PRE-13](workforce-test-parity-plan.md); implementation remains an activation condition;
 - migration cohort, rollout, rollback, observation, or retirement — WF-PRE-14.
 
 No generic repository, broad provider facade, SQL/table contract, shared transaction, or invented event is approved.
@@ -170,4 +170,4 @@ Approved on 2026-07-24 under Single-Founder Governance by Sukhrob Khaydarov as A
 
 **WF-PRE-09: PASSED**
 
-The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 through WF-PRE-12 subsequently approved [focused ports](workforce-focused-ports.md), [consistency](workforce-transaction-consistency.md), and [event/Audit delivery](workforce-event-requirements.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-13.
+The two public surfaces, 10/10 compatibility use cases, exact canonical DTOs, semantic/technical errors, verified authorization contexts, idempotency expectations, privacy projections, and one minimal downstream Teacher reference/status query are approved. WF-PRE-10 through WF-PRE-13 subsequently approved [focused ports](workforce-focused-ports.md), [consistency](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md). Module Readiness remains Failed; the next ordered prerequisite is WF-PRE-14.
