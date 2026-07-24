@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "decisionId": "WF-PRE-14",
+  "status": "approved",
+  "runbookId": "workforce-migration-runbook-2026-07-24.1",
+  "runbookVersion": "1.0.0",
+  "decisionDate": "2026-07-24",
+  "implementationEvidenceCommit": "1c6220f299ea3db2f0780645fba439b0a9ab77b8",
+  "sourceFingerprints": {
+    "architecture/workforce-test-parity-plan.json": "e1d90943abdd0ba94fce59f4ae9db6b476b7eb47f7b0fd8ae54cf41b078520a6",
+    "architecture/workforce-consistency-model.json": "1a87f79c014f4dd12f8a664b02416207c4b3835aa06a40ac8fe724a6ebbd75cb",
+    "architecture/workforce-event-requirements.json": "03395fc5325f9fe62d44fe7383cd284ef8957b575a82575ae8bcc0857b908804",
+    "architecture/workforce-application-contracts.json": "63c045defc757645ab1d4a20fb47220cbaeefddf6077bc5bee089fc31bcfd382",
+    "architecture/workforce-focused-ports.json": "7ea1b5bb22bf8d2db80050c1f90ab40cf3360f53b48e81078ac40e139c2ba231",
+    "architecture/workforce-contract-baseline.json": "908088d79bec7b5a01a1e1dc055cd901f39a718286cd20cc1fc093f4b93d2712",
+    "docs/architecture/ci-pipeline.md": "d2117336eb0cd0ab4100b3e78bd2c2afa972b67f549b4ee4d4efeb999eda5eda",
+    "docs/architecture/contract-testing.md": "dded759bedc4266d6093ffaa333a2f10d5682ec4062f847513b0f8398100ca24"
+  },
+  "migrationPolicy": {
+    "defaultRoute": "legacy",
+    "selectorKey": "Exact tuple (tenantId, contractId, consistencyVariantId, actorClass where required). Missing, invalid, stale, or ambiguous registry state selects legacy.",
+    "authority": "Exactly one request-path authority executes a command. Synchronous dual write, shadow command execution, automatic post-dispatch fallback, and cross-context transaction are forbidden.",
+    "readShadow": "Queries may execute target shadow after legacy authority completes; only the legacy result is returned. Shadow failures never change the user response and are fully observable.",
+    "commandCanary": "Commands have no executing shadow. A canary command invokes either target or legacy exactly once according to the committed selector snapshot.",
+    "fallback": "Changing the selector affects subsequent requests only. Once a target command is dispatched, the same request cannot fall back to legacy because the outcome may be committed or unknown.",
+    "storeAuthority": "First extraction retains the existing SQLite Workforce-owned tables. Route authority changes code path, not database ownership, and introduces no copy, relay, backfill, schema, or second writer.",
+    "legacyAvailability": "Frozen legacy remains deployable, unmodified except approved migration adapters, and selectable throughout canary plus the 14-day rollback window.",
+    "cohort": "Production target allowlist is explicitly empty at this gate. A change record must bind exact tenant IDs before canary; absence from the versioned allowlist always selects legacy.",
+    "routeEffect": "WF-PRE-14 approves the runbook only. No registry, script, route, target suite, target cohort, authority transfer, or production change is implemented or enabled."
+  },
+  "routeRegistryContract": {
+    "owner": "Operations Owner",
+    "storage": "Future versioned Bootstrap-owned route registry; not Domain/Application and not a business table",
+    "modes": ["legacy", "shadow", "target", "quarantined"],
+    "requiredFields": ["registryVersion", "tenantId", "contractId", "variantId", "actorClass", "mode", "approvedBy", "changeId", "reason", "effectiveAt", "expiresAt"],
+    "writeRule": "Compare-and-set against registryVersion; every change is append-audited and produces before/after evidence.",
+    "readFailure": "Select legacy and alert. A registry failure can never select target.",
+    "expiry": "Expired entries select legacy automatically; target entries require explicit renewal.",
+    "currentProductionEntries": [],
+    "currentTargetRoutesEnabled": 0
+  },
+  "cohorts": [
+    {
+      "id": "WF-COHORT-00",
+      "name": "Synthetic rehearsal",
+      "production": false,
+      "sizeRule": "Exactly tenant_wf_rehearsal in a production-like isolated environment",
+      "promotion": "All required suites and rollback rehearsal pass; no production authority"
+    },
+    {
+      "id": "WF-COHORT-01",
+      "name": "Initial production canary",
+      "production": true,
+      "sizeRule": "Exactly one explicitly approved tenant ID in the versioned route change record",
+      "promotion": "C0 evidence accepted, tenant approval recorded, preflight fresh within 30 minutes"
+    },
+    {
+      "id": "WF-COHORT-02",
+      "name": "Limited expansion",
+      "production": true,
+      "sizeRule": "At most five explicitly listed tenants and no more than 10% of eligible tenants",
+      "promotion": "C1 observation/sample thresholds pass with zero critical stop signals"
+    },
+    {
+      "id": "WF-COHORT-03",
+      "name": "Quarter expansion",
+      "production": true,
+      "sizeRule": "At most 25% of eligible tenants, exact IDs committed before activation",
+      "promotion": "C2 observation/sample thresholds pass"
+    },
+    {
+      "id": "WF-COHORT-04",
+      "name": "Half expansion",
+      "production": true,
+      "sizeRule": "At most 50% of eligible tenants, exact IDs committed before activation",
+      "promotion": "C3 observation/sample thresholds pass"
+    },
+    {
+      "id": "WF-COHORT-05",
+      "name": "Eligible completion",
+      "production": true,
+      "sizeRule": "100% only of tenants eligible for the exact increment; legacy-hold variants remain excluded",
+      "promotion": "C4 observation/sample thresholds pass and Architecture/Operations/Security approve"
+    }
+  ],
+  "routeIncrements": [
+    {
+      "id": "WF-ROUTE-01",
+      "order": 1,
+      "contractId": "WF-REF-01",
+      "variantIds": ["WF-CONS-REF-01"],
+      "actorClasses": ["approved_service_caller"],
+      "kind": "query",
+      "stages": ["shadow", "target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Legacy reference source until target mode; target reads same Workforce authority after cutover",
+      "rollback": "Set tuple to legacy; no data reconciliation"
+    },
+    {
+      "id": "WF-ROUTE-02",
+      "order": 2,
+      "contractId": "WF-APP-08",
+      "variantIds": ["WF-CONS-08"],
+      "actorClasses": ["admin", "teacher_self"],
+      "kind": "query",
+      "stages": ["shadow", "target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Legacy read until target mode; no copied projection",
+      "rollback": "Set tuple to legacy; no data reconciliation"
+    },
+    {
+      "id": "WF-ROUTE-03",
+      "order": 3,
+      "contractId": "WF-APP-01",
+      "variantIds": ["WF-CONS-01"],
+      "actorClasses": ["admin", "teacher_self"],
+      "kind": "query",
+      "stages": ["shadow", "target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Legacy composed directory until target mode; provider facts remain provider-owned",
+      "rollback": "Set tuple to legacy; no data reconciliation"
+    },
+    {
+      "id": "WF-ROUTE-04",
+      "order": 4,
+      "contractId": "WF-APP-02",
+      "variantIds": ["WF-CONS-02"],
+      "actorClasses": ["admin", "teacher_self"],
+      "kind": "query",
+      "stages": ["shadow", "target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Legacy profile until target mode; teacher_self requires WF-APP-DELTA-02 remediation PASS",
+      "rollback": "Set actor-specific tuple to legacy; no data reconciliation"
+    },
+    {
+      "id": "WF-ROUTE-05",
+      "order": 5,
+      "contractId": "WF-APP-03",
+      "variantIds": ["WF-CONS-03A"],
+      "actorClasses": ["admin"],
+      "kind": "command",
+      "stages": ["target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-01", "WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-05", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Target only for portalAccess=null; portal-enabled WF-CONS-03B remains legacy",
+      "rollback": "Disable future target dispatch; reconcile any committed/unknown request before legacy reissue"
+    },
+    {
+      "id": "WF-ROUTE-06",
+      "order": 6,
+      "contractId": "WF-APP-04",
+      "variantIds": ["WF-CONS-04A"],
+      "actorClasses": ["admin"],
+      "kind": "command",
+      "stages": ["target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-01", "WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Target only for portalAccessChange=null; access-changing WF-CONS-04B remains legacy",
+      "rollback": "Disable future target dispatch; reconcile committed/unknown request without compensating overwrite"
+    },
+    {
+      "id": "WF-ROUTE-07",
+      "order": 7,
+      "contractId": "WF-APP-06",
+      "variantIds": ["WF-CONS-06"],
+      "actorClasses": ["admin"],
+      "kind": "command",
+      "stages": ["target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-01", "WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Target Workforce lifecycle only; portal access is not restored",
+      "rollback": "Disable future target dispatch; preserve committed status and reconcile Audit"
+    },
+    {
+      "id": "WF-ROUTE-08",
+      "order": 8,
+      "contractId": "WF-APP-07",
+      "variantIds": ["WF-CONS-07"],
+      "actorClasses": ["admin"],
+      "kind": "command",
+      "stages": ["target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Identity atomically resets credential and all sessions; Workforce supplies reference only",
+      "rollback": "Disable future target dispatch; never restore old password or replay unknown reset"
+    },
+    {
+      "id": "WF-ROUTE-09",
+      "order": 9,
+      "contractId": "WF-APP-09",
+      "variantIds": ["WF-CONS-09"],
+      "actorClasses": ["admin", "permitted_actor"],
+      "kind": "command",
+      "stages": ["target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-01", "WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-05", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Target after WF-APP-DELTA-01 Branch remediation and overlap concurrency PASS",
+      "rollback": "Disable future target dispatch; inspect by public query before any new create"
+    },
+    {
+      "id": "WF-ROUTE-10",
+      "order": 10,
+      "contractId": "WF-APP-10",
+      "variantIds": ["WF-CONS-10"],
+      "actorClasses": ["admin"],
+      "kind": "command",
+      "stages": ["target"],
+      "requiredSuiteIds": ["WF-TEST-SUITE-01", "WF-TEST-SUITE-02", "WF-TEST-SUITE-03", "WF-TEST-SUITE-04", "WF-TEST-SUITE-06", "WF-TEST-SUITE-07", "WF-TEST-SUITE-08", "WF-TEST-SUITE-09", "WF-TEST-SUITE-10"],
+      "authority": "Target hard-delete behavior with frozen response quirk and mandatory Audit",
+      "rollback": "Disable future target dispatch; no fabricated restore of a deleted interval"
+    }
+  ],
+  "permanentLegacyHolds": [
+    {"variantId": "WF-CONS-03B", "reason": "Create with portal access crosses Workforce/Identity atomicity without reservation/idempotency"},
+    {"variantId": "WF-CONS-04B", "reason": "Access-changing update crosses Workforce/Identity atomicity/concurrency"},
+    {"variantId": "WF-CONS-05A", "reason": "Archive blocker snapshot TOCTOU remains unresolved"},
+    {"variantId": "WF-CONS-05B", "reason": "Archive blocker TOCTOU plus Workforce/Identity split commit"}
+  ],
+  "stageGates": [
+    {
+      "stage": "preflight",
+      "minimumWindowHours": 0,
+      "minimumSamplesPerIncrement": 0,
+      "requirements": ["All named suites implemented and PASS at current commit", "Zero skipped/flaky/quarantined/unknown required cases", "All architecture/Workforce verifiers PASS", "Route registry target entry count is zero before approved change", "Rollback command dry-run PASS within previous 30 minutes"]
+    },
+    {
+      "stage": "shadow",
+      "minimumWindowHours": 24,
+      "minimumSamplesPerIncrement": 200,
+      "requirements": ["Queries only", "Zero semantic/privacy/tenant mismatches", "Legacy response remains authoritative", "No target side effects"]
+    },
+    {
+      "stage": "cohort_01",
+      "minimumWindowHours": 72,
+      "minimumSamplesPerIncrement": 20,
+      "requirements": ["Exactly one approved production tenant", "Zero critical stop triggers", "Command sample minimum applies only to command increments; read minimum remains 200"]
+    },
+    {
+      "stage": "cohort_02_to_04",
+      "minimumWindowHours": 48,
+      "minimumSamplesPerIncrement": 100,
+      "requirements": ["Previous cohort accepted", "Exact allowlist committed", "Zero critical stop triggers"]
+    },
+    {
+      "stage": "cohort_05",
+      "minimumWindowHours": 168,
+      "minimumSamplesPerIncrement": 500,
+      "requirements": ["All eligible tenants only", "Legacy holds excluded", "Architecture/Operations/Security approval"]
+    }
+  ],
+  "thresholds": {
+    "criticalStop": {
+      "semanticMismatchCount": 0,
+      "tenantLeakCount": 0,
+      "authorizationOrPrivacyMismatchCount": 0,
+      "missingOrDuplicateAuditCount": 0,
+      "unknownOrCommittedUnacknowledgedCount": 0,
+      "legacyHoldTargetInvocationCount": 0,
+      "unexplainedDataChecksumMismatchCount": 0,
+      "synchronousDualWriteCount": 0
+    },
+    "errorRate": {
+      "minimumSample": 100,
+      "maximumTargetTechnicalErrorPercent": 1.0,
+      "maximumIncreaseOverLegacyPercentagePoints": 0.5,
+      "burstStopCount": 3,
+      "burstWindowMinutes": 5
+    },
+    "latency": {
+      "minimumSample": 100,
+      "maximumP95RatioToLegacy": 1.25,
+      "maximumAbsoluteP95Milliseconds": 500,
+      "breachWindowMinutes": 15
+    },
+    "rollback": {
+      "selectorDisableRtoMinutes": 5,
+      "operatorAcknowledgeMinutes": 10,
+      "incidentTriageMinutes": 30,
+      "reconciliationTargetHours": 4,
+      "acceptedWriteRpo": 0
+    },
+    "promotion": "Every threshold must pass. Insufficient samples never count as success; remain at the current stage or return to legacy."
+  },
+  "operatorCommands": [
+    {"id": "WF-OPS-01", "command": "node scripts/workforce-route-control.js status --format json", "purpose": "Read registry version, exact entries, expiry, and effective authority", "implemented": false},
+    {"id": "WF-OPS-02", "command": "node scripts/workforce-preflight.js --change-id <CHANGE_ID> --artifact-dir artifacts/architecture/workforce/preflight", "purpose": "Run gates, config, suite evidence, baseline, and rollback dry-run", "implemented": false},
+    {"id": "WF-OPS-03", "command": "node scripts/workforce-route-control.js set --tenant-id <TENANT_ID> --contract-id <CONTRACT_ID> --variant-id <VARIANT_ID> --actor-class <ACTOR_CLASS> --mode <shadow|target> --expected-version <VERSION> --change-id <CHANGE_ID> --expires-at <ISO_UTC>", "purpose": "Compare-and-set one exact route tuple", "implemented": false},
+    {"id": "WF-OPS-04", "command": "node scripts/workforce-route-control.js disable --tenant-id <TENANT_ID> --contract-id <CONTRACT_ID> --variant-id <VARIANT_ID> --actor-class <ACTOR_CLASS> --expected-version <VERSION> --incident-id <INCIDENT_ID>", "purpose": "Return subsequent requests to legacy within RTO", "implemented": false},
+    {"id": "WF-OPS-05", "command": "node scripts/workforce-reconcile.js inspect --tenant-id <TENANT_ID> --contract-id <CONTRACT_ID> --correlation-id <CORRELATION_ID> --format json", "purpose": "Inspect authoritative public facts and Audit-owned evidence without mutation", "implemented": false},
+    {"id": "WF-OPS-06", "command": "node scripts/workforce-reconcile.js append-missing-audit --tenant-id <TENANT_ID> --contract-id <CONTRACT_ID> --correlation-id <CORRELATION_ID> --incident-id <INCIDENT_ID> --expected-state-hash <HASH>", "purpose": "Append only a proven missing Audit intent under incident control", "implemented": false},
+    {"id": "WF-OPS-07", "command": "node scripts/workforce-rollback-drill.js --tenant-id tenant_wf_rehearsal --increment-id <INCREMENT_ID> --artifact-dir artifacts/architecture/workforce/rollback", "purpose": "Prove selector fallback, authority, RPO/RTO, Audit, and reconciliation", "implemented": false},
+    {"id": "WF-OPS-08", "command": "node scripts/workforce-evidence.js close-window --change-id <CHANGE_ID> --increment-id <INCREMENT_ID> --cohort-id <COHORT_ID> --format json", "purpose": "Compute objective promotion/stop result", "implemented": false}
+  ],
+  "rollbackProcedure": [
+    "Freeze promotion and open an incident; record tenant, contract, variant, actor class, registry version, correlation IDs, and threshold breach.",
+    "Compare-and-set the exact route tuple to legacy within five minutes. Never broaden the target or edit an unresolved selector without version control.",
+    "For queries, verify subsequent requests use legacy and preserve frozen HTTP/privacy behavior; no data reconciliation is required.",
+    "For commands not dispatched or conclusively rolled back, retain the error evidence and allow only a new independently authorized request after rollback.",
+    "For committed, committed_unacknowledged, or unknown outcomes, quarantine the tenant/operation; do not fall back within the original request and do not replay.",
+    "Inspect authoritative Workforce/Identity state and Audit evidence through approved contracts. Append a missing Audit intent only when business state is proven and duplicate absence is conclusive.",
+    "Run tenant/operation parity and checksum evidence, confirm zero accepted write loss, then obtain Operations/Data/Security closure before removing quarantine.",
+    "Keep legacy available and retain all artifacts through the 14-day rollback window."
+  ],
+  "reconciliationPolicy": {
+    "owners": ["Operations Owner", "authoritative provider owner", "Audit & History Owner", "Data Owner", "Security Owner"],
+    "triggerStates": ["committed_unacknowledged", "unknown", "data_checksum_mismatch", "audit_mismatch"],
+    "evidenceKey": ["tenantId", "contractId", "variantId", "correlationId", "entityId when known", "registryVersion", "provider timestamps"],
+    "allowed": ["Read public authoritative facts", "Read Audit-owned acceptance evidence", "Append a conclusively missing Audit intent under incident approval", "Issue a new provider command only after explicit independent authorization"],
+    "forbidden": ["Direct foreign SQL", "Blind replay", "Same-request legacy fallback after target dispatch", "Fabricated success", "Immutable Audit rewrite", "Cross-context compensating overwrite"],
+    "completion": "Exact state/Audit evidence, zero unexplained mismatch, incident approval, and route remains legacy until a new change record"
+  },
+  "observationAndRetirement": {
+    "rollbackWindowDaysAfterFinalEligibleCutover": 14,
+    "minimumFullEligibleObservationHours": 168,
+    "legacyRemovalMinimumZeroUseDays": 30,
+    "legacyRemovalRequirements": ["All eligible increments at C5", "All permanent legacy holds resolved by new governance or explicitly retained", "Zero legacy fallback for eligible tuples for 30 consecutive days", "Zero open reconciliation incidents", "Rollback window closed", "Legacy Retirement Gate approved"],
+    "retirementProhibition": "WF-PRE-14 does not retire AppService, AppRepository, legacy routes, SQLite tables, or provider behavior."
+  },
+  "evidenceContract": {
+    "directory": "artifacts/architecture/workforce/migration/",
+    "requiredFiles": ["preflight.json", "route-registry-before.json", "route-registry-after.json", "parity-summary.json", "threshold-window.json", "rollback-drill.json", "reconciliation.json", "approval.json"],
+    "requiredMetadata": ["gitCommit", "runbookHash", "changeId", "incidentIdWhenApplicable", "incrementId", "cohortId", "tenantIds", "registryVersion", "startedAt", "endedAt", "operator", "approvers", "result"],
+    "redaction": "No password, hash, session cookie, token, personal data, or raw provider credential"
+  },
+  "currentAdmission": {
+    "runbookSpecificationApproved": true,
+    "operatorCommandsImplemented": 0,
+    "rollbackRehearsalsExecuted": 0,
+    "productionCohortTenantIds": [],
+    "targetRoutesEnabled": 0,
+    "authorityTransfersExecuted": 0,
+    "moduleReadinessEffect": "WF-PRE-14 plan completeness passes. Module Readiness remains Failed until WF-PRE-16, and no extraction/canary can start until command, suite, rehearsal, and exact cohort prerequisites are implemented and evidenced."
+  },
+  "risks": [
+    {"id": "WF-RUN-RISK-01", "severity": "critical", "issue": "Post-dispatch fallback can duplicate an unknown or committed command.", "treatment": "No same-request fallback or automatic replay; quarantine and reconcile."},
+    {"id": "WF-RUN-RISK-02", "severity": "critical", "issue": "A broad tenant/operation flag can accidentally route legacy-hold variants.", "treatment": "Selector includes tenant, contract, variant, and actor; four legacy holds are permanently denied."},
+    {"id": "WF-RUN-RISK-03", "severity": "critical", "issue": "Audit failure after commit can be misread as rollback.", "treatment": "Critical stop at first occurrence, committed_unacknowledged classification, provider/Audit evidence, no replay."},
+    {"id": "WF-RUN-RISK-04", "severity": "high", "issue": "Low traffic can produce false promotion confidence.", "treatment": "Both minimum observation time and sample count are mandatory; insufficient sample cannot pass."},
+    {"id": "WF-RUN-RISK-05", "severity": "high", "issue": "A stale route registry can silently leave target authority enabled.", "treatment": "CAS versioning, expiry-to-legacy, audited changes, and failure-to-legacy."},
+    {"id": "WF-RUN-RISK-06", "severity": "high", "issue": "Shared SQLite can obscure which code path held command authority.", "treatment": "Per-request registry version/route evidence and exactly-one-authority assertion; no dual write."}
+  ],
+  "guards": [
+    {"id": "WF-RUN-GUARD-01", "rule": "All ten route increments are ordered and cover only the ten target-eligible PRE-11 variants."},
+    {"id": "WF-RUN-GUARD-02", "rule": "The four PRE-11 legacy-hold variants can never select target."},
+    {"id": "WF-RUN-GUARD-03", "rule": "Production cohort is empty by default; every target entry requires an exact tenant tuple, CAS version, approval, change ID, and expiry."},
+    {"id": "WF-RUN-GUARD-04", "rule": "Commands have one authority, no executing shadow, no dual write, and no same-request fallback after dispatch."},
+    {"id": "WF-RUN-GUARD-05", "rule": "Any semantic, tenant, privacy, Audit, unknown-outcome, legacy-hold, checksum, or dual-write mismatch triggers immediate stop at count one."},
+    {"id": "WF-RUN-GUARD-06", "rule": "Rollback RTO is five minutes, accepted-write RPO is zero, and reconciliation forbids foreign SQL/blind replay."},
+    {"id": "WF-RUN-GUARD-07", "rule": "WF-PRE-14 implements zero commands, executes zero rehearsals/transfers, enables zero routes, and retires no legacy."}
+  ],
+  "temporaryRunbookExceptions": [],
+  "deferredDecisions": {
+    "WF-PRE-16": "Final Module Readiness decision and authorization boundary",
+    "WF-EXT-01+": "Implement the approved module, suites, route registry, operator commands, adapters, and evidence incrementally",
+    "production-change-record": "Bind exact tenant IDs, times, operators, approvals, and registry versions for each canary"
+  },
+  "approvals": [
+    {"role": "Architecture Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Workforce Module Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Product Authority", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Identity & Access Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Audit & History Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Data Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Operations Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Security Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"},
+    {"role": "Quality Owner", "owner": "Sukhrob Khaydarov", "decision": "approved", "date": "2026-07-24"}
+  ]
+}

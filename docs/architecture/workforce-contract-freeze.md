@@ -257,4 +257,4 @@ Security defects are corrected through explicit governed remediation, not perman
 
 All ten current operations, accepted request fields, exact response DTO fields, status/error behavior, authorization/privacy rules, ordering/limits, and OpenAPI coverage/gaps are inventoried and approved as the current compatibility baseline.
 
-This closes only current-contract freeze. It does not pass target parity, activate the privacy remediation, or authorize extraction. WF-PRE-06 through WF-PRE-13 subsequently approved behavior, seams, table access, public contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md); the next ordered prerequisite is WF-PRE-14.
+This closes only current-contract freeze. It does not pass target parity, activate the privacy remediation, or authorize extraction. WF-PRE-06 through WF-PRE-14 subsequently approved all ordered design/planning decisions through the [migration/rollback runbook](workforce-migration-runbook.md); the next ordered prerequisite is WF-PRE-16.

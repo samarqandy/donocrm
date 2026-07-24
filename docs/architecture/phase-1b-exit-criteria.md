@@ -97,12 +97,12 @@ Candidate: Workforce
 
 ## Migration and Rollback
 
-- [ ] A Workforce migration runbook names exact route/use-case increments and tenant cohort.
-- [ ] Entry, parity, performance, error, data-integrity, stop, and rollback thresholds are numeric or otherwise objectively decidable.
-- [ ] Legacy remains available and unchanged throughout the rollback window.
-- [ ] Authority transfer and reconciliation behavior for Teacher/Identity writes is documented.
+- [x] [WF-PRE-14](workforce-migration-runbook.md) names ten exact route/use-case increments, four target-denied legacy holds, six cohort stages, and a zero-default exact-allowlist selector.
+- [x] Entry, parity, performance, error, data-integrity, stop, promotion, RTO, RPO, and reconciliation thresholds are numeric or objectively decidable.
+- [x] Frozen legacy is required to remain selectable and unchanged throughout canary and the 14-day rollback window; commands have no dual write or same-request post-dispatch fallback.
+- [x] Authority transfer and reconciliation behavior is exact for Workforce/Identity/Audit outcomes, including `committed_unacknowledged`, `unknown`, and zero accepted-write loss.
 - [ ] Rollback steps and responsible operator are verified in a production-like environment before canary.
-- [ ] Legacy retirement criteria and observation window are documented.
+- [x] Legacy retirement requires 168 hours full-eligible observation, a 14-day rollback window, 30 consecutive zero-use days, zero open incidents, and a separate Legacy Retirement Gate.
 
 **Pass measure:** a rehearsal report demonstrates route fallback and data/identity consistency for every planned write operation.
 

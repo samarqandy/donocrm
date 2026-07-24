@@ -21,9 +21,10 @@ Source: [Workforce Module Readiness Review](workforce-module-readiness.md)
 | WF-PRE-11 | Completed | 2026-07-24 | [Approved transaction/consistency model](workforce-transaction-consistency.md) defines 14/14 variants, five provider-local atomic units, four read-admissible variants, zero write routes enabled, six Audit-blocked variants, four legacy holds, five risks, seven guards, and zero exceptions |
 | WF-PRE-12 | Completed | 2026-07-24 | [Approved event/Audit decision](workforce-event-requirements.md) fixes 19/19 dependency dispositions, 11/11 provider ports, 7/7 reference consumers, zero published/consumed events or versions, synchronous mandatory Audit acceptance, four risks, seven guards, and zero exceptions |
 | WF-PRE-13 | Completed | 2026-07-24 | [Approved executable test/parity plan](workforce-test-parity-plan.md) fixes 10 suites, eight fixtures, 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 consistency variants, 11 parity rows, seven rollback cases, zero implemented target suites/routes, and zero exceptions |
+| WF-PRE-14 | Completed | 2026-07-24 | [Approved migration/rollback runbook](workforce-migration-runbook.md) fixes 10 route increments, four legacy holds, six cohort stages, five promotion gates, count-one critical stops, five-minute RTO, zero-write-loss RPO, eight operator commands/rollback steps, zero implemented commands/rehearsals/cohort/routes, and zero exceptions |
 | WF-PRE-15 | Completed | 2026-07-23 | Required GitHub check `architecture-enforce-blocking`, strict `main` protection, deterministic failure mode, and retained artifact |
 
-WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by this record.
+WF-PRE-16 remains incomplete. No extraction item is authorized by this record.
 
 ## Ordering Rules
 
@@ -32,7 +33,7 @@ WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by t
 - “During extraction” items describe future controlled migration work; they are not authorized by this document.
 - “Later” items are explicitly outside the first Workforce extraction unless new evidence changes scope.
 - Every item requires a named owner before work begins.
-- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision depends on the then-remaining preparation gates, currently WF-PRE-14 and WF-PRE-16, and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
+- WF-PRE-04 passes module-definition completeness. The final Module Readiness decision is now the only remaining preparation gate and is recorded only by WF-PRE-16; requiring that final decision inside WF-PRE-04 would create a circular ordering dependency.
 
 ## Must Complete Before Migration
 
@@ -51,7 +52,7 @@ WF-PRE-14 and WF-PRE-16 remain incomplete. No extraction item is authorized by t
 | 11 | WF-PRE-11 | **Completed 2026-07-24 — Approve transaction/consistency model** | All 14 variants have exact authority, local atomicity, ordering, failure/unknown-outcome, retry, compensation, Audit, reconciliation, and route admission; unsafe cross-context variants remain legacy-held and no target write route is enabled | [Workforce Transaction and Consistency Decision](workforce-transaction-consistency.md); [machine model](../../architecture/workforce-consistency-model.json) |
 | 12 | WF-PRE-12 | **Completed 2026-07-24 — Decide event and Audit delivery requirements** | All 19 dependencies, 11 provider ports, seven reference consumers, and seven seams have exact synchronous/no-event dispositions; no event/version is invented; Audit uses synchronous mandatory acceptance with explicit post-commit failure semantics and enables no route | [Workforce Integration-Event and Audit Delivery Decision](workforce-event-requirements.md); [machine catalog](../../architecture/workforce-event-requirements.json) |
 | 13 | WF-PRE-13 | **Completed 2026-07-24 — Approve executable test and parity plan** | Ten suites and eight deterministic fixtures give all 69 behavior IDs, 11 contracts, 18 ports/32 methods, 14 consistency variants, two governed deltas, and seven rollback scenarios exact files, commands, results, owners, thresholds, evidence, and activation gates without claiming missing implementation | [Workforce Executable Test and Parity Plan](workforce-test-parity-plan.md); [machine plan](../../architecture/workforce-test-parity-plan.json) |
-| 14 | WF-PRE-14 | Approve migration and rollback runbook | Route/use-case increments, authority, parity, cohort, stop triggers, fallback, reconciliation, observation window, and retirement conditions are documented | No Workforce runbook exists |
+| 14 | WF-PRE-14 | **Completed 2026-07-24 — Approve migration and rollback runbook** | Ten eligible variants have ordered increments; four holds stay legacy; exact selector/cohorts, entry/promotion/stop thresholds, one-authority fallback, reconciliation, five-minute RTO, zero-loss RPO, observation, retirement, commands, owners, and evidence are fixed without enabling a route | [Workforce Migration and Rollback Runbook](workforce-migration-runbook.md); [machine runbook](../../architecture/workforce-migration-runbook.json) |
 | 15 | WF-PRE-15 | **Completed 2026-07-23 — Activate architecture no-growth evidence** | Blocking deterministic failures for new module/legacy violations are active; current baseline remains visible | Required check `architecture-enforce-blocking`; run `30027584361` |
 | 16 | WF-PRE-16 | Pass Phase Exit Criteria | Every item in [phase-1b-exit-criteria.md](phase-1b-exit-criteria.md) has linked evidence and required approval | Final prerequisite |
 

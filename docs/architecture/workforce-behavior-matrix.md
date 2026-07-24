@@ -179,4 +179,4 @@ The full Testing Readiness section is still failed because 48 operation rows and
 
 Ten out of ten operations contain explicit success/failure/invariant rows, all 69 applicable operation rows have stable test IDs, every non-applicable category has a reason, tenant/role/privacy cases are explicit, and current evidence gaps are measurable rather than implied away.
 
-WF-PRE-07 through WF-PRE-13 subsequently approved seams, table access, public contracts, focused ports, the [transaction/consistency model](workforce-transaction-consistency.md), [event/Audit delivery](workforce-event-requirements.md), and the [executable test/parity plan](workforce-test-parity-plan.md). The next ordered prerequisite is WF-PRE-14: approve the migration and rollback runbook.
+WF-PRE-07 through WF-PRE-14 subsequently approved every ordered design/planning decision through the [migration/rollback runbook](workforce-migration-runbook.md). The next ordered prerequisite is WF-PRE-16.

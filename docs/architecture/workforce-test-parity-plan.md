@@ -321,4 +321,4 @@ The executable test/parity plan is complete: 10 executable suite specifications,
 
 Passing WF-PRE-13 does not claim the planned target tests exist or pass. Target test implementation missing is explicit, and zero target routes are enabled.
 
-Module Readiness remains Failed. The next ordered prerequisite is WF-PRE-14: approve the migration and rollback runbook.
+Module Readiness remains Failed. WF-PRE-14 subsequently approved the [migration and rollback runbook](workforce-migration-runbook.md); the next ordered prerequisite is WF-PRE-16.
